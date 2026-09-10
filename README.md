@@ -14,8 +14,11 @@
   - `export_sources.py` 대장 → `docs/sources.md`(사람용 표) + `supabase/seed/crawl_sources.sql`(DB 시드) 생성
   - `common.py` 공용 흐름(가동 스위치 → 수집 → 적재 → 상세 → 요약)
   - `crawl_template.py` 새 소스 붙일 때 복사해 쓰는 템플릿
-  - `robots_check.py` 수집 전 robots.txt 판정 (대장 전체를 한 번에)
+  - `robots_check.py` 수집 전 robots.txt 판정 + 목록 페이지 실측 (대장 전체를 한 번에)
+  - `collection_status.py` / `collection_status_html.py` 판정 결과 → 수집 가능 여부 문서(md / html)
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
+- `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
+- `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
 - `supabase/migrations/0001_init.sql` — DB 스키마 (아직 미적용)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행 (지금은 수동 실행만)

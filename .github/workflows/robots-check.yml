@@ -34,7 +34,9 @@ jobs:
       - name: robots.txt 판정 + 목록 페이지 실측
         run: python scripts/crawler/robots_check.py
       - name: 수집 가능 여부 문서 생성
-        run: python scripts/crawler/collection_status.py robots_result.json docs/collection-status.md
+        run: |
+          python scripts/crawler/collection_status.py robots_result.json docs/collection-status.md
+          python scripts/crawler/collection_status_html.py robots_result.json docs/collection-status.html
       - name: 결과 올리기 (CSV·JSON·문서)
         uses: actions/upload-artifact@v4
         with:
@@ -43,3 +45,4 @@ jobs:
             robots_result.csv
             robots_result.json
             docs/collection-status.md
+            docs/collection-status.html
