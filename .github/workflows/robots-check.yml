@@ -1,0 +1,48 @@
+# 아트잡스 robots.txt 판정 — sources.py 대장의 모든 사이트를 한 번에 판정한다.
+# GitHub 화면에서 Actions → robots-check → "Run workflow" 를 누르면 되고,
+# 끝나면 실행 페이지 하단 Artifacts 의 robots_result 에서 CSV 를 내려받는다.
+# (개발 환경에서는 외부 사이트 접속이 막혀 있어 여기서 돌린다.)
+name: robots-check
+on:
+  workflow_dispatch:
+  # 기본 브랜치에 이 파일이 올라가기 전까지는 수동 실행 버튼이 안 보이므로,
+  # 판정 관련 파일이 바뀌어 푸시되면 자동으로 한 번 돈다.
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "scripts/crawler/sources.py"
+      - "scripts/crawler/robots_check.py"
+      - "scripts/crawler/collection_status.py"
+      - ".github/workflows/robots-check.yml"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - name: 코드 내려받기
+        uses: actions/checkout@v4
+      - name: 파이썬 3.12 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 패키지 설치
+        run: pip install -r scripts/crawler/requirements.txt
+      - name: 대장 검사
+        run: python scripts/crawler/sources.py
+      - name: robots.txt 판정 + 목록 페이지 실측
+        run: python scripts/crawler/robots_check.py
+      - name: 수집 가능 여부 문서 생성
+        run: |
+          python scripts/crawler/collection_status.py robots_result.json docs/collection-status.md
+          python scripts/crawler/collection_status_html.py robots_result.json docs/collection-status.html
+      - name: 결과 올리기 (CSV·JSON·문서)
+        uses: actions/upload-artifact@v4
+        with:
+          name: robots_result
+          path: |
+            robots_result.csv
+            robots_result.json
+            docs/collection-status.md
+            docs/collection-status.html
