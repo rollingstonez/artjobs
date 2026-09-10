@@ -17,7 +17,7 @@
   - `common.py` 공용 흐름(가동 스위치 → 수집 → 적재 → 상세 → 요약)
   - `crawl_template.py` 새 소스 붙일 때 복사해 쓰는 템플릿
   - `robots_check.py` 수집 전 robots.txt 판정
-- `supabase/migrations/` — DB 스키마 (아직 미적용). `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0003 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸
 - `.github/workflows/crawl.yml` — 크롤 자동 실행 (지금은 수동 실행만)
 
 ## 실행

@@ -1,5 +1,5 @@
 -- 아트잡스 초기 스키마 — 바로쌤 crawl_sources / crawled_postings 구조 이식(예술 분야용).
--- ⚠️ 아직 적용 전. Supabase 프로젝트가 준비되면 SQL Editor 또는 CLI 로 실행한다.
+-- Supabase 프로젝트 artjobs 에 적용 완료. 0002·0003 도 이어서 적용됨.
 
 -- 수집 소스 대장 — 허가 상태와 가동 스위치. 크롤러는 is_active=false 면 스스로 중단한다.
 create table if not exists crawl_sources (
