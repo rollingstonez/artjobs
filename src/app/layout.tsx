@@ -11,9 +11,9 @@ const notoSansKr = Noto_Sans_KR({
   weight: ["400", "500", "700", "800"],
 });
 
-const TITLE = "아트잡스 — 순수예술 채용·공모를 한곳에서";
+const TITLE = "아트잡스 — 미술·음악·무용·국악·연극 채용·공모를 내 집 근처부터";
 const DESCRIPTION =
-  "미술관·문화재단·갤러리·레지던시에 흩어진 순수예술 분야 채용공고와 공모를 매일 한곳에 모읍니다.";
+  "미술관·공연장·예술단·문화재단·학교에 흩어진 순수예술 다섯 분야의 채용공고와 오디션·공모를 매일 모아, 내가 사는 곳에서 가까운 순서로 보여드립니다.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

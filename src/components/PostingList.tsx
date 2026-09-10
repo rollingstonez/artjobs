@@ -1,7 +1,9 @@
 // 채용공고·오디션 게시판이 함께 쓰는 목록 화면. 게시판 종류(board)만 다르다.
 import { Suspense } from "react";
 import JobsFilter from "@/components/JobsFilter";
+import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
+import { getUserLocation } from "@/lib/location-server";
 import { DATA_SOURCE, getPostings, type PostingFilters } from "@/lib/postings";
 import { boardLabel, type BoardCode } from "@/types/job";
 
@@ -31,7 +33,8 @@ export default async function PostingList({
   searchParams: SearchParams;
   intro?: string;
 }) {
-  const postings = await getPostings({ board, ...pickFilters(searchParams) });
+  const location = await getUserLocation();
+  const postings = await getPostings({ board, near: location, ...pickFilters(searchParams) });
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
@@ -49,13 +52,17 @@ export default async function PostingList({
         </p>
       )}
 
+      <div className="mb-4">
+        <NearMeBar location={location} compact />
+      </div>
+
       <Suspense>
         <JobsFilter />
       </Suspense>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {postings.map((p) => (
-          <PostingCard key={p.id} posting={p} />
+          <PostingCard key={p.id} posting={p} near={location} />
         ))}
       </div>
 

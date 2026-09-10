@@ -19,6 +19,8 @@ function make(s: Seed): Posting {
   const { daysAgo, daysLeft, ...rest } = s;
   return {
     address: null,
+    lat: null,
+    lng: null,
     salary: null,
     recruitCount: null,
     applyStart: daysFromNow(-daysAgo),

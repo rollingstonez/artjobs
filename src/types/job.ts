@@ -142,6 +142,8 @@ export interface Posting {
   employmentRaw: string | null;
   region: Region | null;
   address: string | null;
+  lat: number | null; // 근무지 좌표. 있으면 "내 집 근처" 정렬에 실제 거리를 쓴다 (src/lib/location.ts)
+  lng: number | null;
   salary: string | null;
   recruitCount: string | null;
   applyStart: string | null;

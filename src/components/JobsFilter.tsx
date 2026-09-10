@@ -1,7 +1,15 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES, genresOf } from "@/types/job";
+import {
+  EMPLOYMENT_TYPES,
+  FIELDS,
+  GENRES,
+  REGIONS,
+  ROLES,
+  genreCodesForField,
+  type FieldCode,
+} from "@/types/job";
 
 const selectClass =
   "h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 focus:border-stone-900 focus:outline-none";
@@ -24,7 +32,12 @@ export default function JobsFilter() {
   };
 
   const field = params.get("field") ?? "";
-  const genreOptions = field ? genresOf(field) : GENRES;
+  // 분야를 고르면 그 분야 장르 + 교차 노출 장르(예: 국악 탭의 한국무용·창극)만 보여준다.
+  const genreOptions = field
+    ? genreCodesForField(field as FieldCode)
+        .map((code) => GENRES.find((g) => g.code === code))
+        .filter((g): g is (typeof GENRES)[number] => Boolean(g))
+    : GENRES;
   const hasAny = FILTER_KEYS.some((k) => params.get(k));
 
   return (
@@ -68,7 +81,9 @@ export default function JobsFilter() {
           <option value="">장르 전체</option>
           {genreOptions.map((g) => (
             <option key={g.code} value={g.code}>
-              {field ? g.label : `${FIELDS.find((f) => f.code === g.field)?.label} · ${g.label}`}
+              {field === g.field
+                ? g.label
+                : `${FIELDS.find((f) => f.code === g.field)?.label} · ${g.label}`}
             </option>
           ))}
         </select>

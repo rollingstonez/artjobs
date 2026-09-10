@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { employmentLabel, fieldLabel, genreLabel, roleLabel, type Posting } from "@/types/job";
 import { getDeadline, periodText } from "@/lib/format";
+import { nearnessLabel, type UserLocation } from "@/lib/location";
 
 const EMPLOYMENT_CHIP: Record<string, string> = {
   full_time: "bg-blue-50 text-blue-700",
@@ -18,8 +19,15 @@ const FIELD_CHIP: Record<string, string> = {
   theater: "bg-indigo-50 text-indigo-700",
 };
 
-export default function PostingCard({ posting }: { posting: Posting }) {
+export default function PostingCard({
+  posting,
+  near = null,
+}: {
+  posting: Posting;
+  near?: UserLocation | null;
+}) {
   const deadline = getDeadline(posting.applyEnd);
+  const nearLabel = near ? nearnessLabel(posting, near) : null;
   const isExpired = deadline.kind === "expired";
   const period = periodText(posting.workStart, posting.workEnd);
   const employment = employmentLabel(posting.employmentType);
@@ -37,8 +45,13 @@ export default function PostingCard({ posting }: { posting: Posting }) {
     >
       <div className="flex min-w-0 items-center gap-1.5">
         {posting.region && (
-          <span className="shrink-0 rounded-full bg-stone-900 px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              nearLabel ? "bg-emerald-700 text-white" : "bg-stone-900 text-white"
+            }`}
+          >
             {posting.region}
+            {nearLabel ? ` · ${nearLabel}` : ""}
           </span>
         )}
         <h2 className="truncate text-[17px] font-bold leading-snug text-stone-900">
