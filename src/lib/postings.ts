@@ -3,12 +3,15 @@
 // 이 파일 안의 구현만 crawled_postings 조회로 바꾸면 화면 코드는 그대로다.
 import { SAMPLE_POSTINGS } from "@/data/sample-postings";
 import { isLivingPosting } from "@/lib/living";
-import type { Posting } from "@/types/job";
+import { FIELDS, genreCodesForField, type BoardCode, type FieldCode, type Posting } from "@/types/job";
 
 export const DATA_SOURCE: "sample" | "supabase" = "sample";
 
 export interface PostingFilters {
-  category?: string;
+  board?: BoardCode;
+  field?: string;
+  genre?: string;
+  role?: string;
   employmentType?: string;
   region?: string;
   q?: string;
@@ -19,13 +22,30 @@ async function loadAll(): Promise<Posting[]> {
   return SAMPLE_POSTINGS;
 }
 
+function isField(v: string | undefined): v is FieldCode {
+  return FIELDS.some((f) => f.code === v);
+}
+
+/** 분야 필터. 분야가 같거나, 그 분야 탭에 교차 노출하기로 한 장르면 통과. */
+function matchesField(p: Posting, field: string | undefined): boolean {
+  if (!field) return true;
+  if (p.field === field) return true;
+  if (isField(field) && p.genre) {
+    return (genreCodesForField(field) as string[]).includes(p.genre);
+  }
+  return false;
+}
+
 export async function getPostings(filters: PostingFilters = {}): Promise<Posting[]> {
   const all = await loadAll();
   const q = filters.q?.trim().toLowerCase();
 
   return all
     .filter((p) => filters.includeClosed || isLivingPosting(p.applyEnd, p.createdAt))
-    .filter((p) => !filters.category || p.category === filters.category)
+    .filter((p) => !filters.board || p.board === filters.board)
+    .filter((p) => matchesField(p, filters.field))
+    .filter((p) => !filters.genre || p.genre === filters.genre)
+    .filter((p) => !filters.role || p.role === filters.role)
     .filter((p) => !filters.employmentType || p.employmentType === filters.employmentType)
     .filter((p) => !filters.region || p.region === filters.region)
     .filter(
@@ -43,12 +63,12 @@ export async function getPosting(id: string): Promise<Posting | null> {
   return all.find((p) => p.id === id) ?? null;
 }
 
-export async function countByCategory(): Promise<Record<string, number>> {
-  const living = await getPostings();
+/** 분야별 모집중 건수(교차 노출 포함). 게시판을 주면 그 게시판만 센다. */
+export async function countByField(board?: BoardCode): Promise<Record<string, number>> {
+  const living = await getPostings({ board });
   const out: Record<string, number> = {};
-  for (const p of living) {
-    if (!p.category) continue;
-    out[p.category] = (out[p.category] ?? 0) + 1;
+  for (const f of FIELDS) {
+    out[f.code] = living.filter((p) => matchesField(p, f.code)).length;
   }
   return out;
 }
