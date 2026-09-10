@@ -19,8 +19,11 @@
 """
 import csv
 import io
+import json
 import re
 import sys
+import time
+from datetime import datetime, timezone
 
 import requests
 
@@ -41,6 +44,19 @@ def fetch(base):
         return r.status_code, (r.text if r.status_code == 200 else "")
     except Exception as e:
         return None, str(e)
+
+
+def probe_list(url):
+    """목록 페이지를 우리 UA로 한 번 열어 본다 → (HTTP, 본문크기, 링크수, 최종URL, 오류).
+    robots 가 허용해도 페이지가 안 열리거나(403/500) 자바스크립트로만 그려지면(링크 거의 없음) 바로 수집이 안 된다."""
+    try:
+        r = requests.get(url, headers={"User-Agent": UA}, timeout=15, allow_redirects=True)
+        r.encoding = r.apparent_encoding or "utf-8"
+        body = r.text or ""
+        links = len(re.findall(r"<a\s", body, flags=re.I))
+        return r.status_code, len(body), links, r.url, ""
+    except Exception as e:
+        return None, 0, 0, url, type(e).__name__
 
 
 def parse_groups(text):
@@ -124,24 +140,41 @@ def main():
         sys.exit("SITES 가 비어 있습니다. 파일의 SITES 에 채우거나  python robots_check.py <base> <path>  로 실행하세요.")
 
     rows, order = [], {"깨끗한 허용": 0, "회색지대": 1, "차단": 2, "확인필요": 3}
-    print(f"\nUser-Agent: {UA}\n" + "=" * 74)
+    print(f"\nUser-Agent: {UA}\n" + "=" * 74, flush=True)
     for code, name, base, path in sites:
         status, text = fetch(base)
         verdict, reason = classify(path, status, text)
-        if path == "/":
+        path_known = path != "/"
+        if not path_known:
             reason += " ※목록경로 미정 — 사이트 최상위로 판정함. sources.py 의 list_path 를 채운 뒤 재판정"
-        rows.append((code, name, base + path, status, verdict, reason))
+        list_http, list_size, list_links, final_url, list_err = (None, 0, 0, base + path, "")
+        if path_known and verdict in ("깨끗한 허용", "회색지대"):
+            list_http, list_size, list_links, final_url, list_err = probe_list(base + path)
+        rows.append(dict(
+            code=code, name=name, url=base + path, robots_http=status, verdict=verdict, reason=reason,
+            path_known=path_known, list_http=list_http, list_size=list_size, list_links=list_links,
+            final_url=final_url, list_err=list_err,
+        ))
+        print(f"[{verdict:6}] {name} (robots {status if status is not None else '—'} / 목록 {list_http if list_http is not None else '—'}, 링크 {list_links})  {base + path}", flush=True)
+        print(f"          → {reason}", flush=True)
+        time.sleep(0.5)
 
-    rows.sort(key=lambda r: order.get(r[4], 9))
-    for code, name, url, status, verdict, reason in rows:
-        print(f"[{verdict:6}] {name} ({status if status is not None else '—'})  {url}")
-        print(f"          → {reason}")
+    rows.sort(key=lambda r: order.get(r["verdict"], 9))
 
     with io.open("robots_result.csv", "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["코드", "기관", "URL", "HTTP", "판정", "근거"])
-        w.writerows(rows)
-    print("=" * 74 + "\nrobots_result.csv 저장 완료.")
+        w.writerow(["코드", "기관", "URL", "robots HTTP", "판정", "근거", "목록경로확정", "목록 HTTP", "목록 크기", "링크수", "최종URL", "목록 오류"])
+        for r in rows:
+            w.writerow([r["code"], r["name"], r["url"], r["robots_http"], r["verdict"], r["reason"], r["path_known"],
+                        r["list_http"], r["list_size"], r["list_links"], r["final_url"], r["list_err"]])
+    with io.open("robots_result.json", "w", encoding="utf-8") as f:
+        json.dump({"checked_at": datetime.now(timezone.utc).isoformat(), "user_agent": UA, "rows": rows},
+                  f, ensure_ascii=False, indent=1)
+    print("=" * 74 + "\nrobots_result.csv / robots_result.json 저장 완료.")
+    # 워크플로 로그에서 결과를 그대로 가져갈 수 있도록 JSON 을 한 줄로 찍는다.
+    print("===ROBOTS_JSON_BEGIN===")
+    print(json.dumps({"checked_at": datetime.now(timezone.utc).isoformat(), "rows": rows}, ensure_ascii=False))
+    print("===ROBOTS_JSON_END===")
 
 
 if __name__ == "__main__":

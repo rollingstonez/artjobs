@@ -46,6 +46,7 @@ scripts/crawler/logs/
 __pycache__/
 *.pyc
 robots_result.csv
+robots_result.json
 
 # claude code 로컬 설정
 .claude/
