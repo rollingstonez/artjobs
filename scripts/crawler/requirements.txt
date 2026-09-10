@@ -1,0 +1,5 @@
+requests==2.34.2
+beautifulsoup4==4.15.0
+# curl_cffi: 일부 공공기관 사이트가 파이썬 requests의 TLS 지문을 차단할 때
+# impersonate="chrome"으로 우회(바로쌤 전남·세종 사례). 사이트 접속에만 사용.
+curl_cffi==0.13.0
