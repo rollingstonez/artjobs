@@ -15,6 +15,9 @@ Supabase 대시보드 > Authentication > URL Configuration
 
 ## 1. 구글 (무료, 10분)
 
+현재 상태: Google Cloud 프로젝트 `artjobs`(lkseok911@gmail.com) 의 클라이언트 `artjobs web` 으로 연결 완료, 로그인 검증됨.
+앱이 아직 "테스트" 상태라 "대상 > 테스트 사용자" 에 등록한 계정만 로그인된다. 오픈 전에 "앱 게시" 를 눌러 프로덕션으로 바꾼다.
+
 1. https://console.cloud.google.com → 프로젝트 새로 만들기 (이름 artjobs)
 2. 왼쪽 메뉴 "API 및 서비스" > "OAuth 동의 화면" → 외부(External) → 앱 이름·이메일만 채우고 저장
 3. "사용자 인증 정보" > "사용자 인증 정보 만들기" > "OAuth 클라이언트 ID" → 유형: 웹 애플리케이션
