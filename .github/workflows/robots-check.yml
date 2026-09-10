@@ -5,6 +5,15 @@
 name: robots-check
 on:
   workflow_dispatch:
+  # 기본 브랜치에 이 파일이 올라가기 전까지는 수동 실행 버튼이 안 보이므로,
+  # 판정 관련 파일이 바뀌어 푸시되면 자동으로 한 번 돈다.
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "scripts/crawler/sources.py"
+      - "scripts/crawler/robots_check.py"
+      - "scripts/crawler/collection_status.py"
+      - ".github/workflows/robots-check.yml"
 jobs:
   check:
     runs-on: ubuntu-latest
