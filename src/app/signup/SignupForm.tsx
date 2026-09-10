@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { signUp, type ActionResult } from "@/lib/actions/auth";
+import SocialLoginButtons, { OrDivider } from "@/components/SocialLoginButtons";
+import { ENABLED_SOCIAL_PROVIDERS } from "@/lib/auth-providers";
 import { ACCOUNT_ROLES, type AccountRole } from "@/types/account";
 
 const input =
@@ -10,7 +12,11 @@ const input =
 
 export default function SignupForm({ initialRole }: { initialRole: AccountRole | null }) {
   const [role, setRole] = useState<AccountRole | null>(initialRole);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(signUp, null);
+  const agreed = agreeTerms && agreePrivacy;
+  const hasSocial = ENABLED_SOCIAL_PROVIDERS.length > 0;
 
   return (
     <form action={action} className="space-y-6">
@@ -43,6 +49,35 @@ export default function SignupForm({ initialRole }: { initialRole: AccountRole |
 
       {role && (
         <div className="space-y-3">
+          <div className="space-y-1.5 rounded-lg bg-stone-100 p-3 text-sm">
+            <label className="flex items-start gap-2">
+              <input type="checkbox" name="agree_terms" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="mt-0.5" />
+              <span>
+                <Link href="/about" className="underline underline-offset-2">이용약관</Link>에 동의합니다 (필수)
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input type="checkbox" name="agree_privacy" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} className="mt-0.5" />
+              <span>
+                <Link href="/about" className="underline underline-offset-2">개인정보 처리방침</Link>에 동의합니다 (필수)
+              </span>
+            </label>
+            <p className="pt-1 text-xs text-stone-500">
+              전화번호는 받지 않습니다. 회원 간 연락은 아트잡스 메신저로만 이루어집니다.
+            </p>
+          </div>
+
+          {hasSocial && (
+            <>
+              <SocialLoginButtons
+                role={role}
+                disabled={!agreed}
+                disabledHint="위 두 항목에 동의하면 카카오·구글·애플 계정으로 바로 가입할 수 있습니다."
+              />
+              <OrDivider label="또는 이메일로 가입" />
+            </>
+          )}
+
           {role === "organization" && (
             <label className="block">
               <span className="text-sm font-semibold text-stone-800">기관명</span>
@@ -71,24 +106,6 @@ export default function SignupForm({ initialRole }: { initialRole: AccountRole |
             <span className="text-sm font-semibold text-stone-800">비밀번호 (8자 이상)</span>
             <input name="password" type="password" required minLength={8} autoComplete="new-password" className={`${input} mt-1`} />
           </label>
-
-          <div className="space-y-1.5 rounded-lg bg-stone-100 p-3 text-sm">
-            <label className="flex items-start gap-2">
-              <input type="checkbox" name="agree_terms" className="mt-0.5" />
-              <span>
-                <Link href="/about" className="underline underline-offset-2">이용약관</Link>에 동의합니다 (필수)
-              </span>
-            </label>
-            <label className="flex items-start gap-2">
-              <input type="checkbox" name="agree_privacy" className="mt-0.5" />
-              <span>
-                <Link href="/about" className="underline underline-offset-2">개인정보 처리방침</Link>에 동의합니다 (필수)
-              </span>
-            </label>
-            <p className="pt-1 text-xs text-stone-500">
-              전화번호는 받지 않습니다. 회원 간 연락은 아트잡스 메신저로만 이루어집니다.
-            </p>
-          </div>
 
           {state && !state.ok && <p className="text-sm text-red-600">{state.error}</p>}
 

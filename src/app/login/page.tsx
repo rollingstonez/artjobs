@@ -7,6 +7,7 @@ export const metadata: Metadata = { title: "로그인 | 아트잡스" };
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
   const next = typeof sp.next === "string" ? sp.next : "/me";
+  const oauthError = sp.error === "oauth";
   return (
     <main className="mx-auto w-full max-w-md px-4 pb-16 md:px-6">
       <div className="py-8">
@@ -18,7 +19,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </Link>
         </p>
       </div>
-      <LoginForm next={next} />
+      <LoginForm next={next} oauthError={oauthError} />
     </main>
   );
 }
