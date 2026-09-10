@@ -14,7 +14,8 @@
     python scripts/crawler/robots_check.py
     python scripts/crawler/robots_check.py https://example.org /board/list.do   # 단건
 
-★ SITES의 '목록경로'는 우리가 실제로 크롤링하는 URL과 반드시 같아야 판정이 정확하다.
+★ sources.py 의 list_path 는 우리가 실제로 크롤링하는 URL과 반드시 같아야 판정이 정확하다.
+  list_path 가 None 인 사이트는 '/' 로 판정되며 근거에 '목록경로 미정' 표시가 붙는다.
 """
 import csv
 import io
@@ -25,10 +26,10 @@ import requests
 
 UA = "ArtjobsBot/0.1 (+https://artjobs.kr; contact: support@artjobs.kr)"
 
-# (소스코드, 이름, base, 실제 수집 목록경로) — 대상 기관이 확정되면 여기에 채운다.
-SITES = [
-    # ("arko", "한국문화예술위원회", "https://www.arko.or.kr", "/recruit/list.do"),
-]
+# (소스코드, 이름, base, 실제 수집 목록경로) — 대장은 sources.py 하나로 관리한다. 여기서 복사하지 말 것.
+from sources import robots_targets
+
+SITES = robots_targets()
 
 SEARCH_BOTS = {"yeti", "googlebot", "daumoa", "bingbot", "naverbot", "google", "msnbot"}
 
@@ -127,6 +128,8 @@ def main():
     for code, name, base, path in sites:
         status, text = fetch(base)
         verdict, reason = classify(path, status, text)
+        if path == "/":
+            reason += " ※목록경로 미정 — 사이트 최상위로 판정함. sources.py 의 list_path 를 채운 뒤 재판정"
         rows.append((code, name, base + path, status, verdict, reason))
 
     rows.sort(key=lambda r: order.get(r[4], 9))

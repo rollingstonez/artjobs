@@ -1,0 +1,31 @@
+# 아트잡스 robots.txt 판정 — sources.py 대장의 모든 사이트를 한 번에 판정한다.
+# GitHub 화면에서 Actions → robots-check → "Run workflow" 를 누르면 되고,
+# 끝나면 실행 페이지 하단 Artifacts 의 robots_result 에서 CSV 를 내려받는다.
+# (개발 환경에서는 외부 사이트 접속이 막혀 있어 여기서 돌린다.)
+name: robots-check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - name: 코드 내려받기
+        uses: actions/checkout@v4
+      - name: 파이썬 3.12 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 패키지 설치
+        run: pip install -r scripts/crawler/requirements.txt
+      - name: 대장 검사
+        run: python scripts/crawler/sources.py
+      - name: robots.txt 판정
+        run: python scripts/crawler/robots_check.py
+      - name: 결과 CSV 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: robots_result
+          path: robots_result.csv
