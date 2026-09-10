@@ -4,6 +4,8 @@ import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import { SITE_URL } from "@/lib/site";
+import { getCurrentUser } from "@/lib/auth";
+import { HAS_SUPABASE } from "@/lib/supabase/env";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-noto-sans-kr",
@@ -33,11 +35,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const me = HAS_SUPABASE ? await getCurrentUser() : null;
+  const navUser = me ? { name: me.profile.display_name, role: me.profile.role, unread: me.unreadNotifications } : null;
   return (
     <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-stone-50 text-stone-900">
-        <SiteNav />
+        <SiteNav user={navUser} accountsEnabled={HAS_SUPABASE} />
         {children}
         <SiteFooter />
       </body>

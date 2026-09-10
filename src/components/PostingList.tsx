@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import JobsFilter from "@/components/JobsFilter";
 import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
+import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
 import { DATA_SOURCE, getPostings, type PostingFilters } from "@/lib/postings";
 import { boardLabel, type BoardCode } from "@/types/job";
@@ -33,7 +34,7 @@ export default async function PostingList({
   searchParams: SearchParams;
   intro?: string;
 }) {
-  const location = await getUserLocation();
+  const [location, { savedIds, loggedIn }] = await Promise.all([getUserLocation(), getSavedIds()]);
   const postings = await getPostings({ board, near: location, ...pickFilters(searchParams) });
 
   return (
@@ -62,7 +63,7 @@ export default async function PostingList({
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {postings.map((p) => (
-          <PostingCard key={p.id} posting={p} near={location} />
+          <PostingCard key={p.id} posting={p} near={location} savedIds={savedIds} loggedIn={loggedIn} />
         ))}
       </div>
 

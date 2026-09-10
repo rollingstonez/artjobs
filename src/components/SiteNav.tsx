@@ -10,7 +10,13 @@ const NAV_ITEMS = [
   { href: "/about", label: "소개" },
 ];
 
-export default function SiteNav() {
+export interface NavUser {
+  name: string;
+  role: "artist" | "organization";
+  unread: number;
+}
+
+export default function SiteNav({ user, accountsEnabled }: { user: NavUser | null; accountsEnabled: boolean }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -22,6 +28,43 @@ export default function SiteNav() {
           <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight text-stone-900">
             아트잡스
           </Link>
+
+          <div className="flex items-center gap-1 md:hidden">
+            {user ? (
+              <>
+                <Link href="/notifications" aria-label="알림" className="relative px-2 py-1 text-sm">
+                  🔔
+                  {user.unread > 0 && <span className="absolute -right-0.5 -top-0.5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{user.unread}</span>}
+                </Link>
+                <Link href="/me" className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-semibold">{user.name}</Link>
+              </>
+            ) : accountsEnabled ? (
+              <Link href="/login" className="rounded-lg bg-stone-900 px-2.5 py-1.5 text-xs font-semibold text-white">로그인</Link>
+            ) : null}
+          </div>
+
+          <div className="hidden shrink-0 items-center gap-1 md:order-last md:flex">
+            {user ? (
+              <>
+                <Link href="/notifications" aria-label="알림" className="relative rounded-lg px-2.5 py-2 text-sm text-stone-600 hover:bg-stone-100">
+                  🔔
+                  {user.unread > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{user.unread}</span>
+                  )}
+                </Link>
+                <Link href="/messages" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">메시지</Link>
+                {user.role === "organization" && (
+                  <Link href="/post" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">공고 올리기</Link>
+                )}
+                <Link href="/me" className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-semibold text-stone-900 hover:bg-stone-200">{user.name}</Link>
+              </>
+            ) : accountsEnabled ? (
+              <>
+                <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">로그인</Link>
+                <Link href="/signup" className="rounded-lg bg-stone-900 px-3 py-2 text-sm font-semibold text-white hover:bg-stone-700">회원가입</Link>
+              </>
+            ) : null}
+          </div>
 
           <ul className="hidden flex-1 items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => (
