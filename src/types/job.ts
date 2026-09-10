@@ -159,6 +159,7 @@ export interface Posting {
   sourceUrl: string;
   status: PostingStatus;
   createdAt: string;
+  orgUserId?: string | null; // 기관이 직접 올린 공고면 그 기관 계정. 메신저 지원·문의 연결에 쓴다
 }
 
 // ── 조회 도우미 ──

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
+import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
+import { HAS_SUPABASE } from "@/lib/supabase/env";
 import { countByField, getPostings } from "@/lib/postings";
 import { FIELDS, genresOf } from "@/types/job";
 
@@ -25,16 +27,17 @@ const PRINCIPLES = [
     icon: "🔒",
     title: "연락처 없이 메신저로",
     body: "인재정보를 열면 전화번호·이메일을 공개하지 않고 사이트 안 메신저로만 연락을 주고받습니다. 개인정보는 사이트 밖으로 나가지 않습니다.",
-    status: "2단계 오픈 예정",
+    status: "회원 기능",
   },
 ] as const;
 
 export default async function HomePage() {
   const location = await getUserLocation();
-  const [jobs, auditions, counts] = await Promise.all([
+  const [jobs, auditions, counts, { savedIds, loggedIn }] = await Promise.all([
     getPostings({ board: "job", near: location }),
     getPostings({ board: "audition", near: location }),
     countByField("job"),
+    getSavedIds(),
   ]);
 
   return (
@@ -104,7 +107,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {jobs.slice(0, 6).map((p) => (
-            <PostingCard key={p.id} posting={p} near={location} />
+            <PostingCard key={p.id} posting={p} near={location} savedIds={savedIds} loggedIn={loggedIn} />
           ))}
         </div>
         {jobs.length === 0 && (
@@ -123,7 +126,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {auditions.slice(0, 4).map((p) => (
-            <PostingCard key={p.id} posting={p} near={location} />
+            <PostingCard key={p.id} posting={p} near={location} savedIds={savedIds} loggedIn={loggedIn} />
           ))}
         </div>
         {auditions.length === 0 && (
@@ -146,17 +149,42 @@ export default async function HomePage() {
               <p className="mt-1.5 flex-1 text-sm leading-relaxed text-stone-600">{item.body}</p>
               <span
                 className={`mt-3 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  item.status === "지금 사용 가능"
+                  item.status === "지금 사용 가능" || HAS_SUPABASE
                     ? "bg-emerald-50 text-emerald-700"
                     : "bg-stone-100 text-stone-500"
                 }`}
               >
-                {item.status}
+                {item.status === "회원 기능" && !HAS_SUPABASE ? "회원 기능 준비 중" : item.status}
               </span>
             </li>
           ))}
         </ul>
       </section>
+
+      {!loggedIn && (
+        <section className="mt-12 grid gap-3 md:grid-cols-2">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6">
+            <p className="text-xs font-semibold text-stone-500">예술가 · 구직자</p>
+            <h2 className="mt-1 text-lg font-bold">프로필 하나로 지원하고, 새 공고를 알림으로 받으세요</h2>
+            <ul className="mt-2 space-y-1 text-sm text-stone-600">
+              <li>· 분야·장르·직무별 프로필, 인재정보 공개 여부는 내가 선택</li>
+              <li>· 내 집 근처 새 공고 알림, 관심 공고 저장, 지원 내역 관리</li>
+              <li>· 전화번호 없이 메신저로만 기관과 대화</li>
+            </ul>
+            <Link href="/signup?role=artist" className="mt-4 inline-block rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-stone-700">예술가로 가입</Link>
+          </div>
+          <div className="rounded-2xl border border-stone-200 bg-white p-6">
+            <p className="text-xs font-semibold text-stone-500">기관 · 구인자</p>
+            <h2 className="mt-1 text-lg font-bold">공고를 올리고 가까운 인재를 찾으세요</h2>
+            <ul className="mt-2 space-y-1 text-sm text-stone-600">
+              <li>· 미술관·공연장·예술단·재단·학교·학원 누구나 무료 등록</li>
+              <li>· 공고 게시 즉시 조건에 맞는 예술가에게 알림</li>
+              <li>· 지원자 확인·수락과 메시지를 한곳에서</li>
+            </ul>
+            <Link href="/signup?role=organization" className="mt-4 inline-block rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold hover:border-stone-500">기관으로 가입</Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

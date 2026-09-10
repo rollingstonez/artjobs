@@ -119,17 +119,22 @@
 ├─ 오디션·공모 /auditions           [1단계 ✅]
 │   ├─ 내 동네 설정 바 · 분야 탭 · 필터 (채용공고와 동일)
 │   └─ 상세 /auditions/[id]
-├─ 인재정보(구직) /talents          [2단계] 회원가입·개인정보 처리 필요. 연락처 비공개, 메신저로만 연결
-│   ├─ 프로필 검색: 분야 · 장르 · 직무 · 지역 (내 동네 우선)
-│   ├─ 프로필 상세 /talents/[id]     "메시지 보내기" 버튼만, 전화·이메일 없음
-│   └─ 내 프로필 등록·수정 /talents/new
-├─ 메신저 /messages                 [2단계] 기관 ↔ 예술가 1:1 대화. 신고·차단
+├─ 회원가입 /signup ?role=artist|organization   [2단계 ✅] 역할 선택 → 이메일·비밀번호·이름(활동명)·약관 동의. 전화번호 안 받음
+├─ 로그인 /login                    [2단계 ✅]
+├─ 인재정보(구직) /talents          [2단계 ✅] 로그인 회원만 열람. 연락처 비공개, 메신저로만 연결
+│   ├─ 검색: 분야 · 직무 · 지역 · 검색어 (기관 위치에서 가까운 순)
+│   └─ 프로필 상세 /talents/[id]     "메시지 보내기" 버튼만(기관 회원), 전화·이메일 없음
+├─ 메신저 /messages                 [2단계 ✅] 기관 ↔ 예술가 1:1 대화. 읽음 표시 · 신고 · 차단
 │   └─ 대화방 /messages/[id]
+├─ 알림 /notifications              [2단계 ✅] 새 메시지 · 지원 접수 · 지원 결과 · 새 공고
 ├─ 레슨·강사 /lessons               [선택] 시간 단위 거래라 채용과 분리
 ├─ 공연·전시 /events                [3단계] 매일 채워야 하는 운영 부담 큼
 ├─ 분야 홈 /art /music /dance /gugak /theater   [2단계] 검색 유입용 랜딩. 지금은 /jobs?field= 로 대신
-├─ 공고 등록 /post                  [2단계] 기관·단체가 직접 올리는 창구
-├─ 마이페이지 /me                   [2단계] 내 동네(계정 저장) · 관심공고 · 마감 알림 · 내 동네 새 공고 알림
+├─ 공고 등록 /post                  [2단계 ✅] 기관 회원이 직접 올림. 접수 방법: 메신저(추천) 또는 외부 접수 페이지
+│   └─ 수정 /post/[id]/edit
+├─ 마이페이지 /me                   [2단계 ✅] 역할별로 다른 메뉴
+│   ├─ 예술가: 프로필 /me/profile · 저장한 공고 /me/saved · 지원 내역 /me/applications · 새 공고 알림 /me/alerts · 설정 /me/settings
+│   └─ 기관:   기관 정보 /me/profile · 내 공고·지원자 /me/postings · 설정 /me/settings
 └─ 소개 /about · 이용약관 · 개인정보 · 출처정책
 ```
 
@@ -137,8 +142,14 @@
 
 ## 4. 단계
 
-1. **1단계(지금)** 채용공고 + 오디션·공모 + 내 동네 우선 정렬(쿠키). 크롤러가 모으는 공고만으로 돌아간다. 로그인 없음.
-2. **2단계** 인재정보(구직), 메신저, 공고 직접 등록, 마이페이지(내 동네 계정 저장·알림), 근무지 지오코딩. Supabase 로그인과 개인정보 처리방침이 먼저 필요하다. 메신저가 열리기 전에는 인재정보를 열지 않는다(연락처를 노출할 다른 길이 없어야 하므로).
+1. **1단계 ✅** 채용공고 + 오디션·공모 + 내 동네 우선 정렬(쿠키). 크롤러가 모으는 공고만으로 돌아간다. 로그인 없음.
+2. **2단계 ✅(코드 완성, DB 연결 대기)** 역할별 회원가입, 프로필, 인재정보, 메신저, 공고 직접 등록, 저장·지원, 알림 조건, 마이페이지.
+   Supabase 프로젝트를 만들고 `.env.local`(또는 배포 환경변수)에 URL·anon key 를 넣으면 켜진다. 없으면 회원 페이지는 "준비 중"으로 보이고 공고는 샘플로 돈다.
+   - 회원 흐름 (바로쌤 선생/학교 → 예술가/기관):
+     - 예술가: 가입 → 프로필(분야·장르·직무·지역·소개·경력) → 인재정보 공개 여부 선택 → 새 공고 알림 조건 → 공고 저장 → 지원(기관 직접 공고는 메신저로 지원서 전달, 크롤 공고는 원문 접수 + 기록) → 메시지
+     - 기관: 가입 → 기관 정보 → 공고 등록(메신저 접수 또는 외부 접수) → 지원자 확인·수락·불합격 → 인재 찾기 → 메시지
+   - 알림: 새 메시지 · 지원 접수 · 지원 상태 변경은 DB 트리거가 바로 만든다. "새 공고" 알림은 크롤/등록 후 alert_conditions 와 대조하는 배치가 필요(다음 작업).
+   - 남은 것: 이메일 발송(알림 메일), 비밀번호 재설정 화면, 이용약관·개인정보 처리방침 본문, 근무지 지오코딩, 관리자 화면(기관 인증·신고 처리).
 3. **3단계** 공연·전시 안내, 레슨, 커뮤니티. 공고가 어느 정도 쌓인 뒤.
 
 ## 5. 예전 코드에서 옮기기
@@ -150,4 +161,21 @@
 | art_education | `field=art` + `role=education` |
 | residency_open_call | `board=audition` |
 
-DB 변환 SQL은 `supabase/migrations/0002_taxonomy.sql`에 있다. 근무지 좌표 칸은 `0003_location.sql`.
+DB 변환 SQL은 `supabase/migrations/0002_taxonomy.sql`에 있다. 근무지 좌표 칸은 `0003_location.sql`, 회원·메신저는 `0004_accounts.sql`.
+
+## 6. 회원 데이터 구조 (0004_accounts.sql)
+
+| 테이블 | 바로쌤 대응 | 내용 |
+|---|---|---|
+| `profiles` | users | 역할(artist/organization)·표시 이름·상태. 가입 트리거가 자동 생성 |
+| `artist_profiles` | teacher_profiles | 분야·장르·직무·지역·이동거리·소개·경력·공개 여부·메시지 허용. **연락처 칸 없음** |
+| `org_profiles` | school_accounts | 기관명·유형·분야·지역·주소·소개·인증 여부. **담당자 연락처 칸 없음** |
+| `org_postings` | school_postings | 기관 직접 공고. crawled_postings 와 같은 표준 칸 + 접수 방법(messenger/external) |
+| `bookmarks` | bookmarks | 저장한 공고 (posting_source + posting_id) |
+| `applications` | applications | 지원. 상태 submitted → viewed → accepted/rejected, withdrawn |
+| `alert_conditions` | alert_conditions | 새 공고 알림 조건 (게시판·분야·장르·직무·고용형태·지역 또는 내 집 근처·채널·빈도) |
+| `notifications` | notifications | 사이트 알림. 메시지·지원·상태 변경은 트리거로 자동 |
+| `conversations` · `messages` | conversations · messages | 예술가 1명 ↔ 기관 1곳당 방 하나. 읽음 시각 |
+| `user_blocks` · `user_reports` | user_blocks · user_reports | 차단·신고. 차단되면 대화 시작·메시지 전송이 RLS 에서 막힌다 |
+| `user_settings` | user_settings | 알림 종류별 켜고 끄기 |
+| `talents_public` (뷰) | — | 인재정보 목록이 읽는 공개 뷰. 좌표(lat·lng) 제외, 공개+완성 프로필만 |

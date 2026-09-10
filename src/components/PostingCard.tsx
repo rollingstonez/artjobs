@@ -2,6 +2,7 @@ import Link from "next/link";
 import { employmentLabel, fieldLabel, genreLabel, roleLabel, type Posting } from "@/types/job";
 import { getDeadline, periodText } from "@/lib/format";
 import { nearnessLabel, type UserLocation } from "@/lib/location";
+import SaveButton from "@/components/SaveButton";
 
 const EMPLOYMENT_CHIP: Record<string, string> = {
   full_time: "bg-blue-50 text-blue-700",
@@ -22,9 +23,14 @@ const FIELD_CHIP: Record<string, string> = {
 export default function PostingCard({
   posting,
   near = null,
+  savedIds,
+  loggedIn = false,
 }: {
   posting: Posting;
   near?: UserLocation | null;
+  /** 로그인 사용자가 저장한 공고 id 목록. 주면 저장 버튼이 보인다. */
+  savedIds?: string[];
+  loggedIn?: boolean;
 }) {
   const deadline = getDeadline(posting.applyEnd);
   const nearLabel = near ? nearnessLabel(posting, near) : null;
@@ -95,15 +101,20 @@ export default function PostingCard({
         <span className="min-w-0 truncate text-xs text-stone-500">
           {posting.address ? `📍 ${posting.address}` : ""}
         </span>
-        {deadline.kind !== "none" && (
-          <span
-            className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${
-              deadline.kind === "soon" ? "bg-red-50 text-red-600" : "bg-stone-100 text-stone-500"
-            }`}
-          >
-            {deadline.label}
-          </span>
-        )}
+        <span className="flex shrink-0 items-center gap-1.5">
+          {savedIds && (
+            <SaveButton postingId={posting.id} saved={savedIds.includes(posting.id)} loggedIn={loggedIn} />
+          )}
+          {deadline.kind !== "none" && (
+            <span
+              className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${
+                deadline.kind === "soon" ? "bg-red-50 text-red-600" : "bg-stone-100 text-stone-500"
+              }`}
+            >
+              {deadline.label}
+            </span>
+          )}
+        </span>
       </div>
     </Link>
   );
