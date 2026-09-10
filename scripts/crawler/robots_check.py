@@ -108,7 +108,9 @@ def status_for(rules, path):
 
 def classify(path, status, text):
     if status is None:
-        return "확인필요", "연결실패(응답없음)"
+        return "확인필요", "연결실패(응답없음) — GitHub 서버(해외 IP)에서 실패했을 수 있음. 국내 PC 에서 재판정"
+    if status in (401, 403) or status >= 500:
+        return "확인필요", f"robots.txt 요청이 거부됨(HTTP {status}) — 봇/해외 IP 차단 가능성. 국내 PC 에서 재판정"
     if status == 404 or not text.strip():
         return "깨끗한 허용", "robots.txt 없음(막을 규칙 자체가 없음)"
 

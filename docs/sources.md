@@ -2,7 +2,7 @@
 
 `scripts/crawler/sources.py` 에서 자동 생성됨 — 이 파일을 직접 고치지 말고 sources.py 를 고친 뒤 `python scripts/crawler/export_sources.py` 를 실행한다.
 
-- 사이트 **81곳** (목록 경로 확정 39곳 / 실측 필요 42곳)
+- 사이트 **81곳** (목록 경로 확정 35곳 / 실측 필요 46곳)
 - **우선순위** 1 = 먼저 붙일 것(공고량 많고 예술 특화) · 2 = 다음 · 3 = 나중
 - **확인** ✅ = 검색으로 목록 URL 확인 · 🔍 = 기관은 확실하나 목록 경로는 브라우저로 실측 필요
 - **robots 판정**은 GitHub Actions `robots-check` 워크플로를 수동 실행하면 `robots_result.csv` 로 받는다. '깨끗한 허용' 또는 서면 협의가 있어야 `crawl_sources.is_active` 를 켠다.
@@ -55,9 +55,9 @@
 | 1 | ✅ | `mmca` | 국립현대미술관 채용 | 채용+공모 | 전시기획·큐레이션·예술교육·레지던시·공모 | 서울 | [www.mmca.go.kr](https://www.mmca.go.kr/pr/employmentList.do) | 학예연구직·기간제·인턴 채용. 고양·창동 레지던시 입주작가 공모는 공지사항(/pr/noticeList.do 추정)에 뜸. |
 | 1 | ✅ | `sema` | 서울시립미술관 채용시험 | 채용+공모 | 전시기획·큐레이션·예술교육·사진·미디어아트 | 서울 | [sema.seoul.go.kr](https://sema.seoul.go.kr/kr/bbs/611389/getBbsList) | 채용시험(611389)·공지사항/공고·공모(610221) 두 게시판. 사진미술관·미디어시티비엔날레·난지창작스튜디오 공모 포함. |
 | 2 | ✅ | `acc` | 국립아시아문화전당 채용공고 | 채용+공모 | 전시기획·큐레이션·미디어아트·레지던시·공모 | 광주 | [www.acc.go.kr](https://www.acc.go.kr/main/board/board.do?PID=0702) | ACC_R 레지던시·아시아창작스튜디오 공모는 공지 게시판. 재단 채용은 recruit.incruit.com/accf(인크루트 채용관 → 수집 대상 아님). |
-| 2 | ✅ | `arko` | 한국문화예술위원회(ARKO) 채용 | 채용 | 아트매니지먼트·전시기획·큐레이션 | 전남 | [arko.recruiton.kr](https://arko.recruiton.kr/recruit/gongo/gongo_list.asp) | 본 사이트 채용모집 게시판은 www.arko.or.kr/board/list/4054(추정). 지원사업 공모는 아트누리로 통합됨. |
-| 2 | 🔍 | `craftmuseum` | 서울공예박물관 채용 | 채용 | 공예·전시기획·큐레이션 | 서울 | [craftmuseum.seoul.go.kr](https://craftmuseum.seoul.go.kr/introduce/recruit) | 상세 /introduce/recruit_view/NTT_… 확인됨. 목록 경로 실측. |
-| 2 | 🔍 | `kawf` | 한국예술인복지재단 공지사항 | 채용+공모 | 시각예술 전반 | 서울 | [www.kawf.kr](https://www.kawf.kr/notice/sub01List.do) | 상세는 /notice/sub01View.do?selIdx=… 확인됨. 예술인파견지원(예술로) 등 예술인 대상 공모. |
+| 2 | 🔍 | `arko` | 한국문화예술위원회(ARKO) 채용 | 채용 | 아트매니지먼트·전시기획·큐레이션 | 전남 | [www.arko.or.kr](https://www.arko.or.kr) *(경로 실측)* | 채용관(arko.recruiton.kr)은 목록 주소가 welcome 페이지로 넘어가 수집 불가 → 본 사이트 채용모집 게시판(board/list/4054 추정) 주소 실측. 지원사업 공모는 아트누리로 통합됨. |
+| 2 | 🔍 | `craftmuseum` | 서울공예박물관 채용 | 채용 | 공예·전시기획·큐레이션 | 서울 | [craftmuseum.seoul.go.kr](https://craftmuseum.seoul.go.kr) *(경로 실측)* | 추정 목록 주소(/introduce/recruit)는 404. 상세 /introduce/recruit_view/NTT_… 확인됨 → 목록 주소 실측. |
+| 2 | 🔍 | `kawf` | 한국예술인복지재단 공지사항 | 채용+공모 | 시각예술 전반 | 서울 | [www.kawf.kr](https://www.kawf.kr) *(경로 실측)* | 추정 목록 주소(/notice/sub01List.do)는 404. 상세는 /notice/sub01View.do?selIdx=… 확인됨 → 공지 목록 주소 실측. 예술인파견지원(예술로) 등 예술인 대상 공모. |
 | 3 | 🔍 | `artmuseums` | 한국사립미술관협회 | 채용+공모 | 전시기획·큐레이션·예술교육 | 서울 | [artmuseums.kr](https://artmuseums.kr) *(경로 실측)* | 사립미술관 채용·공모 게시판 유무부터 확인. |
 | 3 | 🔍 | `galleries` | 한국화랑협회 | 채용 | 아트매니지먼트 | 서울 | [www.koreagalleries.or.kr](https://www.koreagalleries.or.kr) *(경로 실측)* | 갤러리 채용 게시판 유무 확인. 키아프(kiaf.org) 채용도 여기 계열. |
 | 3 | 🔍 | `museum_assoc` | 한국박물관협회 채용정보 | 채용 | 전시기획·큐레이션 | 서울 | [museum.or.kr](https://museum.or.kr) *(경로 실측)* | 회원 박물관·미술관 구인 게시판 경로 실측 필요. |
@@ -105,7 +105,7 @@
 | 2 | ✅ | `busanbiennale` | 부산비엔날레 채용공고 | 채용 | 전시기획·큐레이션·아트매니지먼트 | 부산 | [www.busanbiennale.org](http://www.busanbiennale.org/BBOCkr/index.php?pCode=gongo&mode=list) | https 지원 여부 확인. |
 | 2 | 🔍 | `daeguartfactory` | 대구예술발전소 공지사항 | 채용+공모 | 레지던시·공모 | 대구 | [www.daeguartfactory.kr](https://www.daeguartfactory.kr/front/board/list.php?code=notice) | 상세 /front/board/view.php?code=notice&no=… 확인됨. 매년 12월 레지던시 입주작가 모집. |
 | 2 | 🔍 | `gwangjubiennale` | 광주비엔날레 | 채용+공모 | 전시기획·큐레이션·아트매니지먼트 | 광주 | [www.gwangjubiennale.org](https://www.gwangjubiennale.org) *(경로 실측)* | 채용·전시기획자양성과정 모집. 공지 경로 실측. |
-| 2 | ✅ | `inartplatform` | 인천아트플랫폼 공지사항 | 채용+공모 | 레지던시·공모·전시기획·큐레이션 | 인천 | [inartplatform.kr](https://inartplatform.kr/notice) | 레지던시 입주작가 공모·인턴 채용. |
+| 2 | 🔍 | `inartplatform` | 인천아트플랫폼 공지사항 | 채용+공모 | 레지던시·공모·전시기획·큐레이션 | 인천 | [inartplatform.kr](https://inartplatform.kr) *(경로 실측)* | 추정 목록 주소(/notice)는 404. 상세 /notice/view?no=… 확인됨 → 목록 주소 실측. 레지던시 입주작가 공모·인턴 채용. |
 | 3 | 🔍 | `apma` | 아모레퍼시픽미술관 | 채용 | 전시기획·큐레이션 | 서울 | [apma.amorepacific.com](https://apma.amorepacific.com) *(경로 실측)* | 사립. 채용은 그룹 채용사이트로 갈 가능성 → 확인. |
 | 3 | 🔍 | `artsonje` | 아트선재센터 | 채용 | 전시기획·큐레이션 | 서울 | [artsonje.org](https://artsonje.org) *(경로 실측)* | 사립. 채용 공지 경로·협의. |
 | 3 | 🔍 | `changwon_biennale` | 창원조각비엔날레(창원문화재단) | 채용+공모 | 조각·설치·전시기획·큐레이션 | 경남 | [www.changwonbiennale.or.kr](https://www.changwonbiennale.or.kr) *(경로 실측)* | 조각 분야 핵심 행사. 조직위 채용·참여작가 공모. 경로 실측. |
