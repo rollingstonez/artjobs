@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { SITE_URL } from "@/lib/site";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-noto-sans-kr",
@@ -15,6 +16,7 @@ const DESCRIPTION =
   "미술관·문화재단·갤러리·레지던시에 흩어진 순수예술 분야 채용공고와 공모를 매일 한곳에 모읍니다.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
   openGraph: {
