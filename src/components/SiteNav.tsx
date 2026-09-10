@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "홈" },
   { href: "/jobs", label: "채용공고" },
+  { href: "/auditions", label: "오디션·공모" },
   { href: "/about", label: "소개" },
 ];
 

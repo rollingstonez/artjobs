@@ -5,7 +5,9 @@ import { getPosting } from "@/lib/postings";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: PageProps<"/jobs/[id]">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/auditions/[id]">): Promise<Metadata> {
   const { id } = await params;
   const p = await getPosting(id);
   if (!p) return { title: "공고를 찾을 수 없습니다 | 아트잡스" };
@@ -15,10 +17,10 @@ export async function generateMetadata({ params }: PageProps<"/jobs/[id]">): Pro
   };
 }
 
-export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">) {
+export default async function AuditionDetailPage({ params }: PageProps<"/auditions/[id]">) {
   const { id } = await params;
   const p = await getPosting(id);
   if (!p) notFound();
-  if (p.board === "audition") redirect(`/auditions/${p.id}`);
+  if (p.board !== "audition") redirect(`/jobs/${p.id}`);
   return <PostingDetail p={p} />;
 }

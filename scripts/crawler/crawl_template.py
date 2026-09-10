@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_category, classify_employment, fetch_html, parse_period, today_str, run_crawler,
+    classify_all, fetch_html, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "template"          # crawl_sources.code
@@ -49,15 +49,15 @@ def parse_list(html):
         if apply_end and apply_end < today:
             continue
 
-        category_raw = None
+        category_raw = None  # 사이트가 분야·직무를 따로 표기하면 여기에 원문 그대로
         rows.append({
             "title": title,
             "organization": SOURCE_NAME,
             "region": REGION,
             "category_raw": category_raw,
-            "category": classify_category(category_raw, title),
             "employment_raw": None,
-            "employment_type": classify_employment(title),
+            # field·genre·role·board·employment_type 을 제목·원문 키워드로 채운다
+            **classify_all(category_raw, title),
             "apply_start": apply_start,
             "apply_end": apply_end,
             "source_key": key,

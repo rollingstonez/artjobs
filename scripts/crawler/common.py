@@ -11,7 +11,7 @@
   - 같은 공고 재발견: 삭제 없이 갱신 + last_seen_at. 신규만 INSERT.
   - 상세 전용 필드는 목록 행에 넣지 않는다(매일 갱신이 상세분을 null로 덮지 않게).
   - 원문 불변: 사이트 원문(category_raw·employment_raw)은 그대로 보존하고
-    표준 코드(category·employment_type)는 별도 칸에 넣는다.
+    표준 코드(field·genre·role·board·employment_type)는 별도 칸에 넣는다.
 
 .env.local (저장소 최상위) 필요 키:
   NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
@@ -35,49 +35,133 @@ USER_AGENT = (
 PAGE_SLEEP = 2  # 페이지 사이 예의 간격(초). 소스별 협의가 있으면 그쪽을 따른다 — 줄이지 말 것.
 
 # ── 표준 코드표 (src/types/job.ts 와 반드시 같아야 한다) ──
-CATEGORY_CODES = {
-    "painting", "sculpture_installation", "media_art", "print_drawing", "craft",
-    "photography", "curation", "art_management", "art_education", "residency_open_call",
+# 분류 네 축: field(분야) · genre(장르, 앞에 분야 코드) · role(직무, 공통) · board(게시판)
+FIELD_CODES = {"art", "music", "dance", "gugak", "theater"}
+GENRE_CODES = {
+    "art_painting", "art_sculpture", "art_print", "art_photo", "art_media", "art_craft", "art_calligraphy",
+    "music_voice", "music_piano", "music_strings", "music_winds", "music_percussion", "music_composition",
+    "dance_ballet", "dance_contemporary", "dance_korean",
+    "gugak_voice", "gugak_strings", "gugak_winds", "gugak_percussion", "gugak_composition", "gugak_yeonhui",
+    "theater_play", "theater_musical", "theater_opera", "theater_children", "theater_changgeuk",
 }
+ROLE_CODES = {"performer", "creator", "education", "planning", "stage_tech", "assistant"}
+BOARD_CODES = {"job", "audition", "event"}
 EMPLOYMENT_CODES = {"full_time", "contract", "freelance", "intern", "open_call"}
 
-# 키워드 → 표준 분야. 반드시 "긴 키워드 먼저" — 먼저 걸린 쪽이 이긴다.
-_CATEGORY_KEYWORDS = [
-    ("미디어아트", "media_art"), ("뉴미디어", "media_art"), ("영상설치", "media_art"),
-    ("레지던시", "residency_open_call"), ("입주작가", "residency_open_call"), ("공모", "residency_open_call"),
-    ("학예", "curation"), ("큐레이터", "curation"), ("전시기획", "curation"), ("전시 기획", "curation"),
-    ("예술교육", "art_education"), ("교육강사", "art_education"), ("에듀케이터", "art_education"),
-    ("아트매니지", "art_management"), ("갤러리", "art_management"), ("아트페어", "art_management"),
-    ("판화", "print_drawing"), ("드로잉", "print_drawing"),
-    ("조각", "sculpture_installation"), ("설치", "sculpture_installation"),
-    ("공예", "craft"), ("도자", "craft"), ("금속공예", "craft"), ("섬유", "craft"),
-    ("사진", "photography"),
-    ("회화", "painting"), ("서양화", "painting"), ("한국화", "painting"), ("동양화", "painting"),
+# 키워드 → 장르. 반드시 "긴 키워드 먼저" — 먼저 걸린 쪽이 이긴다. 장르가 잡히면 분야는 자동.
+_GENRE_KEYWORDS = [
+    # 국악 (음악보다 먼저 — "가야금 현악"처럼 겹칠 때 국악이 이겨야 한다)
+    ("판소리", "gugak_voice"), ("민요", "gugak_voice"), ("정가", "gugak_voice"), ("가야금병창", "gugak_voice"), ("소리꾼", "gugak_voice"),
+    ("가야금", "gugak_strings"), ("거문고", "gugak_strings"), ("해금", "gugak_strings"), ("아쟁", "gugak_strings"),
+    ("대금", "gugak_winds"), ("피리", "gugak_winds"), ("소금", "gugak_winds"), ("태평소", "gugak_winds"), ("단소", "gugak_winds"),
+    ("사물놀이", "gugak_percussion"), ("장구", "gugak_percussion"), ("장고", "gugak_percussion"), ("모듬북", "gugak_percussion"),
+    ("풍물", "gugak_yeonhui"), ("탈춤", "gugak_yeonhui"), ("연희", "gugak_yeonhui"), ("줄타기", "gugak_yeonhui"),
+    ("국악작곡", "gugak_composition"), ("국악 작곡", "gugak_composition"),
+    ("창극", "theater_changgeuk"),
+    ("한국무용", "dance_korean"), ("전통무용", "dance_korean"), ("한국 무용", "dance_korean"),
+    # 무용
+    ("발레", "dance_ballet"),
+    ("현대무용", "dance_contemporary"), ("컨템포러리", "dance_contemporary"),
+    # 연극
+    ("뮤지컬", "theater_musical"),
+    ("오페라", "theater_opera"),
+    ("아동극", "theater_children"), ("인형극", "theater_children"), ("어린이극", "theater_children"),
+    ("연극", "theater_play"), ("극단", "theater_play"), ("희곡", "theater_play"),
+    # 음악
+    ("성악", "music_voice"), ("소프라노", "music_voice"), ("테너", "music_voice"), ("바리톤", "music_voice"), ("합창", "music_voice"),
+    ("피아노", "music_piano"), ("오르간", "music_piano"), ("반주", "music_piano"),
+    ("바이올린", "music_strings"), ("비올라", "music_strings"), ("첼로", "music_strings"), ("콘트라베이스", "music_strings"), ("현악", "music_strings"), ("하프", "music_strings"),
+    ("플루트", "music_winds"), ("오보에", "music_winds"), ("클라리넷", "music_winds"), ("바순", "music_winds"),
+    ("호른", "music_winds"), ("트럼펫", "music_winds"), ("트롬본", "music_winds"), ("튜바", "music_winds"), ("관악", "music_winds"),
+    ("팀파니", "music_percussion"), ("타악", "music_percussion"), ("퍼커션", "music_percussion"),
+    ("작곡", "music_composition"), ("지휘", "music_composition"),
+    # 미술
+    ("미디어아트", "art_media"), ("뉴미디어", "art_media"), ("영상설치", "art_media"),
+    ("판화", "art_print"), ("드로잉", "art_print"),
+    ("조각", "art_sculpture"), ("조소", "art_sculpture"), ("설치", "art_sculpture"),
+    ("공예", "art_craft"), ("도자", "art_craft"), ("금속공예", "art_craft"), ("섬유", "art_craft"),
+    ("서예", "art_calligraphy"), ("전각", "art_calligraphy"), ("캘리그라피", "art_calligraphy"),
+    ("사진", "art_photo"),
+    ("회화", "art_painting"), ("서양화", "art_painting"), ("한국화", "art_painting"), ("동양화", "art_painting"),
+]
+
+# 장르는 못 잡아도 분야만이라도 잡는 키워드.
+_FIELD_KEYWORDS = [
+    ("국악", "gugak"), ("전통예술", "gugak"),
+    ("무용", "dance"), ("댄서", "dance"),
+    ("교향악", "music"), ("오케스트라", "music"), ("음악", "music"), ("연주", "music"), ("콘서트", "music"),
+    ("미술", "art"), ("갤러리", "art"), ("전시", "art"), ("시각예술", "art"), ("작가", "art"),
+    ("공연", "theater"), ("배우", "theater"), ("연기", "theater"),
+]
+
+# 키워드 → 직무. 무대·기술과 기획·행정은 분야를 가리지 않는다.
+_ROLE_KEYWORDS = [
+    ("무대감독", "stage_tech"), ("무대미술", "stage_tech"), ("무대디자인", "stage_tech"), ("조명", "stage_tech"), ("음향", "stage_tech"),
+    ("의상", "stage_tech"), ("분장", "stage_tech"), ("소품", "stage_tech"), ("테크니션", "stage_tech"), ("전시설치", "stage_tech"), ("스태프", "stage_tech"), ("스탭", "stage_tech"),
+    ("어시스턴트", "assistant"), ("인턴", "assistant"), ("보조", "assistant"), ("아르바이트", "assistant"),
+    ("학예", "planning"), ("큐레이터", "planning"), ("전시기획", "planning"), ("공연기획", "planning"), ("기획", "planning"),
+    ("홍보", "planning"), ("마케팅", "planning"), ("행정", "planning"), ("사무", "planning"), ("매니저", "planning"),
+    ("강사", "education"), ("레슨", "education"), ("교사", "education"), ("교육", "education"), ("에듀케이터", "education"),
+    ("안무", "creator"), ("연출", "creator"), ("극작", "creator"), ("작곡", "creator"),
+    ("단원", "performer"), ("오디션", "performer"), ("입주작가", "performer"), ("배우", "performer"), ("연주자", "performer"), ("무용수", "performer"),
+]
+
+# 키워드 → 게시판. 안 걸리면 채용공고(job).
+_BOARD_KEYWORDS = [
+    ("오디션", "audition"), ("단원 모집", "audition"), ("단원모집", "audition"), ("단원 공개모집", "audition"),
+    ("콩쿠르", "audition"), ("콩쿨", "audition"), ("공모", "audition"), ("레지던시", "audition"), ("입주작가", "audition"), ("지원사업", "audition"),
 ]
 _EMPLOYMENT_KEYWORDS = [
-    ("정규직", "full_time"),
+    ("정규직", "full_time"), ("상임단원", "full_time"),
     ("인턴", "intern"),
-    ("프리랜서", "freelance"), ("프로젝트 단위", "freelance"),
+    ("프리랜서", "freelance"), ("프로젝트 단위", "freelance"), ("객원", "freelance"), ("출연 계약", "freelance"),
     ("공모", "open_call"), ("지원사업", "open_call"),
-    ("계약직", "contract"), ("기간제", "contract"), ("위촉", "contract"), ("임기제", "contract"),
+    ("계약직", "contract"), ("기간제", "contract"), ("위촉", "contract"), ("임기제", "contract"), ("시간강사", "contract"),
 ]
 
 
-def classify_category(*texts):
-    """제목·분야 원문 → 표준 분야 코드. 근거 없으면 None(억지로 붙이지 않는다)."""
+def _first_match(keywords, *texts):
     text = " ".join(t for t in texts if t)
-    for kw, code in _CATEGORY_KEYWORDS:
+    for kw, code in keywords:
         if kw in text:
             return code
     return None
+
+
+def classify_genre(*texts):
+    """제목·분야 원문 → 장르 코드. 근거 없으면 None(억지로 붙이지 않는다)."""
+    return _first_match(_GENRE_KEYWORDS, *texts)
+
+
+def classify_field(*texts, genre=None):
+    """장르가 있으면 그 앞부분(분야)을, 없으면 분야 키워드로. 그래도 없으면 None."""
+    if genre and genre in GENRE_CODES:
+        return genre.split("_", 1)[0]
+    return _first_match(_FIELD_KEYWORDS, *texts)
+
+
+def classify_role(*texts):
+    return _first_match(_ROLE_KEYWORDS, *texts)
+
+
+def classify_board(*texts):
+    return _first_match(_BOARD_KEYWORDS, *texts) or "job"
 
 
 def classify_employment(*texts):
-    text = " ".join(t for t in texts if t)
-    for kw, code in _EMPLOYMENT_KEYWORDS:
-        if kw in text:
-            return code
-    return None
+    return _first_match(_EMPLOYMENT_KEYWORDS, *texts)
+
+
+def classify_all(*texts):
+    """한 번에 field·genre·role·board·employment_type 을 dict 로. 개별 크롤러에서 row.update(...) 로 쓴다."""
+    genre = classify_genre(*texts)
+    return {
+        "genre": genre,
+        "field": classify_field(*texts, genre=genre),
+        "role": classify_role(*texts),
+        "board": classify_board(*texts),
+        "employment_type": classify_employment(*texts),
+    }
 
 
 # ── .env.local ──
@@ -218,10 +302,15 @@ def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
             "status": "open",
             "last_seen_at": stamp,
         })
-        if x.get("category") not in CATEGORY_CODES:
-            x["category"] = None
-        if x.get("employment_type") not in EMPLOYMENT_CODES:
-            x["employment_type"] = None
+        # 코드표 밖의 값은 null 로. 억지 분류보다 미분류가 낫다.
+        for col, codes in (("field", FIELD_CODES), ("genre", GENRE_CODES), ("role", ROLE_CODES),
+                           ("employment_type", EMPLOYMENT_CODES)):
+            if x.get(col) not in codes:
+                x[col] = None
+        if x.get("board") not in BOARD_CODES:
+            x["board"] = "job"
+        if x.get("genre") and not x.get("field"):
+            x["field"] = x["genre"].split("_", 1)[0]
         all_rows.append(x)
     print(f"[1] 수집 완료: {len(all_rows)}건")
 
@@ -271,10 +360,12 @@ def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
         print(f"[3.5] 상세 수집 완료: {detail_done}건")
 
     # 4) 요약
-    cats = {}
+    fields, boards = {}, {}
     for x in all_rows:
-        c = x.get("category") or "미분류"
-        cats[c] = cats.get(c, 0) + 1
+        f = x.get("field") or "미분류"
+        fields[f] = fields.get(f, 0) + 1
+        b = x.get("board") or "job"
+        boards[b] = boards.get(b, 0) + 1
     print(f"\n[4] 요약: 수집 {len(all_rows)}건 | 신규 {len(to_insert)}건 | 갱신 {len(to_update)}건 | 상세 {detail_done}건")
-    print(f"    분야: {cats}")
+    print(f"    분야: {fields} | 게시판: {boards}")
     return inserted_ids
