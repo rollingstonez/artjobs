@@ -44,3 +44,9 @@ jobs:
       - name: 서울문화재단 (sfac)
         if: always()
         run: python scripts/crawler/crawl_sfac.py $DRY
+      - name: 한국공예·디자인문화진흥원 (kcdf)
+        if: always()
+        run: python scripts/crawler/crawl_kcdf.py $DRY
+      - name: 서울시립미술관 (sema)
+        if: always()
+        run: python scripts/crawler/crawl_sema.py $DRY
