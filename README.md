@@ -64,3 +64,9 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 4. '깨끗한 허용' 또는 서면 협의 완료 → Supabase `crawl_sources` 에서 `robots_status`·`is_active` 갱신
 5. `crawl_template.py` 복사 → `crawl_<code>.py` → 실제 HTML 로 선택자 확인 → `PARSER_READY=True`
 6. `.github/workflows/crawl.yml` 에 실행 단계 추가
+
+## 배포
+
+- Vercel 프로젝트 `artjobs` → https://artjobs.kr (Production 브랜치: `main`). `main` 에 푸시하면 자동 배포된다.
+- 환경변수는 Vercel > Settings > Environment Variables 에 넣는다 (`.env.example` 의 네 항목). `NEXT_PUBLIC_*` 은 Config 타입.
+- Supabase Authentication > URL Configuration 의 Site URL 은 `https://artjobs.kr`, Redirect URLs 에 `https://artjobs.kr/auth/callback`.
