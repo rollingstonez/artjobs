@@ -36,7 +36,10 @@
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
 - `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0008 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
-- `.github/workflows/crawl.yml` — 크롤 자동 실행 (지금은 수동 실행만)
+- `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
+  - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 채용공고(AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외)
+  - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
+- `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음
 
 ## Supabase 연결
@@ -68,8 +71,8 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 2. `python scripts/crawler/export_sources.py`
 3. GitHub → Actions → **robots-check** → Run workflow → 결과 CSV 확인 → `python scripts/crawler/robots_to_sql.py` → 생성된 SQL 을 SQL Editor 에서 실행
 4. '깨끗한 허용' 또는 서면 협의 완료 → Supabase `crawl_sources` 에서 `robots_status`·`is_active` 갱신
-5. `crawl_template.py` 복사 → `crawl_<code>.py` → 실제 HTML 로 선택자 확인 → `PARSER_READY=True`
-6. `.github/workflows/crawl.yml` 에 실행 단계 추가
+5. `crawl_template.py` 복사 → `crawl_<code>.py` → **fetch-sample 워크플로**로 실제 HTML 확인(목록이 비어 있으면 scripts 모드로 AJAX 주소를 찾아 post_data 로 다시) → 선택자 작성 → `PARSER_READY=True` → daily-crawl 을 `dry_run=true` 로 돌려 결과 확인
+6. `.github/workflows/crawl.yml` 에 실행 단계 추가 → 운영자 화면 `/admin/sources` 에서 그 소스를 켠다 → 다음 스케줄부터 자동 수집
 
 ## 심사 작업대 (0006)
 
