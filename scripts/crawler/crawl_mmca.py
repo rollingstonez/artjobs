@@ -36,7 +36,7 @@ MAX_PAGES = 5
 RECENT_DAYS = 60          # 게시 60일 이전 글은 마감됐다고 본다
 PARSER_READY = True
 
-_SKIP_WORDS = ("합격자", "발표", "면접전형 일정", "면접 일정", "일정 공고", "결과", "정정", "취소", "연장 공고", "재공고 안내")
+_SKIP_WORDS = ("합격자", "발표", "면접전형 일정", "면접 일정", "일정 공고", "일정 변경", "결과", "정정", "취소", "연장 공고", "재공고 안내")
 _KEEP_WORDS = ("채용 공고", "채용공고", "모집 공고", "모집공고", "공개모집", "공개채용", "채용", "모집")
 # 관 이름 → 시·도
 _REGION = {"서울": "서울", "덕수궁": "서울", "과천": "경기", "어린이미술관": "경기", "청주": "충북"}
@@ -79,11 +79,12 @@ def row_from_item(it, today, cutoff):
     place = (it.get("bdPlaNm") or "").strip()
     row = {
         "title": title,
-        "organization": SOURCE_NAME + (f" {place}" if place and place != "공통" else ""),
+        "organization": SOURCE_NAME + (f" {place}" if place and place not in ("공통", "기타") else ""),
         "region": _REGION.get(place, "서울"),
         "category_raw": "미술관",
         "employment_raw": None,
         **classify_all("미술관 학예", title),
+        "board": "job",                       # 채용 게시판 — 제목에 '레지던시'가 있어도 채용이다
         "apply_start": apply_start or posted,
         "apply_end": apply_end,
         "source_key": str(it.get("bdCId")),
@@ -137,7 +138,7 @@ if __name__ == "__main__":
         print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
         for r in rows:
             r = dict(r)
-            r["description"] = (r.get("description") or "")[:120]
+            r["description"] = (r.get("description") or "")[:120 if r.get("apply_end") else 700]
             print(json.dumps(r, ensure_ascii=False))
         raise SystemExit(0)
     # 본문이 목록에 들어 있어 상세 단계 없음
