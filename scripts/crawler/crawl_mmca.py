@@ -8,8 +8,8 @@
       → JSON { emplList:[{bdCId, bdCTitle, bdCContents(본문 HTML), bdCNoticeStDt(게시일), bdCRegDt, bdPlaNm(관), fileCnt}],
                paginationInfo:{totalRecordCount, lastPageNo} }
   - 본문이 목록 JSON 에 통째로 들어 있어 상세 요청이 필요 없다. 접수 기간은 본문에서 읽는다(common.parse_period_text).
-  - 상세 화면은 폼 POST(fn_detailVeiw → /pr/employmentDetail.do, bdCId) 라 GET 링크가 없다.
-    원문 링크는 목록 페이지로 두고 공고번호를 붙인다(사람이 목록에서 제목으로 찾을 수 있게).
+  - 상세 화면은 폼 POST(fn_detailVeiw → /pr/employmentDetail.do, bdCId)지만 GET ?bdCId= 로도 열린다(fetch-sample 실측)
+    → 원문 링크는 /pr/employmentDetail.do?bdCId=<공고번호>.
   - robots.txt: 봇 UA 로는 400 을 돌려주지만(robots_check 실측은 '깨끗한 허용'), 목록 API 는 정상 응답.
   - 해외 IP 에서 가끔 접속 시간 초과 → http_retry 가 3회 재시도.
 
@@ -31,7 +31,7 @@ SOURCE_CODE = "mmca"
 SOURCE_NAME = "국립현대미술관"
 BASE = "https://www.mmca.go.kr"
 LIST_API = f"{BASE}/pr/AjaxEmploymentList.do"
-LIST_PAGE = f"{BASE}/pr/employmentList.do"
+DETAIL_URL = f"{BASE}/pr/employmentDetail.do?bdCId={{key}}"
 MAX_PAGES = 5
 RECENT_DAYS = 60          # 게시 60일 이전 글은 마감됐다고 본다
 PARSER_READY = True
@@ -87,7 +87,7 @@ def row_from_item(it, today, cutoff):
         "apply_start": apply_start or posted,
         "apply_end": apply_end,
         "source_key": str(it.get("bdCId")),
-        "source_url": f"{LIST_PAGE}#bdCId={it.get('bdCId')}",
+        "source_url": DETAIL_URL.format(key=it.get("bdCId")),
     }
     if body:
         row["description"] = body[:4000]
