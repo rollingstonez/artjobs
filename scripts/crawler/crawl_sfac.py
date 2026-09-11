@@ -95,9 +95,16 @@ def parse_list(html):
     return rows
 
 
+_PAIR_RE = re.compile(
+    r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2})[^~\-–0-9]{0,12}[~\-–]\s*"
+    r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2}|\d{1,2}\s*[.\-/월]\s*\d{1,2})"
+)
+
+
 def _period_from_text(text, posted_year):
-    """본문 텍스트에서 접수 기간. 끝 날짜에 연도가 없으면 시작 날짜 연도를 쓴다."""
-    m = _PERIOD_RE.search(text)
+    """본문 텍스트에서 접수 기간. 접수/모집 낱말 뒤의 기간을 우선, 없으면 본문 앞부분의 첫 '날짜 ~ 날짜'.
+    끝 날짜에 연도가 없으면 시작 날짜 연도를 쓴다."""
+    m = _PERIOD_RE.search(text) or _PAIR_RE.search(text[:3000])
     if not m:
         return None, None
     start = parse_date(m.group(1))
@@ -119,8 +126,12 @@ def parse_detail(html, posted=None):
         t.decompose()
     # HWP 편집기 JSON 주석은 get_text 에 안 들어오지만, 혹시 남은 주석은 제거
     text = " ".join((body or art).get_text(" ", strip=True).split()) if body else ""
+    # 편집기가 글자마다 span 을 끼워 "접 수 기 간" 처럼 벌어지는 경우가 있어, 기간 판독은 붙여 쓴 텍스트로 한다.
+    tight = re.sub(r"\s+", " ", (body or art).get_text("", strip=True)) if body else ""
     attachments = [" ".join(a.get_text(" ", strip=True).split()) for a in art.select(".board-view--file a.link--file")]
-    apply_start, apply_end = _period_from_text(text, (posted or "")[:4])
+    apply_start, apply_end = _period_from_text(tight, (posted or "")[:4])
+    if not apply_end:
+        apply_start, apply_end = _period_from_text(text, (posted or "")[:4])
     fields = {"apply_start": apply_start, "apply_end": apply_end}
     if text:
         desc = text[:4000]
