@@ -72,7 +72,7 @@ export default function SignupForm({ initialRole }: { initialRole: AccountRole |
               <SocialLoginButtons
                 role={role}
                 disabled={!agreed}
-                disabledHint="위 두 항목에 동의하면 카카오·구글·애플 계정으로 바로 가입할 수 있습니다."
+                disabledHint={`위 두 항목에 동의하면 ${ENABLED_SOCIAL_PROVIDERS.map((p) => p.shortLabel).join("·")} 계정으로 바로 가입할 수 있습니다.`}
               />
               <OrDivider label="또는 이메일로 가입" />
             </>

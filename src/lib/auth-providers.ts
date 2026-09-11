@@ -3,9 +3,9 @@
 // 비어 있으면 소셜 버튼을 아예 보여주지 않는다. 설정 방법은 docs/SOCIAL_LOGIN.md.
 
 export const SOCIAL_PROVIDERS = [
-  { code: "kakao", label: "카카오로 계속하기", className: "bg-[#FEE500] text-[#191919] hover:bg-[#f5dc00]" },
-  { code: "google", label: "Google로 계속하기", className: "border border-stone-300 bg-white text-stone-800 hover:border-stone-500" },
-  { code: "apple", label: "Apple로 계속하기", className: "bg-black text-white hover:bg-stone-800" },
+  { code: "kakao", label: "카카오로 계속하기", shortLabel: "카카오", className: "bg-[#FEE500] text-[#191919] hover:bg-[#f5dc00]" },
+  { code: "google", label: "Google로 계속하기", shortLabel: "구글", className: "border border-stone-300 bg-white text-stone-800 hover:border-stone-500" },
+  { code: "apple", label: "Apple로 계속하기", shortLabel: "애플", className: "bg-black text-white hover:bg-stone-800" },
 ] as const;
 
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]["code"];
