@@ -34,6 +34,11 @@ export default function ApplyForm({ postingId, isOrgPosting, sourceUrl, sourceNa
         className={textareaClass}
         placeholder={isOrgPosting ? "간단한 자기소개와 지원 동기를 적어주세요. 프로필이 함께 전달됩니다." : "지원하면서 기억해 둘 메모 (10자 이상)"}
       />
+      {isOrgPosting && (
+        <p className="text-xs text-stone-500">
+          지원하면 지금 프로필·포트폴리오 링크의 사본이 이 공고의 심사 자료로 기관(담당자·심사위원)에게 전달됩니다. 기관이 정한 보관 기간이 지나면 사본은 삭제됩니다.
+        </p>
+      )}
       {state && !state.ok && <Notice kind="error">{state.error}</Notice>}
       <button type="submit" disabled={pending} className={primaryBtn}>
         {pending ? "보내는 중…" : isOrgPosting ? "메신저로 지원하기" : "지원 기록 남기기"}

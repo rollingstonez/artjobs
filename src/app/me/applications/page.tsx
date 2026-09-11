@@ -4,15 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { joinPostingId } from "@/lib/postings";
 import { createClient } from "@/lib/supabase/server";
-import { APPLICATION_STATUS, type Application } from "@/types/account";
+import { APPLICATION_STATUS, stageTone, type Application } from "@/types/account";
 
-const STATUS_CHIP: Record<string, string> = {
-  submitted: "bg-stone-100 text-stone-700",
-  viewed: "bg-sky-50 text-sky-700",
-  accepted: "bg-emerald-50 text-emerald-700",
-  rejected: "bg-stone-100 text-stone-500",
-  withdrawn: "bg-stone-100 text-stone-400",
-};
 
 export default async function ApplicationsPage() {
   const me = await requireUser("/me/applications", "artist");
@@ -37,7 +30,7 @@ export default async function ApplicationsPage() {
                     {fmtDate(a.created_at)} 지원 · {a.posting_source === "org" ? "메신저 지원" : "기관 접수처로 직접 지원 (기록용)"}
                   </p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_CHIP[a.status]}`}>{APPLICATION_STATUS[a.status]}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${stageTone(a.status)}`}>{APPLICATION_STATUS[a.status]}</span>
                 {a.status === "submitted" && (
                   <form action={withdrawApplication.bind(null, a.id)}>
                     <button type="submit" className="text-xs text-stone-500 underline-offset-2 hover:underline">지원 취소</button>
@@ -49,7 +42,7 @@ export default async function ApplicationsPage() {
         </ul>
       )}
       <p className="text-xs text-stone-500">
-        크롤링으로 모은 공고는 기관 접수처(이메일·홈페이지)로 직접 지원하고, 여기에는 지원 기록만 남깁니다. 기관이 아트잡스에 직접 올린 공고는 메신저로 지원서가 전달되고 기관의 확인·수락 여부가 표시됩니다.
+        크롤링으로 모은 공고는 기관 접수처(이메일·홈페이지)로 직접 지원하고, 여기에는 지원 기록만 남깁니다. 기관이 아트잡스에 직접 올린 공고는 지원 시점의 프로필·포트폴리오가 기관 심사 화면에 전달되고, 확인 → 서류 통과 → 오디션·면접 → 최종 선발 단계가 여기에 표시됩니다.
       </p>
     </div>
   );

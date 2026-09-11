@@ -72,6 +72,7 @@ function fromRow(r: Row, source: PostingSource): Posting {
     status: (s(r.status) as Posting["status"]) ?? "open",
     createdAt: String(r.created_at ?? "").slice(0, 10),
     orgUserId: source === "org" ? s(r.org_user_id) : null,
+    orgVerified: source === "org" && r.org_verified === true,
   };
 }
 

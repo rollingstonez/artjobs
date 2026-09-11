@@ -47,10 +47,18 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   };
 }
 
-/** 로그인 필수 페이지. 없으면 로그인으로 보낸다. 역할을 주면 그 역할만 통과. */
+/** 로그인 필수 페이지. 없으면 로그인으로 보낸다. 역할을 주면 그 역할만 통과. 정지된 계정은 안내로. */
 export async function requireUser(next: string, role?: AccountRole): Promise<CurrentUser> {
   const me = await getCurrentUser();
   if (!me) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (me.profile.status !== "active") redirect("/suspended");
   if (role && me.profile.role !== role) redirect("/me");
+  return me;
+}
+
+/** 운영자 전용 페이지(/admin). profiles.is_admin 이 아니면 마이페이지로. */
+export async function requireAdmin(next: string): Promise<CurrentUser> {
+  const me = await requireUser(next);
+  if (!me.profile.is_admin) redirect("/me");
   return me;
 }

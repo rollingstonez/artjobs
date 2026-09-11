@@ -8,7 +8,7 @@ import type { Notification } from "@/types/account";
 export const metadata: Metadata = { title: "알림 | 아트잡스" };
 export const dynamic = "force-dynamic";
 
-const ICON: Record<string, string> = { message: "💬", application: "📨", application_status: "📋", new_posting: "🆕", system: "🔔" };
+const ICON: Record<string, string> = { message: "💬", application: "📨", application_status: "📋", new_posting: "🆕", invite: "🎟️", system: "🔔" };
 
 export default async function NotificationsPage() {
   const me = await requireUser("/notifications");

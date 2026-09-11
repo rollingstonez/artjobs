@@ -91,15 +91,70 @@ export type TalentPublic = Omit<ArtistProfile, "lat" | "lng" | "is_public" | "pr
 
 export type PostingSource = "crawled" | "org" | "sample";
 
+/** 선발 단계. 접수 → 확인 → 서류통과 → 오디션·면접 → 최종선발/불합격. 철회는 어디서든. */
 export const APPLICATION_STATUS = {
   submitted: "지원 완료",
   viewed: "기관 확인",
-  accepted: "수락",
+  shortlisted: "서류 통과",
+  interview: "오디션·면접",
+  accepted: "최종 선발",
   rejected: "불합격",
   withdrawn: "지원 취소",
 } as const;
 
 export type ApplicationStatus = keyof typeof APPLICATION_STATUS;
+
+/** 기관이 고를 수 있는 단계(철회 제외), 진행 순서대로. */
+export const APPLICATION_STAGES: readonly { code: ApplicationStatus; label: string; tone: string }[] = [
+  { code: "submitted", label: "접수", tone: "bg-stone-100 text-stone-700" },
+  { code: "viewed", label: "확인", tone: "bg-sky-50 text-sky-700" },
+  { code: "shortlisted", label: "서류 통과", tone: "bg-indigo-50 text-indigo-700" },
+  { code: "interview", label: "오디션·면접", tone: "bg-amber-50 text-amber-700" },
+  { code: "accepted", label: "최종 선발", tone: "bg-emerald-50 text-emerald-700" },
+  { code: "rejected", label: "불합격", tone: "bg-stone-100 text-stone-500" },
+];
+
+export function stageTone(status: string): string {
+  return APPLICATION_STAGES.find((s) => s.code === status)?.tone ?? "bg-stone-100 text-stone-400";
+}
+
+export const PORTFOLIO_KINDS = [
+  { code: "video", label: "영상" },
+  { code: "image", label: "이미지" },
+  { code: "audio", label: "음원" },
+  { code: "document", label: "문서" },
+  { code: "link", label: "링크" },
+] as const;
+
+export type PortfolioKind = (typeof PORTFOLIO_KINDS)[number]["code"];
+
+export interface PortfolioItem {
+  id: string;
+  user_id: string;
+  kind: PortfolioKind;
+  title: string | null;
+  url: string;
+  sort_order: number;
+}
+
+/** 지원 시점에 복사해 둔 프로필. DB 트리거(snapshot_applicant)가 만든다. */
+export interface ApplicantSnapshot {
+  display_name: string;
+  field: string | null;
+  genres: string[];
+  roles: string[];
+  employment_types: string[];
+  region: string | null;
+  address_hint: string | null;
+  career_years: number | null;
+  education: string | null;
+  bio: string | null;
+  career: string | null;
+  portfolio_url: string | null;
+  photo_url: string | null;
+  portfolio: { kind: PortfolioKind; title: string | null; url: string }[];
+  captured_at: string;
+}
 
 export interface Application {
   id: string;
@@ -112,7 +167,75 @@ export interface Application {
   status: ApplicationStatus;
   status_changed_at: string;
   created_at: string;
+  profile_snapshot: ApplicantSnapshot | null;
+  purged_at: string | null;
 }
+
+export const ORG_MEMBER_ROLES = [
+  { code: "admin", label: "관리자", note: "심사위원 초청, 공고 수정, 선발 결정" },
+  { code: "member", label: "구성원", note: "지원자 열람, 심사, 선발 단계 변경" },
+] as const;
+
+export type OrgMemberRole = (typeof ORG_MEMBER_ROLES)[number]["code"];
+
+export interface OrgMember {
+  id: string;
+  org_user_id: string;
+  member_user_id: string | null;
+  email: string;
+  role: OrgMemberRole;
+  status: "pending" | "active";
+  token: string;
+  created_at: string;
+  accepted_at: string | null;
+}
+
+export interface PostingReviewer {
+  id: string;
+  posting_id: string;
+  user_id: string | null;
+  email: string;
+  status: "pending" | "active";
+  token: string;
+  created_at: string;
+  accepted_at: string | null;
+}
+
+export interface ApplicationReview {
+  id: string;
+  application_id: string;
+  reviewer_user_id: string;
+  score: number | null;
+  memo: string | null;
+  updated_at: string;
+}
+
+export const REPORT_STATUS = { open: "미처리", reviewed: "확인함", closed: "종결" } as const;
+
+export interface UserReport {
+  id: string;
+  reporter_user_id: string;
+  reported_user_id: string;
+  context_type: string | null;
+  context_id: string | null;
+  category: string;
+  detail: string | null;
+  status: keyof typeof REPORT_STATUS;
+  created_at: string;
+}
+
+export interface AdminLog {
+  id: string;
+  admin_user_id: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  detail: Record<string, unknown> | null;
+  created_at: string;
+}
+
+/** 심사 화면에서의 내 자격. owner·admin·member 는 기관 쪽, reviewer 는 이 공고 심사위원. */
+export type HiringRole = "owner" | "admin" | "member" | "reviewer";
 
 export interface Bookmark {
   id: string;

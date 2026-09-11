@@ -63,6 +63,9 @@ export default function PostingCard({
         <h2 className="truncate text-[17px] font-bold leading-snug text-stone-900">
           {posting.organization ?? "기관명 미기재"}
         </h2>
+        {posting.orgVerified && (
+          <span title="아트잡스가 확인한 기관" className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">✓ 인증</span>
+        )}
         {field && (
           <span
             className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${

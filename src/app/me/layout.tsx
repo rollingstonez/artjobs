@@ -1,10 +1,12 @@
 import { requireUser } from "@/lib/auth";
+import { hasHiringRoles } from "@/lib/hiring";
 import MeNav from "./MeNav";
 
 export const dynamic = "force-dynamic";
 
 export default async function MeLayout({ children }: LayoutProps<"/me">) {
   const me = await requireUser("/me");
+  const hiring = await hasHiringRoles(me.id);
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
       <div className="py-6">
@@ -14,7 +16,7 @@ export default async function MeLayout({ children }: LayoutProps<"/me">) {
         <h1 className="text-2xl font-extrabold tracking-tight">{me.profile.display_name}</h1>
       </div>
       <div className="grid gap-6 md:grid-cols-[200px_1fr]">
-        <MeNav role={me.profile.role} unread={me.unreadNotifications} />
+        <MeNav role={me.profile.role} unread={me.unreadNotifications} hiring={hiring} admin={me.profile.is_admin} />
         <div className="min-w-0">{children}</div>
       </div>
     </main>

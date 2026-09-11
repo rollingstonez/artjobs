@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { REGION_CENTERS } from "@/lib/location";
-import { ORG_TYPES, artistCompleteness, orgCompleteness, type ArtistProfile, type OrgProfile } from "@/types/account";
+import { ORG_TYPES, PORTFOLIO_KINDS, artistCompleteness, orgCompleteness, type ArtistProfile, type OrgProfile } from "@/types/account";
 import { EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
 import type { ActionResult } from "./auth";
 
@@ -59,6 +59,26 @@ export async function saveArtistProfile(_p: ActionResult | null, fd: FormData): 
   }
   const { error } = await supabase.from("artist_profiles").update(patch).eq("user_id", me.id);
   if (error) return { ok: false, error: error.message };
+
+  // 포트폴리오 링크: 폼의 순서대로 통째로 갈아끼운다(pf_kind · pf_title · pf_url 이 같은 순서).
+  const kinds = fd.getAll("pf_kind").map(String);
+  const titles = fd.getAll("pf_title").map(String);
+  const urls = fd.getAll("pf_url").map(String);
+  const items = urls
+    .map((url, i) => ({ url: url.trim(), title: (titles[i] ?? "").trim() || null, kind: kinds[i] ?? "link" }))
+    .filter((it) => /^https?:\/\//i.test(it.url))
+    .map((it, i) => ({
+      user_id: me.id,
+      kind: PORTFOLIO_KINDS.some((k) => k.code === it.kind) ? it.kind : "link",
+      title: it.title,
+      url: it.url,
+      sort_order: i,
+    }));
+  await supabase.from("artist_portfolio_items").delete().eq("user_id", me.id);
+  if (items.length) {
+    const { error: pfError } = await supabase.from("artist_portfolio_items").insert(items);
+    if (pfError) return { ok: false, error: `포트폴리오 저장 실패: ${pfError.message}` };
+  }
   revalidatePath("/me");
   revalidatePath("/me/profile");
   return { ok: true };
