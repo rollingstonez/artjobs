@@ -61,6 +61,16 @@ def one(url: str, rest: list[str]) -> None:
         print("=== END RAW")
         return
     soup = BeautifulSoup(r.text, "html.parser")
+    if mode == "text":
+        # 본문 텍스트만(선택자: article.board-view 가 있으면 그 안, 없으면 body). 기간·연락처 판독 확인용.
+        for t in soup(["script", "style", "svg", "img", "noscript"]):
+            t.decompose()
+        root = soup.select_one("article.board-view") or soup.body or soup
+        loose = " ".join(root.get_text(" ", strip=True).split())
+        tight = " ".join(root.get_text("", strip=True).split())
+        print(f"=== TEXT loose ({len(loose)} chars)\n{loose[:max_lines * 100]}")
+        print(f"=== TEXT tight ({len(tight)} chars)\n{tight[:max_lines * 100]}")
+        return
     if mode == "scripts":
         print("=== BEGIN SCRIPTS")
         for i, sc in enumerate(soup.find_all("script")):
