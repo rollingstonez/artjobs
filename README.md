@@ -29,6 +29,7 @@
   - `crawl_template.py` 새 소스 붙일 때 복사해 쓰는 템플릿
   - `robots_check.py` 수집 전 robots.txt 판정 + 목록 페이지 실측 (대장 전체를 한 번에)
   - `collection_status.py` / `collection_status_html.py` 판정 결과 → 수집 가능 여부 문서(md / html)
+  - `robots_to_sql.py` 판정 결과 → `supabase/seed/robots_status.sql` (DB 의 robots_status 갱신. 운영자 화면 크롤 소스 스위치는 clean·agreed 만 켜진다)
 - `docs/SOCIAL_LOGIN.md` — 카카오·구글·애플 로그인 켜는 순서 (제공자 콘솔 + Supabase + `.env.local`)
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
@@ -65,7 +66,7 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 
 1. `scripts/crawler/sources.py` 에 항목 추가 (목록 URL 은 브라우저 주소창에서 복사)
 2. `python scripts/crawler/export_sources.py`
-3. GitHub → Actions → **robots-check** → Run workflow → 결과 CSV 확인
+3. GitHub → Actions → **robots-check** → Run workflow → 결과 CSV 확인 → `python scripts/crawler/robots_to_sql.py` → 생성된 SQL 을 SQL Editor 에서 실행
 4. '깨끗한 허용' 또는 서면 협의 완료 → Supabase `crawl_sources` 에서 `robots_status`·`is_active` 갱신
 5. `crawl_template.py` 복사 → `crawl_<code>.py` → 실제 HTML 로 선택자 확인 → `PARSER_READY=True`
 6. `.github/workflows/crawl.yml` 에 실행 단계 추가
