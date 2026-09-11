@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/admin/users", label: "회원" },
   { href: "/admin/postings", label: "기관 공고" },
   { href: "/admin/sources", label: "크롤 소스" },
+  { href: "/admin/logs", label: "활동 로그" },
 ];
 
 export default function AdminNav() {

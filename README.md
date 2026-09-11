@@ -33,7 +33,7 @@
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
-- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0007 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거)
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0008 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행 (지금은 수동 실행만)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음
@@ -89,7 +89,8 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 - **화면** `/admin` (마이페이지 왼쪽 메뉴의 🛠 운영자): 현황 · 기관 인증(`/admin/orgs`) · 신고 처리(`/admin/reports`) · 회원 검색·정지·운영자 지정(`/admin/users`, 이메일은 `admin_list_users()` 함수로만) · 기관 공고 마감·내리기(`/admin/postings`) · 크롤 소스 스위치(`/admin/sources`, robots 허용·협의 완료만 켜짐).
 - **정지 계정**: 로그인은 되지만 회원 페이지는 `/suspended` 안내로 가고, DB 의 restrictive 정책이 메시지·대화·지원·공고·심사 쓰기를 막는다. 공고 보기는 계속 된다.
 - **보안**: 0004 의 "본인 수정" 정책은 칸을 안 가려서 자기 `is_admin`·`status`·`is_verified` 를 바꿀 수 있었다. 0007 의 트리거(`protect_profile_flags`·`protect_org_flags`)가 관리자가 아니면 막는다. 메시지 본문은 운영자도 읽지 않는다.
-- 아직 없는 것: 공고 카드·상세의 "인증 기관" 뱃지 표시, 크롤 공고 개별 숨기기, 운영자 활동 로그.
+- **인증 기관 뱃지** (0008): 기관이 인증되면 그 기관 공고 전체의 `org_verified` 가 트리거로 갱신되고, 카드·상세에 "✓ 인증" 이 붙는다. **활동 로그** `/admin/logs`: 인증·정지·운영자 지정·신고 처리·공고 마감·소스 스위치가 `admin_logs` 에 남는다.
+- 아직 없는 것: 크롤 공고 개별 숨기기.
 
 ## 배포
 

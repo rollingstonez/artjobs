@@ -224,6 +224,16 @@ export interface UserReport {
   created_at: string;
 }
 
+export interface AdminLog {
+  id: string;
+  admin_user_id: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  detail: Record<string, unknown> | null;
+  created_at: string;
+}
+
 /** 심사 화면에서의 내 자격. owner·admin·member 는 기관 쪽, reviewer 는 이 공고 심사위원. */
 export type HiringRole = "owner" | "admin" | "member" | "reviewer";
 

@@ -81,7 +81,10 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
 
         <div className="mt-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-stone-500">{p.organization}</p>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-stone-500">
+              {p.organization}
+              {p.orgVerified && <span title="아트잡스가 확인한 기관" className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">✓ 인증 기관</span>}
+            </p>
             <h1 className="mt-1 text-xl font-extrabold leading-snug md:text-2xl">{p.title}</h1>
           </div>
           {viewer.accountsEnabled && (

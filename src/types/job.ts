@@ -160,6 +160,7 @@ export interface Posting {
   status: PostingStatus;
   createdAt: string;
   orgUserId?: string | null; // 기관이 직접 올린 공고면 그 기관 계정. 메신저 지원·문의 연결에 쓴다
+  orgVerified?: boolean; // 운영자가 기관을 확인했으면 true → "인증 기관" 뱃지
 }
 
 // ── 조회 도우미 ──
