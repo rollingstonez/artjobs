@@ -13,6 +13,11 @@ on:
         required: false
         default: "3000"
         type: string
+      mode:
+        description: "html(본문) / scripts(스크립트) / raw(원문)"
+        required: false
+        default: "html"
+        type: string
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -35,4 +40,4 @@ jobs:
           print(f"=== robots.txt HTTP {r.status_code}\n{r.text[:3000]}")
           EOF
       - name: 페이지 HTML
-        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}"
+        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}" "${{ inputs.mode }}"
