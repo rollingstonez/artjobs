@@ -63,10 +63,11 @@ export default async function MeHome() {
   }
 
   const { percent, missing } = orgCompleteness(me.org);
-  const [postings, apps, convs] = await Promise.all([
+  const [postings, apps, convs, members] = await Promise.all([
     supabase.from("org_postings").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "open").is("deleted_at", null),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "submitted"),
     supabase.from("conversations").select("id", { count: "exact", head: true }).eq("org_user_id", me.id),
+    supabase.from("org_members").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "active"),
   ]);
   return (
     <div className="space-y-6">
@@ -89,9 +90,10 @@ export default async function MeHome() {
           <p className="mt-2 text-sm text-emerald-700">완성! 공고를 올리고 인재를 찾아보세요.</p>
         )}
       </section>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="모집중 공고" value={postings.count ?? 0} href="/me/postings" />
-        <Card title="확인 안 한 지원" value={apps.count ?? 0} href="/me/postings" />
+        <Card title="확인 안 한 지원" value={apps.count ?? 0} href="/me/postings" note="심사 작업대에서 보고 점수를 주세요" />
+        <Card title="구성원" value={members.count ?? 0} href="/me/team" note="직원을 초청해 함께 심사" />
         <Card title="대화" value={convs.count ?? 0} href="/messages" />
       </div>
       <div className="flex flex-wrap gap-2">

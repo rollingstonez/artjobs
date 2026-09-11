@@ -3,7 +3,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/me", "/messages", "/notifications", "/post", "/talents"];
+const PROTECTED_PREFIXES = ["/me", "/messages", "/notifications", "/post", "/talents", "/invite"];
 
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

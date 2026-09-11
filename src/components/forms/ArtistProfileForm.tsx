@@ -4,11 +4,12 @@ import { useActionState, useState } from "react";
 import type { ActionResult } from "@/lib/actions/auth";
 import { saveArtistProfile } from "@/lib/actions/profile";
 import { SELECTABLE_REGIONS } from "@/lib/location";
-import type { ArtistProfile } from "@/types/account";
+import type { ArtistProfile, PortfolioItem } from "@/types/account";
 import { EMPLOYMENT_TYPES, FIELDS, ROLES, genresOf } from "@/types/job";
+import PortfolioEditor from "./PortfolioEditor";
 import { CheckGroup, Field, Notice, inputClass, primaryBtn, textareaClass } from "./ui";
 
-export default function ArtistProfileForm({ profile, displayName }: { profile: ArtistProfile; displayName: string }) {
+export default function ArtistProfileForm({ profile, displayName, portfolio }: { profile: ArtistProfile; displayName: string; portfolio: PortfolioItem[] }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveArtistProfile, null);
   const [field, setField] = useState(profile.field ?? "");
 
@@ -80,14 +81,20 @@ export default function ArtistProfileForm({ profile, displayName }: { profile: A
         <Field label="주요 경력 · 수상 · 전시 · 공연" hint="한 줄에 하나씩 적어주세요.">
           <textarea name="career" rows={5} defaultValue={profile.career ?? ""} className={textareaClass} />
         </Field>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="학력 (선택)">
-            <input name="education" defaultValue={profile.education ?? ""} placeholder="예: OO대학교 회화과 졸업" className={inputClass} />
-          </Field>
-          <Field label="포트폴리오 링크 (선택)">
-            <input name="portfolio_url" type="url" defaultValue={profile.portfolio_url ?? ""} placeholder="https://" className={inputClass} />
-          </Field>
-        </div>
+        <Field label="학력 (선택)">
+          <input name="education" defaultValue={profile.education ?? ""} placeholder="예: OO대학교 회화과 졸업" className={inputClass} />
+        </Field>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-bold">포트폴리오</h2>
+        <p className="text-xs text-stone-500">
+          공연 영상, 작품 사진, 음원, 작품집 PDF 링크를 여러 개 넣을 수 있습니다. 기관은 심사 화면에서 이 링크를 바로 열어 보며 메모하고 점수를 줍니다. 경력 글보다 이게 더 큰 힘이 됩니다.
+        </p>
+        <PortfolioEditor items={portfolio} />
+        <Field label="대표 포트폴리오 주소 (선택)" hint="개인 홈페이지나 작가 페이지 하나. 인재정보 카드에 표시됩니다.">
+          <input name="portfolio_url" type="url" defaultValue={profile.portfolio_url ?? ""} placeholder="https://" className={inputClass} />
+        </Field>
       </section>
 
       <section className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">

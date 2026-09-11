@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { startConversation } from "@/lib/actions/messages";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { TalentPublic } from "@/types/account";
+import { PORTFOLIO_KINDS, type PortfolioItem, type TalentPublic } from "@/types/account";
+import { hostOf } from "@/lib/embed";
 import { employmentLabel, fieldLabel, genreLabel, roleLabel } from "@/types/job";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ export default async function TalentDetailPage({ params, searchParams }: PagePro
   const { data } = await supabase.from("talents_public").select("*").eq("user_id", id).maybeSingle();
   if (!data) notFound();
   const t = data as TalentPublic;
+  const { data: pf } = await supabase.from("artist_portfolio_items").select("*").eq("user_id", id).order("sort_order").order("created_at");
+  const portfolio = (pf ?? []) as PortfolioItem[];
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16 md:px-6">
@@ -41,6 +44,20 @@ export default async function TalentDetailPage({ params, searchParams }: PagePro
           {t.portfolio_url && <div className="grid grid-cols-[100px_1fr] gap-3 py-2.5"><dt className="text-stone-500">포트폴리오</dt><dd><a href={t.portfolio_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">{t.portfolio_url}</a></dd></div>}
         </dl>
 
+        {portfolio.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-bold text-stone-700">포트폴리오 <span className="font-normal text-stone-400">{portfolio.length}</span></h2>
+            <ul className="mt-2 divide-y divide-stone-100 text-sm">
+              {portfolio.map((it) => (
+                <li key={it.id} className="flex items-center gap-2 py-2">
+                  <span className="rounded bg-stone-100 px-1.5 py-0.5 text-[11px] font-semibold text-stone-600">{PORTFOLIO_KINDS.find((k) => k.code === it.kind)?.label ?? "링크"}</span>
+                  <a href={it.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate underline underline-offset-2">{it.title || hostOf(it.url)}</a>
+                  <span className="shrink-0 text-xs text-stone-400">{hostOf(it.url)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {t.bio && <section className="mt-6"><h2 className="text-sm font-bold text-stone-700">소개</h2><p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{t.bio}</p></section>}
         {t.career && <section className="mt-6"><h2 className="text-sm font-bold text-stone-700">주요 경력</h2><p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{t.career}</p></section>}
 

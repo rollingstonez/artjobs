@@ -97,7 +97,8 @@ export async function withdrawApplication(id: string): Promise<void> {
   revalidatePath("/me/applications");
 }
 
-export async function setApplicationStatus(id: string, status: "viewed" | "accepted" | "rejected"): Promise<void> {
+/** @deprecated 심사 작업대(actions/hiring.ts 의 setApplicationStage)를 쓴다. */
+export async function setApplicationStatus(id: string, status: "viewed" | "shortlisted" | "interview" | "accepted" | "rejected"): Promise<void> {
   const me = await requireUser("/me/postings", "organization");
   const supabase = (await createClient())!;
   await supabase
