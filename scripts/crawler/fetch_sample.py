@@ -6,7 +6,7 @@ GitHub Actions(fetch-sample) 에서 돈다. 작업 환경(클로드 코드)은 �
     python scripts/crawler/fetch_sample.py <url> [max_lines] [mode] [post_data]
     post_data 를 주면(예: "cbIdx=964&pageIndex=1") 폼 POST 로 요청한다 — AJAX 목록 사이트용
     mode: html(기본) — 본문 정리 출력 / scripts — 인라인 스크립트·외부 스크립트 주소 출력(AJAX 목록 사이트용)
-          raw — 원문 그대로(줄 단위)
+          raw — 원문 그대로(줄 단위) / json — AJAX JSON 응답을 들여쓰기해 출력(목록 5건, 긴 문자열은 자름)
 """
 from __future__ import annotations
 
@@ -54,6 +54,28 @@ def one(url: str, rest: list[str]) -> None:
         r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30, allow_redirects=True)
     r.encoding = r.apparent_encoding or "utf-8"
     print(f"=== GET {url}\n=== HTTP {r.status_code} · {len(r.content)} bytes · final {r.url} · encoding {r.encoding}")
+    if mode == "json":
+        # AJAX 가 JSON 을 돌려주는 사이트용. 키 구조가 보이게 들여쓰고, 긴 문자열(본문 HTML)은 max_lines*10 자까지만.
+        import json as _json
+        cut = max(200, max_lines * 10)
+
+        def trim(v):
+            if isinstance(v, dict):
+                return {k: trim(x) for k, x in v.items()}
+            if isinstance(v, list):
+                return [trim(x) for x in v[:5]] + ([f"... 외 {len(v) - 5}건"] if len(v) > 5 else [])
+            if isinstance(v, str) and len(v) > cut:
+                return v[:cut] + f"...(총 {len(v)}자)"
+            return v
+        try:
+            data = r.json()
+        except ValueError:
+            print("=== JSON 아님. 앞부분:\n" + r.text[:2000])
+            return
+        print("=== BEGIN JSON")
+        print(_json.dumps(trim(data), ensure_ascii=False, indent=1))
+        print("=== END JSON")
+        return
     if mode == "raw":
         print("=== BEGIN RAW")
         for ln in r.text.splitlines()[:max_lines]:

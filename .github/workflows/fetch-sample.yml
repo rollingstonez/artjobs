@@ -14,7 +14,7 @@ on:
         default: "3000"
         type: string
       mode:
-        description: "html(본문) / scripts(스크립트) / raw(원문)"
+        description: "html(본문) / scripts(스크립트) / raw(원문) / text(텍스트) / grep(정규식) / json(AJAX JSON)"
         required: false
         default: "html"
         type: string
