@@ -114,7 +114,8 @@ create policy "active only: reviews" on application_reviews as restrictive for i
 create or replace function protect_profile_flags() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  -- auth.uid() 가 없으면 SQL Editor·service role(서버) 실행이므로 통과. 브라우저(로그인 사용자)만 막는다.
+  if auth.uid() is not null and not public.is_admin() then
     if new.is_admin is distinct from old.is_admin then raise exception 'is_admin can only be changed by an admin'; end if;
     if new.status is distinct from old.status then raise exception 'status can only be changed by an admin'; end if;
   end if;
@@ -126,7 +127,7 @@ create trigger trg_protect_profile_flags before update on profiles for each row 
 create or replace function protect_org_flags() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() and new.is_verified is distinct from old.is_verified then
+  if auth.uid() is not null and not public.is_admin() and new.is_verified is distinct from old.is_verified then
     raise exception 'is_verified can only be changed by an admin';
   end if;
   return new;
