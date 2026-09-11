@@ -1,3 +1,4 @@
+import SourceToggle from "@/components/admin/SourceToggle";
 import { setSourceActive } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -12,8 +13,11 @@ const ROBOTS: Record<string, { label: string; tone: string }> = {
   unchecked: { label: "미판정", tone: "bg-stone-100 text-stone-500" },
 };
 
-export default async function AdminSourcesPage() {
+export default async function AdminSourcesPage({ searchParams }: PageProps<"/admin/sources">) {
   await requireAdmin("/admin/sources");
+  const sp = await searchParams;
+  const err = typeof sp.err === "string" ? sp.err : null;
+  const ok = typeof sp.ok === "string" ? sp.ok : null;
   const supabase = (await createClient())!;
   const { data } = await supabase.from("crawl_sources").select("*").order("is_active", { ascending: false }).order("name");
   const rows = (data ?? []) as Row[];
@@ -22,6 +26,8 @@ export default async function AdminSourcesPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold">크롤 소스 <span className="text-stone-400">{active} / {rows.length} 가동</span></h2>
+      {err && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">저장 실패: {err}</p>}
+      {ok && <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{ok} 을(를) {sp.on === "1" ? "켰습니다" : "껐습니다"}.</p>}
       <p className="text-xs text-stone-500">
         스위치를 켜면 크롤러가 그 사이트를 수집합니다. robots 판정이 &lsquo;허용&rsquo; 또는 &lsquo;협의 완료&rsquo;인 곳만 켜세요. 판정은 GitHub Actions 의 robots-check 로 갱신하고, 파서가 준비된 소스만 실제로 돕니다(`docs/collection-status.md`).
       </p>
@@ -46,13 +52,7 @@ export default async function AdminSourcesPage() {
                   </p>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.tone}`}>{r.label}</span>
-                {s.is_active ? (
-                  <form action={setSourceActive.bind(null, s.code, false)}><button className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white">가동 중 · 끄기</button></form>
-                ) : (
-                  <form action={setSourceActive.bind(null, s.code, true)}>
-                    <button disabled={!canEnable} title={canEnable ? "" : "robots 허용 또는 협의 완료 후 켤 수 있습니다"} className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold disabled:opacity-40">켜기</button>
-                  </form>
-                )}
+                <SourceToggle action={setSourceActive.bind(null, s.code, !s.is_active)} active={s.is_active} canEnable={canEnable} />
               </li>
             );
           })}

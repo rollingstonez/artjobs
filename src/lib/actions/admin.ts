@@ -1,6 +1,7 @@
 "use server";
 // 운영자 액션. 모두 requireAdmin 을 거치고, DB 쪽도 is_admin() RLS 가 한 번 더 막는다.
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -72,8 +73,12 @@ export async function adminDeletePosting(id: string): Promise<void> {
 export async function setSourceActive(code: string, active: boolean): Promise<void> {
   const me = await requireAdmin("/admin/sources");
   const supabase = (await createClient())!;
-  await supabase.from("crawl_sources").update({ is_active: active }).eq("code", code);
+  // 결과를 확인해서 실패 사유를 화면에 보여 준다(supabase-js 는 예외를 던지지 않고 error 를 돌려준다).
+  const { data, error } = await supabase.from("crawl_sources").update({ is_active: active }).eq("code", code).select("code");
+  if (error) redirect(`/admin/sources?err=${encodeURIComponent(error.message)}`);
+  if (!data || data.length === 0) redirect(`/admin/sources?err=${encodeURIComponent(`${code}: 바뀐 행이 없음(권한 또는 코드 확인)`)}`);
   await log(supabase, me.id, active ? "source_on" : "source_off", "source", code);
   revalidatePath("/admin/sources");
   revalidatePath("/admin");
+  redirect(`/admin/sources?ok=${encodeURIComponent(code)}&on=${active ? 1 : 0}`);
 }
