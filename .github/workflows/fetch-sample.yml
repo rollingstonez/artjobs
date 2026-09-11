@@ -18,6 +18,11 @@ on:
         required: false
         default: "html"
         type: string
+      post_data:
+        description: "있으면 폼 POST (예: cbIdx=964&pageIndex=1)"
+        required: false
+        default: ""
+        type: string
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -40,4 +45,4 @@ jobs:
           print(f"=== robots.txt HTTP {r.status_code}\n{r.text[:3000]}")
           EOF
       - name: 페이지 HTML
-        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}" "${{ inputs.mode }}"
+        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}" "${{ inputs.mode }}" "${{ inputs.post_data }}"

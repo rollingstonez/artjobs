@@ -3,7 +3,8 @@
 GitHub Actions(fetch-sample) 에서 돈다. 작업 환경(클로드 코드)은 외부 사이트 접근이 막혀 있어서
 사이트 구조는 이 로그로 본다. script/style/svg 는 빼고 본문만 정리해서 출력한다.
 
-    python scripts/crawler/fetch_sample.py <url> [max_lines] [mode]
+    python scripts/crawler/fetch_sample.py <url> [max_lines] [mode] [post_data]
+    post_data 를 주면(예: "cbIdx=964&pageIndex=1") 폼 POST 로 요청한다 — AJAX 목록 사이트용
     mode: html(기본) — 본문 정리 출력 / scripts — 인라인 스크립트·외부 스크립트 주소 출력(AJAX 목록 사이트용)
           raw — 원문 그대로(줄 단위)
 """
@@ -22,7 +23,13 @@ def main() -> None:
     url = sys.argv[1]
     max_lines = int(sys.argv[2]) if len(sys.argv) > 2 else 3000
     mode = sys.argv[3] if len(sys.argv) > 3 else "html"
-    r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30, allow_redirects=True)
+    post_data = sys.argv[4] if len(sys.argv) > 4 else ""
+    if post_data:
+        from urllib.parse import parse_qsl
+        r = requests.post(url, data=dict(parse_qsl(post_data, keep_blank_values=True)),
+                          headers={"User-Agent": USER_AGENT, "X-Requested-With": "XMLHttpRequest"}, timeout=30)
+    else:
+        r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30, allow_redirects=True)
     r.encoding = r.apparent_encoding or "utf-8"
     print(f"=== GET {url}\n=== HTTP {r.status_code} · {len(r.content)} bytes · final {r.url} · encoding {r.encoding}")
     if mode == "raw":
