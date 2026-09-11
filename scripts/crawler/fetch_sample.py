@@ -20,10 +20,32 @@ from common import USER_AGENT  # noqa: E402
 
 
 def main() -> None:
-    url = sys.argv[1]
-    max_lines = int(sys.argv[2]) if len(sys.argv) > 2 else 3000
-    mode = sys.argv[3] if len(sys.argv) > 3 else "html"
-    post_data = sys.argv[4] if len(sys.argv) > 4 else ""
+    # url 은 공백·쉼표로 여러 개 가능. mode=grep 이면 post_data 를 정규식으로 써서 맞는 줄만(앞뒤 2줄 포함) 찍는다.
+    for url in [u for u in sys.argv[1].replace(",", " ").split() if u]:
+        one(url, sys.argv[2:])
+
+
+def one(url: str, rest: list[str]) -> None:
+    max_lines = int(rest[0]) if len(rest) > 0 and rest[0] else 3000
+    mode = rest[1] if len(rest) > 1 and rest[1] else "html"
+    post_data = rest[2] if len(rest) > 2 else ""
+    if mode == "grep":
+        import re
+        r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        r.encoding = r.apparent_encoding or "utf-8"
+        pat = re.compile(post_data or ".", re.I)
+        lines = r.text.splitlines()
+        print(f"=== GET {url}\n=== HTTP {r.status_code} · {len(lines)} lines · grep /{post_data}/")
+        shown = 0
+        for i, ln in enumerate(lines):
+            if pat.search(ln):
+                for j in range(max(0, i - 2), min(len(lines), i + 3)):
+                    print(f"{j + 1:6d}: {lines[j][:300]}")
+                print("      ---")
+                shown += 1
+                if shown >= max_lines:
+                    break
+        return
     if post_data:
         from urllib.parse import parse_qsl
         r = requests.post(url, data=dict(parse_qsl(post_data, keep_blank_values=True)),
