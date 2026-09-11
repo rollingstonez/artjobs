@@ -35,14 +35,26 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r scripts/crawler/requirements.txt
+      # 입력값은 env 로 넘긴다 — 정규식의 괄호·따옴표가 셸에서 깨지지 않게.
       - name: robots.txt
+        env:
+          URL: ${{ inputs.url }}
         run: |
-          python - "${{ inputs.url }}" <<'EOF'
+          python - "$URL" <<'EOF'
           import sys, requests
           from urllib.parse import urlsplit
-          u = urlsplit(sys.argv[1]); base = f"{u.scheme}://{u.netloc}"
-          r = requests.get(base + "/robots.txt", timeout=20)
-          print(f"=== robots.txt HTTP {r.status_code}\n{r.text[:3000]}")
+          for url in sys.argv[1].replace(",", " ").split():
+              u = urlsplit(url); base = f"{u.scheme}://{u.netloc}"
+              try:
+                  r = requests.get(base + "/robots.txt", timeout=20)
+                  print(f"=== robots.txt {base} HTTP {r.status_code}\n{r.text[:3000]}")
+              except Exception as e:
+                  print(f"=== robots.txt {base} 실패: {e}")
           EOF
       - name: 페이지 HTML
-        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}" "${{ inputs.mode }}" "${{ inputs.post_data }}"
+        env:
+          URL: ${{ inputs.url }}
+          MAX_LINES: ${{ inputs.max_lines }}
+          MODE: ${{ inputs.mode }}
+          POST_DATA: ${{ inputs.post_data }}
+        run: python scripts/crawler/fetch_sample.py "$URL" "$MAX_LINES" "$MODE" "$POST_DATA"
