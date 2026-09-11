@@ -3,7 +3,7 @@
 // 분류 설계 배경과 사이트맵은 docs/SITEMAP.md 에 있다.
 //
 // 분류는 네 축으로 나눈다.
-//   family  서비스 우산   fine(아트잡스) | modern(모던아트잡, 자리만 예약)
+//   family  서비스 우산   fine(아트잡스) | modern(모던아트잡스, 자리만 예약)
 //   field   분야(대분류)  미술 · 음악 · 무용 · 국악 · 연극
 //   genre   장르(소분류)  분야마다 다름. 코드 앞에 분야 코드를 붙여 장르만 봐도 분야를 알 수 있다.
 //   role    직무(공통)    실연 · 창작 · 교육 · 기획행정 · 무대기술 · 보조
@@ -12,7 +12,7 @@
 // ── 서비스 우산 ──
 export const FAMILIES = [
   { code: "fine", label: "아트잡스", note: "순수예술. 예술의전당·국립국악원 무대와 전시장에 오르는 장르" },
-  { code: "modern", label: "모던아트잡", note: "산업예술. 실용음악·디자인·영상 등 (별도 서비스, 자리만 예약)" },
+  { code: "modern", label: "모던아트잡스", note: "산업예술. 실용음악·디자인·영상 등 (별도 서비스, 자리만 예약)" },
 ] as const;
 
 export type FamilyCode = (typeof FAMILIES)[number]["code"];

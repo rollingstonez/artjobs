@@ -4,7 +4,7 @@
 
 alter table crawled_postings
   add column if not exists board  text not null default 'job',  -- job | audition | event
-  add column if not exists family text not null default 'fine', -- fine(아트잡스) | modern(모던아트잡)
+  add column if not exists family text not null default 'fine', -- fine(아트잡스) | modern(모던아트잡스)
   add column if not exists field  text,                         -- art | music | dance | gugak | theater
   add column if not exists genre  text,                         -- 예: music_strings (앞에 field 코드)
   add column if not exists role   text;                         -- performer | creator | education | planning | stage_tech | assistant

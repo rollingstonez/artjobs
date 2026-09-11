@@ -6,7 +6,8 @@
 
 ## 구조
 
-- `docs/SITEMAP.md` — 서비스 범위(아트잡스 vs 모던아트잡), 분야·장르·직무 코드표, 사이트맵, 단계 계획
+- `docs/CONCEPT.md` — 아트잡스(파인아트 다섯 분야)와 모던아트잡스(그 밖의 모든 예술)를 쌍둥이 사이트로 나누는 개념 기준
+- `docs/SITEMAP.md` — 서비스 범위(아트잡스 vs 모던아트잡스), 분야·장르·직무 코드표, 사이트맵, 단계 계획
 - `src/app` — 화면 (홈 `/`, 채용공고 `/jobs`, 오디션·공모 `/auditions`, 상세 `/jobs/[id]` `/auditions/[id]`, 소개 `/about`)
   - 회원: 가입 `/signup` · 로그인 `/login` · 마이페이지 `/me/*` · 인재정보 `/talents` · 메신저 `/messages` · 알림 `/notifications` · 공고 등록 `/post`
   - Supabase 환경변수가 없으면 회원 페이지는 `/account-unavailable` 안내로 대체된다 (`src/proxy.ts`)
