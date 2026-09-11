@@ -96,6 +96,7 @@ _FIELD_KEYWORDS = [
 
 # 키워드 → 직무. 무대·기술과 기획·행정은 분야를 가리지 않는다.
 _ROLE_KEYWORDS = [
+    ("행정스태프", "planning"), ("행정 스태프", "planning"), ("사무보조", "assistant"),
     ("무대감독", "stage_tech"), ("무대미술", "stage_tech"), ("무대디자인", "stage_tech"), ("조명", "stage_tech"), ("음향", "stage_tech"),
     ("의상", "stage_tech"), ("분장", "stage_tech"), ("소품", "stage_tech"), ("테크니션", "stage_tech"), ("전시설치", "stage_tech"), ("스태프", "stage_tech"), ("스탭", "stage_tech"),
     ("어시스턴트", "assistant"), ("인턴", "assistant"), ("보조", "assistant"), ("아르바이트", "assistant"),
