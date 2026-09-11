@@ -9,14 +9,14 @@ import { boardLabel, fieldLabel } from "@/types/job";
 type OrgPostingRow = {
   id: string; title: string; board: string; field: string | null; status: string; apply_end: string | null; created_at: string; view_count: number;
 };
-type AppRow = { id: string; posting_id: string; status: string; created_at: string };
+type AppRow = { id: string; artist_user_id: string; posting_id: string; posting_title: string; status: string; created_at: string; profile_snapshot: { display_name?: string } | null };
 
 export default async function MyPostingsPage() {
   const me = await requireUser("/me/postings", "organization");
   const supabase = (await createClient())!;
   const [{ data: postings }, { data: apps }, { count: memberCount }] = await Promise.all([
     supabase.from("org_postings").select("id,title,board,field,status,apply_end,created_at,view_count").eq("org_user_id", me.id).is("deleted_at", null).order("created_at", { ascending: false }),
-    supabase.from("applications").select("id,posting_id,status,created_at").eq("org_user_id", me.id).neq("status", "withdrawn"),
+    supabase.from("applications").select("id,artist_user_id,posting_id,posting_title,status,created_at,profile_snapshot").eq("org_user_id", me.id).neq("status", "withdrawn").order("created_at", { ascending: false }),
     supabase.from("org_members").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "active"),
   ]);
   const rows = (postings ?? []) as OrgPostingRow[];
@@ -84,6 +84,29 @@ export default async function MyPostingsPage() {
           </ul>
         )}
       </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">지원자 <span className="text-stone-400">{applications.length}</span></h2>
+        {applications.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">아직 지원자가 없습니다.</p>
+        ) : (
+          <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white">
+            {applications.slice(0, 30).map((a) => {
+              const stage = APPLICATION_STAGES.find((s) => s.code === a.status);
+              return (
+                <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold">{a.profile_snapshot?.display_name ?? "예술가"}</p>
+                    <p className="truncate text-xs text-stone-500">→ {a.posting_title} · {fmtDate(a.created_at)}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${stage?.tone ?? "bg-stone-100 text-stone-500"}`}>{stage?.label ?? a.status}</span>
+                  <Link href={`/me/postings/${a.posting_id}/review`} className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold hover:border-stone-900">심사하기</Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       <p className="text-xs text-stone-500">
         지원자 검토·메모·점수·선발 단계 변경은 공고별 심사 작업대에서 합니다. 직원은 <Link href="/me/team" className="underline underline-offset-2">구성원</Link>으로, 외부 심사위원은 각 작업대에서 초청하세요.
       </p>
