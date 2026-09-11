@@ -14,6 +14,7 @@ export default function MeNav({ role, unread, hiring, admin }: { role: AccountRo
           { href: "/me/profile", label: "내 프로필" },
           { href: "/me/saved", label: "저장한 공고" },
           { href: "/me/applications", label: "지원 내역" },
+          { href: "/me/seeking", label: "내 구직 글" },
           { href: "/me/alerts", label: "새 공고 알림" },
           ...(hiring ? [{ href: "/me/reviews", label: "심사 참여" }] : []),
           { href: "/messages", label: "메시지" },

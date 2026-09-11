@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/admin/reports", label: "신고 처리" },
   { href: "/admin/users", label: "회원" },
   { href: "/admin/postings", label: "기관 공고" },
+  { href: "/admin/seeking", label: "구직 글" },
   { href: "/admin/sources", label: "크롤 소스" },
   { href: "/admin/logs", label: "활동 로그" },
 ];
