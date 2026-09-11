@@ -210,6 +210,20 @@ export interface ApplicationReview {
   updated_at: string;
 }
 
+export const REPORT_STATUS = { open: "미처리", reviewed: "확인함", closed: "종결" } as const;
+
+export interface UserReport {
+  id: string;
+  reporter_user_id: string;
+  reported_user_id: string;
+  context_type: string | null;
+  context_id: string | null;
+  category: string;
+  detail: string | null;
+  status: keyof typeof REPORT_STATUS;
+  created_at: string;
+}
+
 /** 심사 화면에서의 내 자격. owner·admin·member 는 기관 쪽, reviewer 는 이 공고 심사위원. */
 export type HiringRole = "owner" | "admin" | "member" | "reviewer";
 

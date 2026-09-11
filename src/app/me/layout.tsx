@@ -16,7 +16,7 @@ export default async function MeLayout({ children }: LayoutProps<"/me">) {
         <h1 className="text-2xl font-extrabold tracking-tight">{me.profile.display_name}</h1>
       </div>
       <div className="grid gap-6 md:grid-cols-[200px_1fr]">
-        <MeNav role={me.profile.role} unread={me.unreadNotifications} hiring={hiring} />
+        <MeNav role={me.profile.role} unread={me.unreadNotifications} hiring={hiring} admin={me.profile.is_admin} />
         <div className="min-w-0">{children}</div>
       </div>
     </main>

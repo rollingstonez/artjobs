@@ -33,7 +33,7 @@
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
-- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0006 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간)
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0007 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행 (지금은 수동 실행만)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음
@@ -82,6 +82,14 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 - **자료 보관** — 지원하는 순간 프로필·포트폴리오가 `applications.profile_snapshot` 에 복사된다(트리거). 나중에 프로필을 고쳐도 심사 자료는 그대로. 공고별 `retention_days`(기본 마감 후 180일)가 지나면 `purge_expired_applications()` 가 스냅샷·지원 메시지를 지우고 점수·단계만 남긴다. `/me/team` 의 "지금 정리" 버튼 또는 pg_cron 으로 자동화(마이그레이션 파일 안 주석 참고).
 - **포트폴리오** — 예술가 프로필에서 링크를 종류별(영상·이미지·음원·문서·링크)로 여러 개 등록(`artist_portfolio_items`). 인재정보 상세에도 표시.
 - 아직 없는 것: 초대 이메일 자동 발송(지금은 앱 알림 + 링크 복사), 구성원의 메신저 대리 발신(대화방은 기관 계정에만 묶여 있다), 사진·나이 열 켜고 끄기(블라인드 채용용).
+
+## 운영자 (0007)
+
+- **지정 방식**: 별도 역할 없이 `profiles.is_admin` 플래그. 운영자는 **구인자(기관)로 가입**한다. `lkseok911@gmail.com` 은 가입 트리거가 자동으로 관리자로 만든다(내니잡·바로쌤과 같은 방식). 다른 운영자는 `/admin/users` 에서 "운영자 지정".
+- **화면** `/admin` (마이페이지 왼쪽 메뉴의 🛠 운영자): 현황 · 기관 인증(`/admin/orgs`) · 신고 처리(`/admin/reports`) · 회원 검색·정지·운영자 지정(`/admin/users`, 이메일은 `admin_list_users()` 함수로만) · 기관 공고 마감·내리기(`/admin/postings`) · 크롤 소스 스위치(`/admin/sources`, robots 허용·협의 완료만 켜짐).
+- **정지 계정**: 로그인은 되지만 회원 페이지는 `/suspended` 안내로 가고, DB 의 restrictive 정책이 메시지·대화·지원·공고·심사 쓰기를 막는다. 공고 보기는 계속 된다.
+- **보안**: 0004 의 "본인 수정" 정책은 칸을 안 가려서 자기 `is_admin`·`status`·`is_verified` 를 바꿀 수 있었다. 0007 의 트리거(`protect_profile_flags`·`protect_org_flags`)가 관리자가 아니면 막는다. 메시지 본문은 운영자도 읽지 않는다.
+- 아직 없는 것: 공고 카드·상세의 "인증 기관" 뱃지 표시, 크롤 공고 개별 숨기기, 운영자 활동 로그.
 
 ## 배포
 

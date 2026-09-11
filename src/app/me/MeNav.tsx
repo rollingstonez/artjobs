@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/actions/auth";
 import type { AccountRole } from "@/types/account";
 
-export default function MeNav({ role, unread, hiring }: { role: AccountRole; unread: number; hiring: boolean }) {
+export default function MeNav({ role, unread, hiring, admin }: { role: AccountRole; unread: number; hiring: boolean; admin: boolean }) {
   const pathname = usePathname();
   const items =
     role === "artist"
@@ -53,6 +53,13 @@ export default function MeNav({ role, unread, hiring }: { role: AccountRole; unr
             </li>
           );
         })}
+        {admin && (
+          <li className="shrink-0">
+            <Link href="/admin" className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">
+              🛠 운영자
+            </Link>
+          </li>
+        )}
         <li className="shrink-0">
           <form action={signOut}>
             <button type="submit" className="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-stone-500 hover:bg-stone-100">
