@@ -122,7 +122,7 @@ def row_from_item(it, today):
         cls["field"] = field
         if cls.get("genre") and not cls["genre"].startswith(field + "_"):
             cls["genre"] = None
-    cls["board"] = "job" if "채용" in it["title"] else "audition"
+    cls["board"] = "job" if any(w in it["title"] for w in ("채용", "강사", "모집 공고(직원", "인력")) else "audition"
     if cls["board"] == "audition" and not cls.get("employment_type"):
         cls["employment_type"] = "open_call"
     _META[it["docid"]] = (it["org"], it["se_no"])
