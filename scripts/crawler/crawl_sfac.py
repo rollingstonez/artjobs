@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE, USER_AGENT,
-    classify_all, parse_date, today_str, run_crawler,
+    classify_all, parse_date, today_str, run_crawler, parse_period_text, normalize_period_text,
 )
 from http_retry import _retry
 
@@ -50,18 +50,7 @@ _SKIP_WORDS = ("합격자", "발표", "면접심사 안내", "면접 안내", "�
 _KEEP_WORDS = ("공고", "모집", "채용", "공개모집", "공개채용")
 
 _VIEW_RE = re.compile(r"doView\('(\d+)'\s*,\s*'(\d+)'")
-# 기간 표기 실측: "접수기간 : 2026. 8. 1.(월) 09:00 ~ 2026. 8. 14.(금) 18:00",
-#   "접수기간: ‘26.08.31.(월) ~ ’26.09.07.(월) 16:00"(두 자리 연도+따옴표), "2026.8.13.(목) 10:00∼2026.8.20.(목) 17:00"(∼).
-# _normalize() 가 두 자리 연도→네 자리, ∼·～→~ 로 고친 뒤 아래 정규식을 쓴다.
-_DATE = r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2})"
-_DATE_OR_MD = r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2}|\d{1,2}\s*[.\-/월]\s*\d{1,2})"
-# 날짜 뒤에 붙는 ".(월) 09:00 부터" 같은 꼬리를 허용하고 ~ 로 잇는다.
-_TAIL = r"\.?\s*(?:\([^)]{1,4}\))?\s*(?:\d{1,2}\s*:\s*\d{2})?\s*(?:부터|까지)?\s*"
-_RANGE = _DATE + _TAIL + r"~\s*" + _DATE_OR_MD
-# 1순위: '접수기간/접수일정/접수기한' 바로 뒤. (공고기간·근무기간과 구분)
-_PERIOD_RE = re.compile(r"접수\s*(?:기간|일정|기한)\s*[:：]?\s*" + _RANGE)
-# 2순위: 모집/신청/원서접수 뒤.
-_PERIOD_RE2 = re.compile(r"(?:모집|신청|원서\s*접수|접수)\s*(?:기간|일정|기한)?\s*[:：]?\s*" + _RANGE)
+# 접수 기간 판독은 common.parse_period_text (표기 실측·정규식은 그쪽 주석 참고).
 
 
 def _post_html(url, data, sleep=0):
@@ -101,31 +90,13 @@ def parse_list(html):
     return rows
 
 
-_PAIR_RE = re.compile(_RANGE)
-
-
 def _normalize(text):
-    """두 자리 연도(‘26.08.31.)→2026.08.31. · 물결표 변형(∼ ～ –)→~ · 공백 정리."""
-    t = re.sub(r"[‘’'′`]\s*(\d{2})\s*\.\s*(\d{1,2})\s*\.", r"20\1.\2.", text)
-    t = re.sub(r"[∼～〜]", "~", t)
-    return re.sub(r"\s+", " ", t)
+    return normalize_period_text(text)
 
 
-def _period_from_text(text, posted_year):
-    """본문 텍스트에서 접수 기간. 접수기간 → 모집/신청 기간 → 본문 앞부분의 첫 '날짜 ~ 날짜' 순으로 찾는다.
-    끝 날짜에 연도가 없으면 시작 날짜 연도를 쓴다."""
-    text = _normalize(text)
-    m = _PERIOD_RE.search(text) or _PERIOD_RE2.search(text) or _PAIR_RE.search(text[:3000])
-    if not m:
-        return None, None
-    start = parse_date(m.group(1))
-    end_raw = m.group(2)
-    end = parse_date(end_raw)
-    if not end and start:
-        mm = re.match(r"(\d{1,2})\s*[.\-/월]\s*(\d{1,2})", end_raw)
-        if mm:
-            end = f"{start[:4]}-{int(mm.group(1)):02d}-{int(mm.group(2)):02d}"
-    return start, end
+def _period_from_text(text, posted_year=None):
+    """본문 텍스트에서 접수 기간 — 공용 common.parse_period_text 를 쓴다(표기 실측은 common 주석 참고)."""
+    return parse_period_text(text)
 
 
 def parse_detail(html, posted=None):

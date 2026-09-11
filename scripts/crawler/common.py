@@ -249,6 +249,42 @@ def parse_period(text):
     return parse_date(left), parse_date(right)
 
 
+# ── 본문 텍스트에서 접수 기간 찾기 (sfac 에서 실측한 표기들을 모두 받는다) ──
+# "접수기간 : 2026. 8. 1.(월) 09:00 ~ 2026. 8. 14.(금) 18:00", "접수기간: ‘26.08.31.(월) ~ ’26.09.07.(월) 16:00",
+# "2026.8.13.(목) 10:00∼2026.8.20.(목) 17:00", "2026-09-09 ~ 2026-09-27"
+_P_DATE = r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2})"
+_P_DATE_OR_MD = r"(\d{4}\s*[.\-/년]\s*\d{1,2}\s*[.\-/월]\s*\d{1,2}|\d{1,2}\s*[.\-/월]\s*\d{1,2})"
+_P_TAIL = r"\.?\s*(?:\([^)]{1,4}\))?\s*(?:\d{1,2}\s*:\s*\d{2})?\s*(?:부터|까지)?\s*"
+_P_RANGE = _P_DATE + _P_TAIL + r"~\s*" + _P_DATE_OR_MD
+PERIOD_RE = re.compile(r"접수\s*(?:기간|일정|기한)\s*[:：]?\s*" + _P_RANGE)                       # 1순위: 접수기간
+PERIOD_RE2 = re.compile(r"(?:모집|신청|원서\s*접수|접수)\s*(?:기간|일정|기한)?\s*[:：]?\s*" + _P_RANGE)  # 2순위: 모집/신청 기간
+PAIR_RE = re.compile(_P_RANGE)                                                                      # 3순위: 첫 '날짜 ~ 날짜'
+
+
+def normalize_period_text(text):
+    """두 자리 연도(‘26.08.31.)→2026.08.31. · 물결표 변형(∼ ～ 〜)→~ · 공백 정리."""
+    t = re.sub(r"[‘’'′`]\s*(\d{2})\s*\.\s*(\d{1,2})\s*\.", r"20\1.\2.", text or "")
+    t = re.sub(r"[∼～〜]", "~", t)
+    return re.sub(r"\s+", " ", t)
+
+
+def parse_period_text(text, head=3000):
+    """본문에서 (접수 시작, 접수 끝). 접수기간 → 모집/신청 기간 → 본문 앞 head 자 안의 첫 '날짜 ~ 날짜'.
+    끝 날짜에 연도가 없으면 시작 연도를 쓴다. 못 찾으면 (None, None) — 지어내지 않는다."""
+    t = normalize_period_text(text)
+    m = PERIOD_RE.search(t) or PERIOD_RE2.search(t) or PAIR_RE.search(t[:head])
+    if not m:
+        return None, None
+    start = parse_date(m.group(1))
+    end_raw = m.group(2)
+    end = parse_date(end_raw)
+    if not end and start:
+        mm = re.match(r"(\d{1,2})\s*[.\-/월]\s*(\d{1,2})", end_raw)
+        if mm:
+            end = f"{start[:4]}-{int(mm.group(1)):02d}-{int(mm.group(2)):02d}"
+    return start, end
+
+
 def today_str():
     return datetime.now().strftime("%Y-%m-%d")
 

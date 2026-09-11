@@ -50,3 +50,9 @@ jobs:
       - name: 서울시립미술관 (sema)
         if: always()
         run: python scripts/crawler/crawl_sema.py $DRY
+      - name: 국립현대미술관 (mmca)
+        if: always()
+        run: python scripts/crawler/crawl_mmca.py $DRY
+      - name: 아트누리 (artnuri)
+        if: always()
+        run: python scripts/crawler/crawl_artnuri.py $DRY

@@ -38,8 +38,11 @@
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
   - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 채용공고(AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외)
+  - `crawl_kcdf.py` 한국공예·디자인문화진흥원 채용(표 목록, 접수 기간·마감 배지로 모집중만) · `crawl_sema.py` 서울시립미술관 채용시험(목록 45일 안, 본문이 첨부라 마감일 없음)
+  - `crawl_mmca.py` 국립현대미술관 채용(AJAX JSON 에 본문 포함 → 접수 기간은 `common.parse_period_text` 로 판독, 합격자·면접 공고 제외)
+  - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
-- `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
+- `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음
 
 ## Supabase 연결
