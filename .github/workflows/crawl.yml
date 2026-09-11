@@ -1,19 +1,29 @@
 # 아트잡스 공고 크롤러 — 바로쌤 crawl.yml 구조 이식
-# - 지금은 수동 실행(workflow_dispatch)만. 수집 대상 기관이 확정되고 Supabase가 연결되면
-#   schedule 주석을 풀어 자동화한다(GitHub cron은 UTC — KST 21:11 = "11 12 * * 1-5").
+# - 평일 21:11 KST 자동 실행(GitHub cron 은 UTC: "11 12 * * 1-5") + 수동 실행(workflow_dispatch).
+# - 수동 실행에서 dry_run=true 를 고르면 DB 에 넣지 않고 수집 결과만 로그에 찍는다(파서 확인용).
 # - 비밀값: GitHub Secrets → 실행 시점에 .env.local 로 만들어 크롤러가 로컬과 동일하게 읽는다.
-# - 각 단계 if: always() → 앞 소스가 실패해도 다음 소스는 계속 실행.
+# - 각 소스 단계 if: always() → 앞 소스가 실패해도 다음 소스는 계속 실행.
+# - 소스는 운영자 화면(/admin/sources)에서 켠 것만 실제 수집한다(crawl_sources.is_active).
 name: daily-crawl
 on:
-  # schedule:
-  #   - cron: "11 12 * * 1-5"
+  schedule:
+    - cron: "11 12 * * 1-5"
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true 면 DB 적재 없이 수집 결과만 출력"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
 jobs:
   crawl:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     timeout-minutes: 60
+    env:
+      DRY: ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
     steps:
       - name: 코드 내려받기
         uses: actions/checkout@v4
@@ -24,14 +34,13 @@ jobs:
       - name: 크롤러 패키지 설치
         run: pip install -r scripts/crawler/requirements.txt
       - name: .env.local 생성 (Secrets → 파일)
+        if: ${{ inputs.dry_run != 'true' }}
         run: |
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}"
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
           } > .env.local
-      # 소스가 확정되면 아래 형태로 한 단계씩 추가한다.
-      # - name: 한국문화예술위원회(ARKO) 크롤
-      #   if: always()
-      #   run: python scripts/crawler/crawl_arko.py
-      - name: 준비 상태 확인
-        run: python -c "import sys; sys.path.insert(0, 'scripts/crawler'); import common; print('크롤러 모듈 OK')"
+      # ── 소스별 단계. 새 소스는 같은 모양으로 한 줄씩 추가 ──
+      - name: 서울문화재단 (sfac)
+        if: always()
+        run: python scripts/crawler/crawl_sfac.py $DRY
