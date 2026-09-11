@@ -24,11 +24,19 @@ export interface PostingFilters {
   near?: UserLocation | null;
 }
 
-/** 공고 id 는 "출처:원래id" 로 만든다. 저장·지원 테이블이 (posting_source, posting_id) 로 가리킨다. */
+/** 공고 id 는 "출처:원래id" 로 만든다. 저장·지원 테이블이 (posting_source, posting_id) 로 가리킨다.
+ * URL 경로 파라미터로 들어올 때는 ":" 가 "%3A" 로 인코딩된 채 그대로 올 수 있어(Next.js 16 라우트 파라미터가
+ * 자동으로 디코딩해 주지 않는 경우가 있다) 먼저 한 번 디코딩한다. 이미 디코딩된 값이 들어와도 안전하다. */
 export function splitPostingId(id: string): { source: PostingSource; rawId: string } {
-  if (id.startsWith("org:")) return { source: "org", rawId: id.slice(4) };
-  if (id.startsWith("crawled:")) return { source: "crawled", rawId: id.slice(8) };
-  return { source: "sample", rawId: id };
+  let decoded = id;
+  try {
+    decoded = decodeURIComponent(id);
+  } catch {
+    // 잘못된 퍼센트 인코딩이면 원본 그대로 둔다.
+  }
+  if (decoded.startsWith("org:")) return { source: "org", rawId: decoded.slice(4) };
+  if (decoded.startsWith("crawled:")) return { source: "crawled", rawId: decoded.slice(8) };
+  return { source: "sample", rawId: decoded };
 }
 
 export function joinPostingId(source: PostingSource, rawId: string): string {
