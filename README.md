@@ -34,7 +34,7 @@
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
-- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0008 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs)
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
   - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 채용공고(AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외)
@@ -86,6 +86,13 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 - **자료 보관** — 지원하는 순간 프로필·포트폴리오가 `applications.profile_snapshot` 에 복사된다(트리거). 나중에 프로필을 고쳐도 심사 자료는 그대로. 공고별 `retention_days`(기본 마감 후 180일)가 지나면 `purge_expired_applications()` 가 스냅샷·지원 메시지를 지우고 점수·단계만 남긴다. `/me/team` 의 "지금 정리" 버튼 또는 pg_cron 으로 자동화(마이그레이션 파일 안 주석 참고).
 - **포트폴리오** — 예술가 프로필에서 링크를 종류별(영상·이미지·음원·문서·링크)로 여러 개 등록(`artist_portfolio_items`). 인재정보 상세에도 표시.
 - 아직 없는 것: 초대 이메일 자동 발송(지금은 앱 알림 + 링크 복사), 구성원의 메신저 대리 발신(대화방은 기관 계정에만 묶여 있다), 사진·나이 열 켜고 끄기(블라인드 채용용).
+
+## 구직 게시판 (0009)
+
+- 인재정보(`/talents`)가 "기관이 프로필을 검색"하는 곳이라면, 구직(`/seeking`)은 **예술가가 "이런 일을 찾습니다" 하고 직접 올리는 공개 글**이다. 예술가는 누가 자기를 필요로 할지 몰라 여기저기 공지를 올리는데, 그 자리를 아트잡스 안에 만든 것.
+- 로그인 없이 누구나 목록·상세를 본다(예술가가 공개를 선택한 글이라서). 이름(활동명)·경력 연수·글 내용만 보이고 프로필 상세·포트폴리오는 로그인한 기관만. 연락은 메신저로만.
+- 한 사람 3개까지, 60일 만료(연장 가능). 예술가 마이페이지 `/me/seeking`, 운영자 `/admin/seeking`에서 내리기.
+- 크롤러는 구직·인력풀 게시판을 절대 수집하지 않는다(개인정보). 구직 글은 회원이 직접 올리는 것만.
 
 ## 운영자 (0007)
 

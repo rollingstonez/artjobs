@@ -136,6 +136,7 @@
 │   ├─ 예술가: 프로필(포트폴리오 여러 개) /me/profile · 저장한 공고 /me/saved · 지원 내역 /me/applications · 새 공고 알림 /me/alerts · 심사 참여 /me/reviews(초청받았을 때만) · 설정 /me/settings
 │   └─ 기관:   기관 정보 /me/profile · 내 공고·지원자 /me/postings · 심사 작업대 /me/postings/[id]/review (+ /export CSV) · 구성원 /me/team · 설정 /me/settings
 ├─ 초대 수락 /invite/[token]        [3단계 ✅] 구성원·심사위원 초대 링크
+├─ 구직 /seeking · /seeking/[id]     [3단계 ✅] 예술가가 직접 올리는 공개 구직 글(비로그인 열람). 작성·관리 /me/seeking
 ├─ 운영자 /admin                    [3단계 ✅] 현황 · 기관 인증 · 신고 처리 · 회원 · 기관 공고 · 크롤 소스 (profiles.is_admin 만)
 ├─ 이용 제한 안내 /suspended          [3단계 ✅] 정지된 계정
 └─ 소개 /about · 이용약관 · 개인정보 · 출처정책

@@ -234,6 +234,30 @@ export interface AdminLog {
   created_at: string;
 }
 
+/** 구직 게시판 글. DB 정의는 0009_seeking.sql. */
+export interface SeekingPost {
+  id: string;
+  artist_user_id: string;
+  display_name: string;
+  career_years: number | null;
+  title: string;
+  field: string | null;
+  genres: string[];
+  roles: string[];
+  employment_types: string[];
+  region: string | null;
+  address_hint: string | null;
+  available_from: string | null;
+  available_until: string | null;
+  body: string;
+  status: "open" | "closed";
+  expires_at: string;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 /** 심사 화면에서의 내 자격. owner·admin·member 는 기관 쪽, reviewer 는 이 공고 심사위원. */
 export type HiringRole = "owner" | "admin" | "member" | "reviewer";
 
