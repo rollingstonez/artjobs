@@ -284,7 +284,9 @@ def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
     # 0) 가동 스위치 — 허가가 반영되지 않았으면 스스로 멈춘다.
     src = sb.get("crawl_sources", {"code": f"eq.{source_code}", "select": "code,is_active,robots_status"})
     if not src or not src[0]["is_active"]:
-        sys.exit(f"[중단] crawl_sources에서 {source_code} is_active=false (허가 반영 후 재실행)")
+        # 꺼져 있으면 조용히 끝낸다(exit 0). 운영자 화면 /admin/sources 에서 켜야 수집한다.
+        print(f"[건너뜀] crawl_sources 에서 {source_code} 가 꺼져 있음(is_active=false). 운영자 화면에서 켜면 수집합니다.")
+        return []
     print(f"[0] 가동 스위치: {source_code} is_active=true (robots: {src[0]['robots_status']})")
 
     # 1) 수집
