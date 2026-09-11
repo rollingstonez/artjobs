@@ -1,0 +1,38 @@
+# 파서 만들 때 사이트 HTML 을 눈으로 확인하는 용도. 목록/상세 주소를 넣고 Run workflow → 로그에 정리된 HTML 이 찍힌다.
+# 수집·적재는 하지 않는다. (작업 환경에서 외부 사이트 접근이 막혀 있어 GitHub 에서 대신 받아 본다)
+name: fetch-sample
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "받아볼 페이지 주소 (목록 또는 상세)"
+        required: true
+        type: string
+      max_lines:
+        description: "출력 줄 수 상한"
+        required: false
+        default: "3000"
+        type: string
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r scripts/crawler/requirements.txt
+      - name: robots.txt
+        run: |
+          python - "${{ inputs.url }}" <<'EOF'
+          import sys, requests
+          from urllib.parse import urlsplit
+          u = urlsplit(sys.argv[1]); base = f"{u.scheme}://{u.netloc}"
+          r = requests.get(base + "/robots.txt", timeout=20)
+          print(f"=== robots.txt HTTP {r.status_code}\n{r.text[:3000]}")
+          EOF
+      - name: 페이지 HTML
+        run: python scripts/crawler/fetch_sample.py "${{ inputs.url }}" "${{ inputs.max_lines }}"
