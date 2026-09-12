@@ -1,9 +1,11 @@
 import Link from "next/link";
 import CollectionDashboard, { type DashboardItem } from "@/components/CollectionDashboard";
+import PopupModal from "@/components/PopupModal";
 import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
 import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
+import { getLivePopups } from "@/lib/popups";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
 import { countArchived, countByField, getPostings } from "@/lib/postings";
 import { FIELDS, genresOf } from "@/types/job";
@@ -34,12 +36,13 @@ const PRINCIPLES = [
 
 export default async function HomePage() {
   const location = await getUserLocation();
-  const [jobs, auditions, counts, closedCount, { savedIds, loggedIn }] = await Promise.all([
+  const [jobs, auditions, counts, closedCount, { savedIds, loggedIn }, popups] = await Promise.all([
     getPostings({ board: "job", near: location }),
     getPostings({ board: "audition", near: location }),
     countByField("job"),
     countArchived(),
     getSavedIds(),
+    getLivePopups(),
   ]);
 
   // 현황판(실시간 수집 현황) 데이터 — 지금 모집 중인 실제 공고로 계산한다.
@@ -63,6 +66,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
+      {popups.length > 0 && <PopupModal popups={popups} />}
       <section className="grid items-start gap-8 py-12 md:grid-cols-2 md:gap-10 md:py-20">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-stone-500">순수예술 구인구직</p>

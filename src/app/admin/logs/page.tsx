@@ -20,6 +20,7 @@ const TARGET_HREF: Record<string, (id: string) => string> = {
   contact: (id) => `/admin/support?show=all&focus=${id}`,
   notice: (id) => `/admin/notices/${id}`,
   feedback: (id) => `/admin/feedback?show=all&focus=${id}`,
+  popup: () => "/admin/popups",
   system: () => "/admin/settings",
 };
 
