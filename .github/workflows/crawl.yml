@@ -41,9 +41,12 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
           } > .env.local
       # ── 소스별 단계. 새 소스는 같은 모양으로 한 줄씩 추가 ──
-      - name: 서울문화재단 (sfac)
+      - name: 서울문화재단 채용 (sfac)
         if: always()
         run: python scripts/crawler/crawl_sfac.py $DRY
+      - name: 서울문화재단 지원사업 공모 (sfac)
+        if: always()
+        run: python scripts/crawler/crawl_sfac_gongmo.py $DRY
       - name: 한국공예·디자인문화진흥원 (kcdf)
         if: always()
         run: python scripts/crawler/crawl_kcdf.py $DRY
