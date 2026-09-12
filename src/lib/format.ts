@@ -32,3 +32,38 @@ export function getDeadline(applyEnd: string | null): Deadline {
   if (diffDays <= 3) return { kind: "soon", label: `마감임박 D-${diffDays}` };
   return { kind: "normal", label: `D-${diffDays}` };
 }
+
+/** 날짜+시간 (2026.09.12 14:03). 서버·클라이언트 어디서든 같은 결과가 나오도록 KST 고정. */
+export function fmtDateTime(d: string | null | undefined): string {
+  if (!d) return "";
+  const t = new Date(d);
+  if (isNaN(t.getTime())) return d;
+  const k = new Date(t.getTime() + 9 * 60 * 60 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${k.getUTCFullYear()}.${p(k.getUTCMonth() + 1)}.${p(k.getUTCDate())} ${p(k.getUTCHours())}:${p(k.getUTCMinutes())}`;
+}
+
+/** "3분 전", "2일 전" 같은 상대 시각. 운영자 화면에서 최근 활동을 한눈에 볼 때 쓴다. */
+export function timeAgo(d: string | null | undefined): string {
+  if (!d) return "—";
+  const t = new Date(d).getTime();
+  if (isNaN(t)) return "—";
+  const diff = Date.now() - t;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "방금";
+  if (min < 60) return `${min}분 전`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}시간 전`;
+  const days = Math.floor(h / 24);
+  if (days < 30) return `${days}일 전`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}개월 전`;
+  return `${Math.floor(months / 12)}년 전`;
+}
+
+/** 오늘 날짜를 "2026년 9월 12일 (금)" 형식으로. */
+export function fmtTodayKo(d: Date = new Date()): string {
+  const k = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const days = ["일", "월", "화", "수", "목", "금", "토"];
+  return `${k.getUTCFullYear()}년 ${k.getUTCMonth() + 1}월 ${k.getUTCDate()}일 (${days[k.getUTCDay()]})`;
+}
