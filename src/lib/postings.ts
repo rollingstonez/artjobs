@@ -2,7 +2,7 @@
 // Supabase 가 연결되면 crawled_postings(크롤러) + org_postings(기관 직접 등록)을 합쳐 읽고,
 // 아니면 샘플 데이터(src/data/sample-postings.ts)를 읽는다.
 import { SAMPLE_POSTINGS } from "@/data/sample-postings";
-import { isLivingPosting, todayStr } from "@/lib/living";
+import { isLivingPosting, noDeadlineCutoff, todayStr } from "@/lib/living";
 import { rankNearness, type UserLocation } from "@/lib/location";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -229,17 +229,21 @@ export async function countArchived(): Promise<number> {
   const supabase = await createClient();
   if (!supabase) return 0;
   const today = todayStr();
+  const cutoff = noDeadlineCutoff(today); // 마감일 없는 공고는 등록 후 NO_DEADLINE_DAYS 일까지만 모집중
+  // isLivingPosting 과 같은 기준으로 "마감"을 센다: 마감일이 지났거나,
+  // 마감일이 없고 등록일이 cutoff 보다 오래된 공고.
+  const closed = `apply_end.lt.${today},and(apply_end.is.null,created_at.lt.${cutoff})`;
   const [crawled, org] = await Promise.all([
     supabase
       .from("crawled_postings")
       .select("id", { count: "exact", head: true })
       .eq("status", "open")
-      .lt("apply_end", today),
+      .or(closed),
     supabase
       .from("org_postings")
       .select("id", { count: "exact", head: true })
       .is("deleted_at", null)
-      .lt("apply_end", today),
+      .or(closed),
   ]);
   return (crawled.count ?? 0) + (org.count ?? 0);
 }
