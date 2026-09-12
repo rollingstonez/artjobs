@@ -68,34 +68,34 @@
 | 우선 | 확인 | 코드 | 이름 | 종류 | 분야 | 지역 | 수집 URL | 비고 |
 |---|---|---|---|---|---|---|---|---|
 | 1 | ✅ | `sfac` | 서울문화재단 채용공고 | 채용+공모 | 시각예술 전반 | 서울 | [www.sfac.or.kr](https://www.sfac.or.kr/opensquare/notice/recruit_list.do) | 입주작가 공모는 /participation/participation/artspace_movein.do (금천예술공장·서울예술창작센터 등). 직원 공채는 recruit.sfac.or.kr. |
-| 2 | 🔍 | `bscf` | 부산문화재단 | 채용+공모 | 시각예술 전반 | 부산 | [www.bscf.or.kr](https://www.bscf.or.kr) *(경로 실측)* | 채용관 busancf.saramin.co.kr. 홍티아트센터 레지던시 공모 포함. |
+| 2 | 🔍 | `bscf` | 부산문화재단 | 채용+공모 | 시각예술 전반 | 부산 | [www.bscf.or.kr](https://www.bscf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 busancf.saramin.co.kr. 홍티아트센터 레지던시 공모 포함. |
 | 2 | 🔍 | `busan_art` | 부산시립미술관 고시공고 | 채용+공모 | 전시기획·큐레이션·예술교육 | 부산 | [art.busan.go.kr](https://art.busan.go.kr/anucmt/list.nm) | 상세 /anucmt/view.nm 확인됨. 부산시 채용공고(busan.go.kr/nbincruit)에도 동시 게재. |
 | 2 | 🔍 | `daegu_art` | 대구미술관 | 채용+공모 | 전시기획·큐레이션·예술교육 | 대구 | [daeguartmuseum.or.kr](https://daeguartmuseum.or.kr) *(경로 실측)* | 채용·공고 게시판 경로 실측. |
 | 2 | 🔍 | `daejeon_art` | 대전시립미술관 | 채용+공모 | 전시기획·큐레이션·예술교육 | 대전 | [www.daejeon.go.kr](https://www.daejeon.go.kr/dma/DmaBoardList.do?menuSeq=6098) | 상세 /dma/DmaBoardView.do?menuSeq=6098 확인됨. 대전시 포털 하위라 robots 는 daejeon.go.kr 기준. |
-| 2 | ✅ | `gcaf` | 경남문화예술진흥원 공고 | 채용+공모 | 시각예술 전반 | 경남 | [www.gcaf.or.kr](https://www.gcaf.or.kr/bbs/board.php?bo_table=sub4_1) | 그누보드 공고 게시판(sub4_1). 마산현대미술관 레지던시 공모 등. |
-| 2 | 🔍 | `ggcf` | 경기문화재단 | 채용+공모 | 시각예술 전반 | 경기 | [www.ggcf.kr](https://www.ggcf.kr) *(경로 실측)* | 채용은 ggcf.saramin.co.kr(사람인 채용관 → 수집 대상 아님). 공모는 경기예술인지원센터(artist.ggcf.kr) 확인. |
-| 2 | ✅ | `gjcf` | 광주문화재단 채용공고 | 채용+공모 | 시각예술 전반 | 광주 | [www.gjcf.or.kr](https://www.gjcf.or.kr/cf/news/hire.do) | 열린광장 > 채용공고. |
+| 2 | ✅ | `gcaf` | 경남문화예술진흥원 공고 | 채용+공모 | 시각예술 전반 | 경남 | [www.gcaf.or.kr](https://www.gcaf.or.kr/bbs/board.php?bo_table=sub4_1) | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 그누보드 공고 게시판(sub4_1). 마산현대미술관 레지던시 공모 등. |
+| 2 | 🔍 | `ggcf` | 경기문화재단 | 채용+공모 | 시각예술 전반 | 경기 | [www.ggcf.kr](https://www.ggcf.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용은 ggcf.saramin.co.kr(사람인 채용관 → 수집 대상 아님). 공모는 경기예술인지원센터(artist.ggcf.kr) 확인. |
+| 2 | ✅ | `gjcf` | 광주문화재단 채용공고 | 채용+공모 | 시각예술 전반 | 광주 | [www.gjcf.or.kr](https://www.gjcf.or.kr/cf/news/hire.do) | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 열린광장 > 채용공고. |
 | 2 | 🔍 | `gmoma` | 경기도미술관 | 채용+공모 | 전시기획·큐레이션·예술교육 | 경기 | [gmoma.ggcf.kr](https://gmoma.ggcf.kr) *(경로 실측)* | 경기문화재단 계열. 채용은 재단 통합 채용(ggcf.saramin.co.kr)로 빠질 수 있음. |
 | 2 | 🔍 | `gwangju_art` | 광주시립미술관 | 채용+공모 | 전시기획·큐레이션·레지던시·공모 | 광주 | [artmuse.gwangju.go.kr](https://artmuse.gwangju.go.kr) *(경로 실측)* | 북구 창작스튜디오 입주작가 공모 포함. 경로 실측. |
-| 2 | 🔍 | `ifac` | 인천문화재단 | 채용+공모 | 시각예술 전반 | 인천 | [www.ifac.or.kr](https://www.ifac.or.kr) *(경로 실측)* | 채용관 ifac.incruit.com. 인천아트플랫폼 레지던시는 별도(inartplatform). |
-| 2 | ✅ | `jfac` | 제주문화예술재단 채용공고 | 채용+공모 | 시각예술 전반 | 제주 | [www.jcaf.or.kr](http://www.jcaf.or.kr/contents/index.php?mid=070102) | 채용관 recruit.incruit.com/jfac. 레지던시 입주작가 통합공모 매년 게시. |
+| 2 | 🔍 | `ifac` | 인천문화재단 | 채용+공모 | 시각예술 전반 | 인천 | [www.ifac.or.kr](https://www.ifac.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 ifac.incruit.com. 인천아트플랫폼 레지던시는 별도(inartplatform). |
+| 2 | ✅ | `jfac` | 제주문화예술재단 채용공고 | 채용+공모 | 시각예술 전반 | 제주 | [www.jcaf.or.kr](http://www.jcaf.or.kr/contents/index.php?mid=070102) | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 recruit.incruit.com/jfac. 레지던시 입주작가 통합공모 매년 게시. |
 | 2 | 🔍 | `njp` | 백남준아트센터 | 채용+공모 | 미디어아트·전시기획·큐레이션 | 경기 | [njp.ggcf.kr](https://njp.ggcf.kr) *(경로 실측)* | 미디어아트 핵심 기관. 공지·공모 경로 실측. |
-| 3 | 🔍 | `cbfc` | 충북문화재단 | 채용+공모 | 시각예술 전반 | 충북 | [www.cbfc.or.kr](https://www.cbfc.or.kr) *(경로 실측)* | 경로 실측. |
+| 3 | 🔍 | `cbfc` | 충북문화재단 | 채용+공모 | 시각예술 전반 | 충북 | [www.cbfc.or.kr](https://www.cbfc.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. |
 | 3 | 🔍 | `cheongju_art` | 청주시립미술관 | 채용+공모 | 전시기획·큐레이션 | 충북 | [cmoa.cheongju.go.kr](https://cmoa.cheongju.go.kr) *(경로 실측)* | 경로 실측. |
-| 3 | 🔍 | `ctcf` | 충남문화관광재단 | 채용+공모 | 시각예술 전반 | 충남 | [www.ctcf.or.kr](https://www.ctcf.or.kr) *(경로 실측)* | 경로 실측. |
-| 3 | 🔍 | `dcaf` | 대전문화재단 | 채용+공모 | 시각예술 전반 | 대전 | [www.dcaf.or.kr](https://www.dcaf.or.kr) *(경로 실측)* | 경로 실측. |
-| 3 | 🔍 | `dgfac` | 대구문화예술진흥원 | 채용+공모 | 시각예술 전반 | 대구 | [www.dgfac.or.kr](https://www.dgfac.or.kr) *(경로 실측)* | 도메인·경로 실측(대구예술발전소는 별도 daeguartfactory). |
-| 3 | 🔍 | `gacf` | 경북문화재단 | 채용+공모 | 시각예술 전반 | 경북 | [www.gacf.kr](http://www.gacf.kr) *(경로 실측)* | https 지원 여부·경로 실측. |
-| 3 | 🔍 | `gwcf` | 강원문화재단 | 채용+공모 | 시각예술 전반 | 강원 | [www.gwcf.or.kr](https://www.gwcf.or.kr) *(경로 실측)* | 경로 실측. 강원국제트리엔날레 공모 포함 가능. |
+| 3 | 🔍 | `ctcf` | 충남문화관광재단 | 채용+공모 | 시각예술 전반 | 충남 | [www.ctcf.or.kr](https://www.ctcf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. |
+| 3 | 🔍 | `dcaf` | 대전문화재단 | 채용+공모 | 시각예술 전반 | 대전 | [www.dcaf.or.kr](https://www.dcaf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. |
+| 3 | 🔍 | `dgfac` | 대구문화예술진흥원 | 채용+공모 | 시각예술 전반 | 대구 | [www.dgfac.or.kr](https://www.dgfac.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 도메인·경로 실측(대구예술발전소는 별도 daeguartfactory). |
+| 3 | 🔍 | `gacf` | 경북문화재단 | 채용+공모 | 시각예술 전반 | 경북 | [www.gacf.kr](http://www.gacf.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. https 지원 여부·경로 실측. |
+| 3 | 🔍 | `gwcf` | 강원문화재단 | 채용+공모 | 시각예술 전반 | 강원 | [www.gwcf.or.kr](https://www.gwcf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. 강원국제트리엔날레 공모 포함 가능. |
 | 3 | 🔍 | `gyeongnam_art` | 경남도립미술관 | 채용+공모 | 전시기획·큐레이션 | 경남 | [www.gyeongnam.go.kr](https://www.gyeongnam.go.kr) *(경로 실측)* | 경남도 포털 하위(/gam). 경로 실측. |
-| 3 | 🔍 | `jbct` | 전북문화관광재단 | 채용+공모 | 시각예술 전반 | 전북 | [www.jbct.or.kr](https://www.jbct.or.kr) *(경로 실측)* | 경로 실측. |
+| 3 | 🔍 | `jbct` | 전북문화관광재단 | 채용+공모 | 시각예술 전반 | 전북 | [www.jbct.or.kr](https://www.jbct.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. |
 | 3 | 🔍 | `jeju_art` | 제주도립미술관 | 채용+공모 | 전시기획·큐레이션 | 제주 | [www.jeju.go.kr](https://www.jeju.go.kr) *(경로 실측)* | 제주도 포털 하위(/jmoa). 경로 실측. |
 | 3 | 🔍 | `jeonbuk_art` | 전북도립미술관 | 채용+공모 | 전시기획·큐레이션·레지던시·공모 | 전북 | [www.jma.go.kr](https://www.jma.go.kr) *(경로 실측)* | 창작스튜디오 공모 포함. 경로 실측. |
 | 3 | 🔍 | `jeonnam_art` | 전남도립미술관 | 채용+공모 | 전시기획·큐레이션 | 전남 | [jnam.jeonnam.go.kr](https://jnam.jeonnam.go.kr) *(경로 실측)* | 경로 실측. |
-| 3 | 🔍 | `jncf` | 전남문화재단 | 채용+공모 | 시각예술 전반 | 전남 | [www.jncf.or.kr](https://www.jncf.or.kr) *(경로 실측)* | 채용관 jeonnam.saramin.co.kr. 본 사이트 경로 실측. |
-| 3 | 🔍 | `sjcf` | 세종시문화관광재단 | 채용+공모 | 시각예술 전반 | 세종 | [www.sjcf.or.kr](https://www.sjcf.or.kr) *(경로 실측)* | 경로 실측. |
+| 3 | 🔍 | `jncf` | 전남문화재단 | 채용+공모 | 시각예술 전반 | 전남 | [www.jncf.or.kr](https://www.jncf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 jeonnam.saramin.co.kr. 본 사이트 경로 실측. |
+| 3 | 🔍 | `sjcf` | 세종시문화관광재단 | 채용+공모 | 시각예술 전반 | 세종 | [www.sjcf.or.kr](https://www.sjcf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. |
 | 3 | 🔍 | `suwon_art` | 수원시립미술관 | 채용+공모 | 전시기획·큐레이션·예술교육 | 경기 | [suma.suwon.go.kr](https://suma.suwon.go.kr) *(경로 실측)* | 경로 실측. |
-| 3 | 🔍 | `uctf` | 울산문화관광재단 | 채용+공모 | 시각예술 전반 | 울산 | [www.uctf.or.kr](https://www.uctf.or.kr) *(경로 실측)* | 채용관 uctf.saramin.co.kr / recruit.incruit.com/uctf. 본 사이트 공고 경로 실측. |
+| 3 | 🔍 | `uctf` | 울산문화관광재단 | 채용+공모 | 시각예술 전반 | 울산 | [www.uctf.or.kr](https://www.uctf.or.kr) *(경로 실측)* | 아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 uctf.saramin.co.kr / recruit.incruit.com/uctf. 본 사이트 공고 경로 실측. |
 | 3 | 🔍 | `ulsan_art` | 울산시립미술관 | 채용+공모 | 전시기획·큐레이션·미디어아트 | 울산 | [www.ulsan.go.kr](https://www.ulsan.go.kr) *(경로 실측)* | 울산시 포털 하위(/s/uam). 경로 실측. |
 
 ## 4. 레지던시·비엔날레·사립미술관·전문분야 (16곳)
