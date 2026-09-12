@@ -180,6 +180,21 @@ def load_env(path=".env.local"):
     return env
 
 
+# 본문 HTML 등에서 딸려 오는 제어문자(널 문자 \x00 등)는 Postgres text 에 저장할 수 없어
+# INSERT/PATCH 를 400 으로 만든다(배치 전체가 실패). 탭·개행만 남기고 걷어낸다.
+_CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _scrub(v):
+    if isinstance(v, str):
+        return _CTRL_RE.sub("", v)
+    if isinstance(v, dict):
+        return {k: _scrub(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_scrub(x) for x in v]
+    return v
+
+
 # ── Supabase REST(PostgREST) ──
 class Supabase:
     def __init__(self, env):
@@ -214,7 +229,7 @@ class Supabase:
             requests.post, f"{self.url}/rest/v1/{path}",
             headers={**self.headers, "Prefer": "return=representation,resolution=ignore-duplicates"},
             params={"select": "id", "on_conflict": on_conflict},
-            data=json.dumps(rows), timeout=30,
+            data=json.dumps(_scrub(rows)), timeout=30,
         )
         r.raise_for_status()
         return [row["id"] for row in r.json()]
@@ -223,7 +238,7 @@ class Supabase:
         r = _retry(
             requests.patch, f"{self.url}/rest/v1/{path}",
             headers={**self.headers, "Prefer": "return=minimal"},
-            params=params, data=json.dumps(data), timeout=20,
+            params=params, data=json.dumps(_scrub(data)), timeout=20,
         )
         r.raise_for_status()
 
@@ -238,8 +253,13 @@ def parse_date(text):
     m = _DATE_RE.search(text or "")
     if not m:
         return None
-    y, mo, d = m.groups()
-    return f"{y}-{int(mo):02d}-{int(d):02d}"
+    y, mo, d = (int(g) for g in m.groups())
+    try:
+        # 불가능한 날짜(예: 본문에서 잘못 집힌 2026-19-99)는 date 컬럼 적재 시 Postgres 400 을
+        # 유발하므로 지어내지 말고 버린다.
+        return datetime(y, mo, d).strftime("%Y-%m-%d")
+    except ValueError:
+        return None
 
 
 def parse_period(text):
