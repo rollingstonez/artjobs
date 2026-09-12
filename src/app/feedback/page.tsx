@@ -54,7 +54,7 @@ export default async function FeedbackPage({ searchParams }: PageProps<"/feedbac
       {err && <div className="mb-4"><Notice kind="error">{err}</Notice></div>}
 
       {!HAS_SUPABASE ? (
-        <Notice>지금은 의견을 받을 수 없습니다. support@artjobs.kr 로 메일 주세요.</Notice>
+        <Notice>지금은 의견을 받을 수 없습니다. barohaus.com@gmail.com 로 메일 주세요.</Notice>
       ) : missing ? (
         <Notice kind="error">의견 게시판 준비가 아직 끝나지 않았습니다(0012 마이그레이션 필요). 잠시 뒤 다시 시도해 주세요.</Notice>
       ) : (

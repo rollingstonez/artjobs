@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 import requests
 
-UA = "ArtjobsBot/0.1 (+https://artjobs.kr; contact: support@artjobs.kr)"
+UA = "ArtjobsBot/0.1 (+https://artjobs.kr; contact: barohaus.com@gmail.com)"
 
 # (소스코드, 이름, base, 실제 수집 목록경로) — 대장은 sources.py 하나로 관리한다. 여기서 복사하지 말 것.
 from sources import robots_targets

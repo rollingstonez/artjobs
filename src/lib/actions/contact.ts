@@ -20,7 +20,7 @@ export async function submitContact(formData: FormData): Promise<void> {
   if (subject.length < 2 || subject.length > 120) fail("제목은 2~120자로 적어 주세요.");
   if (body.length < 5 || body.length > 4000) fail("내용은 5~4000자로 적어 주세요.");
   const supabase = await createClient();
-  if (!supabase) fail("지금은 문의를 받을 수 없습니다. support@artjobs.kr 로 메일 주세요.");
+  if (!supabase) fail("지금은 문의를 받을 수 없습니다. barohaus.com@gmail.com 로 메일 주세요.");
   const me = await getCurrentUser();
   const { error } = await supabase!.from("contact_messages").insert({ user_id: me?.id ?? null, name, email, category, subject, body });
   if (error) fail(`보내지 못했습니다: ${error.message}`);
