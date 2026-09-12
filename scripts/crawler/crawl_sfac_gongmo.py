@@ -72,7 +72,9 @@ def parse_list(html):
             skipped += 1
             continue
         key, url = _link_for(card)
-        if not key or key in seen:
+        if not key:   # 상위 앵커를 못 찾으면 제목 기반 키 + 목록 페이지로 폴백(그래도 담는다)
+            key, url = "t" + re.sub(r"\W+", "", title)[:40], LIST_URL
+        if key in seen:
             skipped += 1
             continue
         seen.add(key)
