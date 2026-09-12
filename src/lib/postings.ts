@@ -119,9 +119,11 @@ async function loadAll(): Promise<Posting[]> {
     supabase.from("crawled_postings").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(2000),
     supabase.from("org_postings").select("*").eq("status", "open").is("deleted_at", null).order("created_at", { ascending: false }).limit(1000),
   ]);
+  // 운영자가 숨긴 수집 공고(hidden_at, 0010)는 뺀다. RLS 가 비로그인·일반 회원에게는 이미 가리지만,
+  // 운영자 계정으로 공개 화면을 볼 때도 같은 화면이 보이도록 여기서 한 번 더 거른다(칸이 없어도 안전).
   return [
     ...((org.data ?? []) as Row[]).map((r) => fromRow(r, "org")),
-    ...((crawled.data ?? []) as Row[]).map((r) => fromRow(r, "crawled")),
+    ...((crawled.data ?? []) as Row[]).filter((r) => r.hidden_at == null).map((r) => fromRow(r, "crawled")),
   ];
 }
 
@@ -201,9 +203,11 @@ export async function getPostingsByIds(ids: string[]): Promise<Posting[]> {
     orgIds.length ? supabase.from("org_postings").select("*").in("id", orgIds) : Promise.resolve({ data: [] }),
     crawledIds.length ? supabase.from("crawled_postings").select("*").in("id", crawledIds) : Promise.resolve({ data: [] }),
   ]);
+  // 운영자가 숨긴 수집 공고(hidden_at, 0010)는 뺀다. RLS 가 비로그인·일반 회원에게는 이미 가리지만,
+  // 운영자 계정으로 공개 화면을 볼 때도 같은 화면이 보이도록 여기서 한 번 더 거른다(칸이 없어도 안전).
   return [
     ...((org.data ?? []) as Row[]).map((r) => fromRow(r, "org")),
-    ...((crawled.data ?? []) as Row[]).map((r) => fromRow(r, "crawled")),
+    ...((crawled.data ?? []) as Row[]).filter((r) => r.hidden_at == null).map((r) => fromRow(r, "crawled")),
   ];
 }
 

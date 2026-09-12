@@ -15,6 +15,12 @@ export default function SiteFooter() {
           <Link href="/auditions" className="hover:text-stone-900">
             오디션·공모
           </Link>
+          <Link href="/notices" className="hover:text-stone-900">
+            공지사항
+          </Link>
+          <Link href="/support" className="hover:text-stone-900">
+            문의하기
+          </Link>
         </div>
         <p className="mt-3 leading-relaxed">
           아트잡스는 미술·음악·무용·국악·연극 기관이 공개한 채용·공모 정보를 허용된 범위에서

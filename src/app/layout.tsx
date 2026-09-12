@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import VisitTracker from "@/components/VisitTracker";
 import { SITE_URL } from "@/lib/site";
 import { getCurrentUser } from "@/lib/auth";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
@@ -42,6 +43,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-stone-50 text-stone-900">
         <SiteNav user={navUser} accountsEnabled={HAS_SUPABASE} />
+        {HAS_SUPABASE && <VisitTracker />}
         {children}
         <SiteFooter />
       </body>

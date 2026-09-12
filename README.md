@@ -99,14 +99,27 @@ python scripts/crawler/robots_check.py <base_url> <목록경로>   # 단건
 - 한 사람 3개까지, 60일 만료(연장 가능). 예술가 마이페이지 `/me/seeking`, 운영자 `/admin/seeking`에서 내리기.
 - 크롤러는 구직·인력풀 게시판을 절대 수집하지 않는다(개인정보). 구직 글은 회원이 직접 올리는 것만.
 
-## 운영자 (0007)
+## 운영자 (0007 · 0008 · 0010 · 0011)
 
-- **지정 방식**: 별도 역할 없이 `profiles.is_admin` 플래그. 운영자는 **구인자(기관)로 가입**한다. `lkseok911@gmail.com` 은 가입 트리거가 자동으로 관리자로 만든다(내니잡·바로쌤과 같은 방식). 다른 운영자는 `/admin/users` 에서 "운영자 지정".
-- **화면** `/admin` (마이페이지 왼쪽 메뉴의 🛠 운영자): 현황 · 기관 인증(`/admin/orgs`) · 신고 처리(`/admin/reports`) · 회원 검색·정지·운영자 지정(`/admin/users`, 이메일은 `admin_list_users()` 함수로만) · 기관 공고 마감·내리기(`/admin/postings`) · 크롤 소스 스위치(`/admin/sources`, robots 허용·협의 완료만 켜짐).
+- **지정 방식**: 별도 역할 없이 `profiles.is_admin` 플래그. 운영자는 **구인자(기관)로 가입**한다. `lkseok911@gmail.com` 은 가입 트리거가 자동으로 관리자로 만든다(내니잡·바로쌤과 같은 방식). 다른 운영자는 `/admin/users` 에서 "운영자 지정", `/admin/settings` 에서 목록·해제.
+- **관리자 센터** `/admin` (마이페이지 왼쪽 메뉴의 🛠 운영자). 바로쌤 어드민 구조를 아트잡스 데이터에 맞게 옮겼다. 왼쪽 그룹 메뉴 + 배지(처리 대기 수), 대시보드에 관리 메뉴 그리드.
+  - **현황** `/admin`: 오늘 처리할 일(인증 대기·미처리 신고·새 문의·마감 지난 모집중 공고·정지 계정·7일 지원) · 가입 추이 14일 막대(예술가/기관) · 회원 구성·인증 기관·프로필 완성률(28일 코호트) · 공고·지원·대화 카드 · 최근 7일 활동(로그인·재로그인·메시지 보낸 사람·양방향 대화·활성 비율) · 소스별 수집 현황 · 최근 운영 기록.
+  - **회원** `/admin/users`(역할·상태·인증·프로필 완성·가입 기간·정렬·검색·페이지) → `/admin/users/[id]` 상세(가입 경로·마지막 로그인·프로필·포트폴리오·지원/공고 이력·알림 설정 점검·신고·차단·운영 메모·운영팀 알림 보내기·정지/운영자/인증/인재정보 비공개). `/admin/orgs` 기관 인증(대기·인증됨·전체, 공고·지원 수, 검색 확인 링크).
+  - **공고·지원** `/admin/postings` 기관 공고(모집중·마감일 지남·마감·임시·내림·복구), `/admin/crawled` 수집 공고(소스·게시판·상태 필터, **숨기기/숨김 해제/마감** — README 의 "아직 없는 것"이던 개별 숨기기), `/admin/applications` 지원 현황(단계별 수·기간), `/admin/seeking` 구직 글(🚩 연락처 의심 필터·내리기·복구).
+  - **신뢰·안전** `/admin/reports` 신고(미처리→확인함→종결, 유형 필터, 피신고 반복 표시, 계정 정지), `/admin/blocks` 차단 모니터(반복 피차단 강조), `/admin/messages` 대화 모니터(건수·양방향·응답 대기만, **본문 없음**).
+  - **소통** `/admin/support` 고객 문의(공개 폼 `/support`, 답변·상태·내부 메모, 회원 문의는 답변 알림), `/admin/notices` 공지사항(작성·공개·고정, 공개 화면 `/notices`), `/admin/sent` 운영팀 발신함(회원에게 보낸 알림·읽음 여부).
+  - **시스템** `/admin/sources` 크롤 소스(스위치 + 소스별 누적·모집중·7일·마지막 확인, 파서 유무 표시), `/admin/stats` 통계(가입·공고·지원·대화·구직·문의 추이 7/30/90일, 분야·지역·게시판·고용형태·회원 분포), `/admin/logs` 활동 로그(기간·대상·운영자·액션 필터), `/admin/settings` 환경 설정(운영자 목록, 만료 지원서 파기 실행, 환경 정보, 0010 적용 여부).
+- **DB 확장 0010** (`supabase/migrations/0010_admin_center.sql`, SQL Editor 에서 실행): 운영자 읽기 정책(저장·알림 조건·알림·설정·차단·포트폴리오·심사·대화방 메타), `crawled_postings.hidden_at`, 운영자 알림 insert, `contact_messages`·`site_notices`·`admin_user_notes` 테이블, 운영자 전용 함수(`admin_search_users`·`admin_user_auth`·`admin_conversation_list`·`admin_daily_counts`·`admin_activity_7d`·`admin_source_stats`·`admin_distribution`·`admin_purge_applications`). 적용 전에도 어드민은 열리며, 해당 화면에 "0010 을 실행하세요" 안내가 뜬다.
 - **정지 계정**: 로그인은 되지만 회원 페이지는 `/suspended` 안내로 가고, DB 의 restrictive 정책이 메시지·대화·지원·공고·심사 쓰기를 막는다. 공고 보기는 계속 된다.
-- **보안**: 0004 의 "본인 수정" 정책은 칸을 안 가려서 자기 `is_admin`·`status`·`is_verified` 를 바꿀 수 있었다. 0007 의 트리거(`protect_profile_flags`·`protect_org_flags`)가 관리자가 아니면 막는다. 메시지 본문은 운영자도 읽지 않는다.
-- **인증 기관 뱃지** (0008): 기관이 인증되면 그 기관 공고 전체의 `org_verified` 가 트리거로 갱신되고, 카드·상세에 "✓ 인증" 이 붙는다. **활동 로그** `/admin/logs`: 인증·정지·운영자 지정·신고 처리·공고 마감·소스 스위치가 `admin_logs` 에 남는다.
-- 아직 없는 것: 크롤 공고 개별 숨기기.
+- **보안**: 0004 의 "본인 수정" 정책은 칸을 안 가려서 자기 `is_admin`·`status`·`is_verified` 를 바꿀 수 있었다. 0007 의 트리거(`protect_profile_flags`·`protect_org_flags`)가 관리자가 아니면 막는다. **메시지 본문은 운영자도 읽지 않는다**(대화 모니터는 건수만 돌려주는 security definer 함수).
+- **인증 기관 뱃지** (0008): 기관이 인증되면 그 기관 공고 전체의 `org_verified` 가 트리거로 갱신되고, 카드·상세에 "✓ 인증" 이 붙는다. **활동 로그** `/admin/logs`: 인증·정지·운영자 지정·신고 처리·공고 마감/내림/복구·수집 공고 숨김·구직 글·소스 스위치·문의 처리·공지·알림 발송·파기가 `admin_logs` 에 남는다.
+- **방문·유입 통계 0011** (`supabase/migrations/0011_traffic.sql`, SQL Editor 에서 실행): 바로쌤의 방문 기록을 옮겼다. `/admin/traffic` 유입·방문.
+  - 기록: 루트 레이아웃의 `VisitTracker` 가 브라우저 세션당 1회 `/api/track/visit` 를 부르고, 서버가 유입원(utm → 이전 페이지 도메인 → 직접)·기기·브라우저·봇을 판정해 `track_visit()`(security definer) 로 `visit_logs` 에 넣는다. **IP 는 저장하지 않고**, 봇은 표시만 해 통계에서 뺀다. 신규/재방문은 브라우저 표식(localStorage)으로 판정한다. `/admin` 방문은 세지 않는다. 앱은 service role 을 쓰지 않는다(함수로만 쓰기, 읽기는 운영자 RLS).
+  - 가입 귀속(first-touch): 첫 방문 때 `aj_attr` 쿠키(90일)에 유입 정보를 남기고, 이메일 가입은 metadata → `handle_new_user`, 소셜 가입은 콜백 → `set_signup_attribution()` 으로 `profiles.signup_source / signup_device_type / signup_attribution` 에 넣는다(가입 10분 안, 비어 있을 때만).
+  - 채널 단축링크: `/r/{code}` (예: `/r/gugak1`). 카톡방·밴드·카페마다 다른 링크를 나눠 주면 `referral_visits` 에 클릭이 남고 utm 을 붙여 홈으로 간다 → 방별 클릭·방문·가입 수가 보인다. 링크는 `/admin/traffic` 에서 만든다.
+  - 화면: 방문·사람 수(추정)·가입·가입 전환율·붐비는 시간/날, 일별 추이(평균선), 신규/재방문, 날짜×시간 히트맵, 유입 경로·기기·브라우저(인앱 구분)·처음 연 페이지·이전 도메인, 가입 유입원별(기간·전체), 광고 성과(utm_medium=cpc), 채널 표, 월별 일자 표(요일 색, 가입 있는 날 강조). 대시보드에도 7일 방문 카드, 통계 요약에 방문·전환율.
+  - 광고·홍보 링크에는 `?utm_source=naver&utm_medium=cpc&utm_campaign=이름` 처럼 utm 을 붙인다. 집계는 `admin_traffic(p_days)` 한 함수가 JSON 으로 돌려준다.
+- 아직 없는 것: 이메일 발송(문의 답변 메일), 부관리자 권한 세분화(바로쌤의 admin_grants), 광고비·CPA(광고 플랫폼 API 연동 필요).
 
 ## 배포
 
