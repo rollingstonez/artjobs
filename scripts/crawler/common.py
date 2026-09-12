@@ -195,6 +195,13 @@ def _scrub(v):
     return v
 
 
+def _raise_for_status(r):
+    """4xx·5xx 면 응답 본문(PostgREST 오류 상세)까지 담아 예외를 올린다 — 왜 거부됐는지 로그에 남게."""
+    if not r.ok:
+        body = (r.text or "")[:1000]
+        raise requests.HTTPError(f"{r.status_code} {r.reason} for {r.url}\n  본문: {body}", response=r)
+
+
 # ── Supabase REST(PostgREST) ──
 class Supabase:
     def __init__(self, env):
@@ -231,7 +238,7 @@ class Supabase:
             params={"select": "id", "on_conflict": on_conflict},
             data=json.dumps(_scrub(rows)), timeout=30,
         )
-        r.raise_for_status()
+        _raise_for_status(r)
         return [row["id"] for row in r.json()]
 
     def patch(self, path, params, data):
@@ -240,7 +247,7 @@ class Supabase:
             headers={**self.headers, "Prefer": "return=minimal"},
             params=params, data=json.dumps(_scrub(data)), timeout=20,
         )
-        r.raise_for_status()
+        _raise_for_status(r)
 
 
 # ── 파싱 도구 ──
