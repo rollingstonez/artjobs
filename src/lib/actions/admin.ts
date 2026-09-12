@@ -298,6 +298,71 @@ export async function deleteNotice(id: string): Promise<void> {
   back("/admin/notices", { ok: "공지를 삭제했습니다." });
 }
 
+// ───────────────────────── 첫 화면 팝업 ─────────────────────────
+function revalidatePopups() {
+  revalidatePath("/admin/popups");
+  revalidatePath("/");
+}
+
+/** 팝업 만들기·수정. id 가 있으면 수정.
+ *  노출 기간 입력칸(datetime-local)은 "2026-09-13T09:00" 처럼 시간대 표시가 없는 값을 보낸다.
+ *  서버는 UTC 로 도는데 운영자는 한국시간으로 적으므로, 여기서 +09:00 을 붙여 한국시간으로 해석한다. */
+export async function savePopup(id: string | null, formData: FormData): Promise<void> {
+  const me = await requireAdmin("/admin/popups");
+  const title = str(formData, "title");
+  const body = str(formData, "body");
+  const imageUrl = str(formData, "image_url");
+  const linkUrl = str(formData, "link_url");
+  const target = str(formData, "target") || "all";
+  const startsAt = str(formData, "starts_at");
+  const endsAt = str(formData, "ends_at");
+  const order = parseInt(str(formData, "display_order"), 10);
+  const isPublished = formData.get("is_published") === "on";
+  if (title.length < 2) back("/admin/popups", { err: "제목은 2자 이상 적어 주세요." });
+  if (!["all", "guest", "artist", "organization"].includes(target)) back("/admin/popups", { err: "대상 값이 잘못됐습니다." });
+  if (startsAt && endsAt && startsAt > endsAt) back("/admin/popups", { err: "노출 시작이 종료보다 늦습니다." });
+  if (imageUrl && !/^https?:\/\//.test(imageUrl)) back("/admin/popups", { err: "이미지 주소는 http:// 또는 https:// 로 시작해야 합니다." });
+
+  const row: Record<string, unknown> = {
+    title, body: body || null, image_url: imageUrl || null, link_url: linkUrl || null, target,
+    starts_at: startsAt ? new Date(`${startsAt}:00+09:00`).toISOString() : null,
+    ends_at: endsAt ? new Date(`${endsAt}:00+09:00`).toISOString() : null,
+    display_order: Number.isFinite(order) ? order : 0,
+    is_published: isPublished,
+  };
+  const supabase = (await createClient())!;
+  if (id) {
+    const { error } = await supabase.from("popups").update(row).eq("id", id);
+    if (error) back("/admin/popups", { err: error.message });
+    await log(supabase, me.id, "popup_update", "popup", id, { title });
+    revalidatePopups();
+    back("/admin/popups", { ok: "팝업을 저장했습니다." });
+  }
+  const { data, error } = await supabase.from("popups").insert({ ...row, created_by: me.id }).select("id").single();
+  if (error || !data) back("/admin/popups", { err: error?.message ?? "저장 실패" });
+  await log(supabase, me.id, "popup_create", "popup", data.id, { title });
+  revalidatePopups();
+  back("/admin/popups", { ok: isPublished ? "팝업을 만들고 공개했습니다. 홈에서 바로 보입니다." : "팝업을 만들었습니다(비공개). 공개하기를 누르면 홈에 뜹니다." });
+}
+
+export async function togglePopupPublished(id: string, publish: boolean): Promise<void> {
+  const me = await requireAdmin("/admin/popups");
+  const supabase = (await createClient())!;
+  await supabase.from("popups").update({ is_published: publish }).eq("id", id);
+  await log(supabase, me.id, "popup_update", "popup", id, { is_published: publish });
+  revalidatePopups();
+}
+
+export async function deletePopup(id: string): Promise<void> {
+  const me = await requireAdmin("/admin/popups");
+  const supabase = (await createClient())!;
+  const { error } = await supabase.from("popups").delete().eq("id", id);
+  if (error) back("/admin/popups", { err: error.message });
+  await log(supabase, me.id, "popup_delete", "popup", id);
+  revalidatePopups();
+  back("/admin/popups", { ok: "팝업을 삭제했습니다." });
+}
+
 // ───────────────────────── 의견(/feedback) ─────────────────────────
 export async function updateFeedback(id: string, formData: FormData): Promise<void> {
   const me = await requireAdmin("/admin/feedback");

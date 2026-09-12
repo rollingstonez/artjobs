@@ -27,6 +27,9 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   notice_update: "공지 수정",
   notice_delete: "공지 삭제",
   purge_applications: "만료 지원서 파기",
+  popup_create: "팝업 만듦",
+  popup_update: "팝업 수정",
+  popup_delete: "팝업 삭제",
   feedback_update: "의견 처리",
   feedback_delete: "의견 삭제",
   channel_create: "채널 링크 만듦",
@@ -45,6 +48,7 @@ export const ADMIN_TARGET_LABEL: Record<string, string> = {
   contact: "문의",
   notice: "공지",
   feedback: "의견",
+  popup: "팝업",
   channel: "채널 링크",
   system: "시스템",
 };
@@ -97,6 +101,17 @@ export function maskName(name: string): string {
   if (n.length <= 1) return n;
   if (n.length === 2) return `${n[0]}O`;
   return `${n[0]}${"O".repeat(n.length - 2)}${n[n.length - 1]}`;
+}
+
+export const POPUP_TARGET = [
+  { code: "all", label: "모두에게" },
+  { code: "guest", label: "비로그인 방문자만", note: "가입 유도" },
+  { code: "artist", label: "예술가 회원만" },
+  { code: "organization", label: "기관 회원만" },
+] as const;
+
+export function popupTargetLabel(code: string | null): string {
+  return POPUP_TARGET.find((t) => t.code === code)?.label ?? "모두에게";
 }
 
 export const NOTICE_KIND = [

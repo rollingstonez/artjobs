@@ -67,3 +67,11 @@ export function fmtTodayKo(d: Date = new Date()): string {
   const days = ["일", "월", "화", "수", "목", "금", "토"];
   return `${k.getUTCFullYear()}년 ${k.getUTCMonth() + 1}월 ${k.getUTCDate()}일 (${days[k.getUTCDay()]})`;
 }
+
+/** timestamptz → datetime-local 입력칸 값("YYYY-MM-DDTHH:mm", 한국시간). 없으면 빈 문자열. */
+export function toDatetimeLocalKst(d: string | null | undefined): string {
+  if (!d) return "";
+  const t = new Date(d);
+  if (isNaN(t.getTime())) return "";
+  return new Date(t.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
+}
