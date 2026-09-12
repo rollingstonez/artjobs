@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { contactError } from "@/lib/validation/contact";
 import { REGION_CENTERS } from "@/lib/location";
 import { ORG_TYPES, PORTFOLIO_KINDS, artistCompleteness, orgCompleteness, type ArtistProfile, type OrgProfile } from "@/types/account";
 import { EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
@@ -50,6 +51,8 @@ export async function saveArtistProfile(_p: ActionResult | null, fd: FormData): 
     is_public: fd.get("is_public") === "on",
     allow_messages: fd.get("allow_messages") === "on",
   };
+  const contact = contactError([patch.bio, patch.career, patch.education].filter(Boolean).join("\n"), "profile");
+  if (contact) return { ok: false, error: contact };
   const merged = { ...(me.artist as ArtistProfile), ...patch };
   patch.profile_completed = artistCompleteness(merged).percent === 100;
 

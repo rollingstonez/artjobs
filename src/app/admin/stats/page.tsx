@@ -68,7 +68,7 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
       </div>
 
       {/* 활동 */}
-      <Card title="활동 — 얼마나 살아있나" sub="최근 7일 고정">
+      <Card title="활동 — 얼마나 살아있나" sub="최근 7일 고정" action={<Link href="/admin/stats/active" className="text-xs font-semibold text-stone-500 hover:text-stone-900">활성 회원 명단 →</Link>}>
         {activity.error ? <ErrorNote message={activity.error} missing={activity.missing} /> : act ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {[

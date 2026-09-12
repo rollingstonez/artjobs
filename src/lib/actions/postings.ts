@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { REGION_CENTERS } from "@/lib/location";
 import { getPosting, splitPostingId } from "@/lib/postings";
 import { createClient } from "@/lib/supabase/server";
+import { contactError } from "@/lib/validation/contact";
 import { BOARDS, EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
 import type { ActionResult } from "./auth";
 
@@ -142,12 +143,19 @@ function postingPatch(fd: FormData, orgName: string) {
   };
 }
 
+/** 공고 본문에 개인 연락처가 들어갔는지 확인한다(기관 대표번호는 허용). */
+function postingContactError(patch: { description?: string | null; required_docs?: string | null; title?: string }): string | null {
+  return contactError([patch.title, patch.description, patch.required_docs].filter(Boolean).join("\n"), "posting");
+}
+
 export async function createOrgPosting(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {
   const me = await requireUser("/post", "organization");
   const supabase = (await createClient())!;
   const patch = postingPatch(fd, me.org?.org_name ?? me.profile.display_name);
   if (patch.title.length < 5) return { ok: false, error: "공고 제목을 5자 이상 적어주세요." };
   if (!patch.field) return { ok: false, error: "분야를 골라주세요." };
+  const contact = postingContactError(patch);
+  if (contact) return { ok: false, error: contact };
   if (!patch.region) return { ok: false, error: "지역을 골라주세요." };
   if (patch.apply_method === "external" && !patch.apply_url) return { ok: false, error: "접수 페이지 주소를 적어주세요." };
   const { data, error } = await supabase
@@ -170,6 +178,8 @@ export async function updateOrgPosting(_p: ActionResult | null, fd: FormData): P
   if (patch.title.length < 5) return { ok: false, error: "공고 제목을 5자 이상 적어주세요." };
   if (!patch.field) return { ok: false, error: "분야를 골라주세요." };
   if (!patch.region) return { ok: false, error: "지역을 골라주세요." };
+  const contact = postingContactError(patch);
+  if (contact) return { ok: false, error: contact };
   const { error } = await supabase.from("org_postings").update(patch).eq("id", id).eq("org_user_id", me.id);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/jobs");

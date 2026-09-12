@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { FEEDBACK_CATEGORY } from "@/lib/admin/labels";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { contactError } from "@/lib/validation/contact";
 
 export async function submitFeedback(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "").trim();
@@ -18,6 +19,8 @@ export async function submitFeedback(formData: FormData): Promise<void> {
   if (honey) redirect("/feedback?ok=1");
   if (!FEEDBACK_CATEGORY.some((c) => c.code === category)) fail("의견 종류를 골라 주세요.");
   if (content.length < 5 || content.length > 500) fail("의견은 5~500자로 적어 주세요.");
+  const contact = contactError(content, "feedback");
+  if (contact) fail(contact);
 
   const supabase = await createClient();
   if (!supabase) fail("지금은 의견을 받을 수 없습니다. 잠시 뒤 다시 시도해 주세요.");
