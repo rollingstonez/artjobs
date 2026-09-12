@@ -19,6 +19,7 @@ const TARGET_HREF: Record<string, (id: string) => string> = {
   source: (id) => `/admin/sources?q=${id}`,
   contact: (id) => `/admin/support?show=all&focus=${id}`,
   notice: (id) => `/admin/notices/${id}`,
+  feedback: (id) => `/admin/feedback?show=all&focus=${id}`,
   system: () => "/admin/settings",
 };
 
@@ -58,7 +59,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps<"/admin/
   const targetLabel = (r: AdminLog) => {
     if (r.target_type === "user" || r.target_type === "org") return names.get(r.target_id ?? "")?.display_name ?? r.target_id ?? "";
     if (r.target_type === "posting") return (postings ?? []).find((p) => p.id === r.target_id)?.title ?? r.target_id ?? "";
-    if (r.target_type === "report" || r.target_type === "contact" || r.target_type === "notice" || r.target_type === "crawled" || r.target_type === "seeking") return `${ADMIN_TARGET_LABEL[r.target_type]} ${(r.target_id ?? "").slice(0, 8)}`;
+    if (["report", "contact", "notice", "crawled", "seeking", "feedback"].includes(r.target_type ?? "")) return `${ADMIN_TARGET_LABEL[r.target_type ?? ""] ?? ""} ${(r.target_id ?? "").slice(0, 8)}`;
     return r.target_id ?? "";
   };
   const detailText = (d: Record<string, unknown> | null) => {

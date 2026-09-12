@@ -111,10 +111,11 @@ export default async function AdminHome() {
       <section className="rounded-2xl bg-stone-900 p-3 text-white sm:p-4">
         <h2 className="text-sm font-extrabold">오늘 처리할 일</h2>
         <p className="mt-0.5 text-[11px] text-stone-400">지금 검토·응답이 필요한 건입니다. 숫자를 누르면 그 화면으로 갑니다.</p>
-        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
           <Todo label="인증 대기 기관" value={badges.pendingOrgs} href="/admin/orgs" accent />
           <Todo label="미처리 신고" value={badges.openReports} href="/admin/reports" accent />
           <Todo label="새 문의" value={badges.newContacts} href="/admin/support?show=new" accent />
+          <Todo label="새 의견" value={badges.newFeedback} href="/admin/feedback?show=new" accent />
           <Todo label="마감일 지난 모집중 공고" value={orgOverdue} href="/admin/postings?show=overdue" />
           <Todo label="정지된 계정" value={badges.suspended} href="/admin/users?status=suspended" />
           <Todo label="최근 7일 지원" value={apps7} href="/admin/applications?days=7" />
