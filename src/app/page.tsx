@@ -5,7 +5,7 @@ import PostingCard from "@/components/PostingCard";
 import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
-import { countByField, getPostings } from "@/lib/postings";
+import { countArchived, countByField, getPostings } from "@/lib/postings";
 import { FIELDS, genresOf } from "@/types/job";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +34,11 @@ const PRINCIPLES = [
 
 export default async function HomePage() {
   const location = await getUserLocation();
-  const [jobs, auditions, counts, { savedIds, loggedIn }] = await Promise.all([
+  const [jobs, auditions, counts, closedCount, { savedIds, loggedIn }] = await Promise.all([
     getPostings({ board: "job", near: location }),
     getPostings({ board: "audition", near: location }),
     countByField("job"),
+    countArchived(),
     getSavedIds(),
   ]);
 
@@ -96,6 +97,7 @@ export default async function HomePage() {
         <CollectionDashboard
           jobCount={jobs.length}
           auditionCount={auditions.length}
+          closedCount={closedCount}
           orgCount={orgCount}
           lastCollected={lastCollected}
           items={dashboardItems}

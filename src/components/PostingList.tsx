@@ -5,8 +5,12 @@ import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
 import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
+import { isLivingPosting } from "@/lib/living";
 import { DATA_SOURCE, getPostings, type PostingFilters } from "@/lib/postings";
 import { boardLabel, type BoardCode } from "@/types/job";
+
+// 마감 공고를 지우지 않고 이 기간(일) 안쪽까지 목록 뒤에 남겨 둔다. 너무 오래된 건 감춘다.
+const CLOSED_WINDOW_DAYS = 60;
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -41,7 +45,16 @@ export default async function PostingList({
     filters.role = undefined;
     filters.employmentType = undefined;
   }
-  const postings = await getPostings({ board, near: location, ...filters });
+  // 모집중 + 최근 마감(아카이브)을 함께 불러온 뒤, 모집중은 위에·마감은 뒤로 나눠 보여준다.
+  const all = await getPostings({
+    board,
+    near: location,
+    ...filters,
+    status: "all",
+    closedWithinDays: CLOSED_WINDOW_DAYS,
+  });
+  const postings = all.filter((p) => isLivingPosting(p.applyEnd, p.createdAt));
+  const closed = all.filter((p) => !isLivingPosting(p.applyEnd, p.createdAt));
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
@@ -74,7 +87,30 @@ export default async function PostingList({
       </div>
 
       {postings.length === 0 && (
-        <p className="mt-10 text-center text-sm text-stone-500">조건에 맞는 공고가 없습니다.</p>
+        <p className="mt-10 text-center text-sm text-stone-500">
+          {closed.length > 0
+            ? "지금 모집중인 공고는 없습니다. 아래 지난 공고를 참고하세요."
+            : "조건에 맞는 공고가 없습니다."}
+        </p>
+      )}
+
+      {/* 지난 공고(마감) — 지우지 않고 참고용으로 남겨 둔다. 카드는 흐리게 표시된다. */}
+      {closed.length > 0 && (
+        <section className="mt-10">
+          <div className="flex items-center gap-3">
+            <h2 className="shrink-0 text-sm font-bold text-stone-500">지난 공고 · 마감</h2>
+            <span className="text-xs text-stone-400">{closed.length}건</span>
+            <span className="h-px flex-1 bg-stone-200" />
+          </div>
+          <p className="mt-1 text-xs text-stone-400">
+            최근 {CLOSED_WINDOW_DAYS}일 안에 마감된 공고입니다. 접수는 끝났지만 원문은 참고할 수 있습니다.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {closed.map((p) => (
+              <PostingCard key={p.id} posting={p} near={location} savedIds={savedIds} loggedIn={loggedIn} />
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );

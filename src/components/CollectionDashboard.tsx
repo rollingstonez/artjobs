@@ -20,6 +20,7 @@ export interface DashboardItem {
 interface Props {
   jobCount: number;
   auditionCount: number;
+  closedCount: number; // 마감(모집 종료)돼 아카이브로 쌓인 누적 공고 수
   orgCount: number;
   lastCollected: string | null; // 가장 최근에 수집된 공고 날짜(YYYY-MM-DD)
   items: DashboardItem[];
@@ -31,6 +32,7 @@ const fmtClock = (d: Date) =>
 export default function CollectionDashboard({
   jobCount,
   auditionCount,
+  closedCount,
   orgCount,
   lastCollected,
   items,
@@ -68,10 +70,15 @@ export default function CollectionDashboard({
         </span>
       </div>
 
-      {/* 총 모집 건수 */}
+      {/* 총 모집 건수 (+ 지금껏 쌓인 마감 공고 수) */}
       <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="text-4xl font-extrabold tabular-nums md:text-5xl">{total.toLocaleString("ko-KR")}</span>
         <span className="text-sm text-stone-300">건 모집 중</span>
+        {closedCount > 0 && (
+          <span className="text-sm text-stone-500">
+            · 마감 {closedCount.toLocaleString("ko-KR")}건
+          </span>
+        )}
       </div>
 
       {/* 게시판별 건수 */}

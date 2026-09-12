@@ -2,7 +2,7 @@
 // Supabase 가 연결되면 crawled_postings(크롤러) + org_postings(기관 직접 등록)을 합쳐 읽고,
 // 아니면 샘플 데이터(src/data/sample-postings.ts)를 읽는다.
 import { SAMPLE_POSTINGS } from "@/data/sample-postings";
-import { isLivingPosting } from "@/lib/living";
+import { isLivingPosting, todayStr } from "@/lib/living";
 import { rankNearness, type UserLocation } from "@/lib/location";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -20,8 +20,35 @@ export interface PostingFilters {
   region?: string;
   q?: string;
   includeClosed?: boolean;
+  /**
+   * 어떤 공고를 보여줄지.
+   *   "living"(기본) 모집중만 · "closed" 마감된 것만 · "all" 모집중 먼저 + 마감을 뒤에.
+   * 마감 공고도 지우지 않고 아카이브로 남겨, 사이트에 늘 볼거리가 있게 한다.
+   */
+  status?: "living" | "closed" | "all";
+  /** status 가 closed·all 일 때, 마감 후 이 일수 안쪽만 보여준다(아주 오래된 건 감춤). 없으면 전부. */
+  closedWithinDays?: number;
   /** 사용자 위치. 주면 가까운 공고(같은 시·도 → 인접권·전국 → 그 밖)가 먼저 온다. */
   near?: UserLocation | null;
+}
+
+/** 오늘로부터 days 일 전 날짜(YYYY-MM-DD). 마감 아카이브의 보존 기간 계산에 쓴다. */
+function daysAgoStr(days: number): string {
+  const d = new Date(`${todayStr()}T00:00:00`);
+  d.setDate(d.getDate() - days);
+  return todayStr(d);
+}
+
+/** 마감된(=모집이 끝난) 공고인지. isLivingPosting 의 반대. */
+function isClosedPosting(p: Posting): boolean {
+  return !isLivingPosting(p.applyEnd, p.createdAt);
+}
+
+/** 마감 공고를 보존 기간(withinDays) 안쪽만 남긴다. 기준일은 마감일(없으면 등록일). */
+function withinClosedWindow(p: Posting, withinDays?: number): boolean {
+  if (withinDays == null) return true;
+  const end = (p.applyEnd ?? p.createdAt ?? "").slice(0, 10);
+  return end ? end >= daysAgoStr(withinDays) : false;
 }
 
 /** 공고 id 는 "출처:원래id" 로 만든다. 저장·지원 테이블이 (posting_source, posting_id) 로 가리킨다.
@@ -116,8 +143,15 @@ export async function getPostings(filters: PostingFilters = {}): Promise<Posting
   const all = await loadAll();
   const q = filters.q?.trim().toLowerCase();
 
+  const status = filters.status ?? (filters.includeClosed ? "all" : "living");
+
   return all
-    .filter((p) => filters.includeClosed || isLivingPosting(p.applyEnd, p.createdAt))
+    .filter((p) => {
+      const living = isLivingPosting(p.applyEnd, p.createdAt);
+      if (status === "closed") return !living && withinClosedWindow(p, filters.closedWithinDays);
+      if (status === "all") return living || withinClosedWindow(p, filters.closedWithinDays);
+      return living; // "living"
+    })
     .filter((p) => !filters.board || p.board === filters.board)
     .filter((p) => matchesField(p, filters.field))
     .filter((p) => !filters.genre || p.genre === filters.genre)
@@ -132,6 +166,10 @@ export async function getPostings(filters: PostingFilters = {}): Promise<Posting
           .some((t) => (t as string).toLowerCase().includes(q)),
     )
     .sort((a, b) => {
+      // 모집중을 항상 위에, 마감(아카이브)은 뒤로 가라앉힌다.
+      const ca = isClosedPosting(a);
+      const cb = isClosedPosting(b);
+      if (ca !== cb) return ca ? 1 : -1;
       if (filters.near) {
         const d = rankNearness(a, filters.near) - rankNearness(b, filters.near);
         if (d !== 0) return d;
@@ -177,4 +215,31 @@ export async function countByField(board?: BoardCode): Promise<Record<string, nu
     out[f.code] = living.filter((p) => matchesField(p, f.code)).length;
   }
   return out;
+}
+
+/**
+ * 마감된(모집이 끝난) 공고 누적 건수. 현황판의 "마감 N건"에 쓴다.
+ * 마감 공고를 지우지 않고 쌓아 두므로 시간이 갈수록 늘어난다.
+ * Supabase 에서는 마감일이 지난 공개(status=open) 행을 DB 에서 바로 센다(전량을 불러오지 않는다).
+ */
+export async function countArchived(): Promise<number> {
+  if (!HAS_SUPABASE) {
+    return SAMPLE_POSTINGS.filter((p) => isClosedPosting(p)).length;
+  }
+  const supabase = await createClient();
+  if (!supabase) return 0;
+  const today = todayStr();
+  const [crawled, org] = await Promise.all([
+    supabase
+      .from("crawled_postings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .lt("apply_end", today),
+    supabase
+      .from("org_postings")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .lt("apply_end", today),
+  ]);
+  return (crawled.count ?? 0) + (org.count ?? 0);
 }
