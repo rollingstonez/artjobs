@@ -32,7 +32,6 @@ LIST_URL = f"{BASE}/participation/participation/artspace_project.do"
 PARSER_READY = True
 
 _PRJ_RE = re.compile(r"doUserView\('(\d+)'\)")
-_GOPAGE_RE = re.compile(r"goPage(?:Blank)?\('([^']+)'\)")
 # 예술인 응모가 아닌 것(수강생·기업 대상·결과 등)은 뺀다. 지원사업 공모는 대체로 예술인 대상이라 가볍게만.
 _SKIP_WORDS = (
     "수강생", "교육생", "공급기업", "참여기업", "입찰", "용역", "결과 발표", "선정 결과", "합격자", "설명회", "간담회",
@@ -43,38 +42,22 @@ def _is_target(title):
     return title and not any(w in title for w in _SKIP_WORDS)
 
 
-def _link_for(card):
-    """카드를 감싼 <a> 의 doUserView/goPage 로 (source_key, source_url) 을 만든다."""
-    a = card.find_parent("a")
-    blob = f"{a.get('href','')} {a.get('onclick','') or ''}" if a else ""
-    m = _PRJ_RE.search(blob)
-    if m:
-        return f"g{m.group(1)}", LIST_URL           # 상세 POST 전용 → 목록 페이지로 링크
-    g = _GOPAGE_RE.search(blob)
-    if g:
-        path = g.group(1)
-        url = path if path.startswith("http") else BASE + path
-        key = "p" + re.sub(r"\W+", "", path)[-40:]  # 전용 페이지 경로로 고유 키
-        return key, url
-    return None, None
-
-
 def parse_list(html):
-    """목록 HTML → 접수중 공모 dict 목록. div.frame_g 카드를 직접 순회한다."""
+    """목록 HTML → 접수중 공모 dict 목록.
+    공모 목록 항목은 a[href="javascript:doUserView('N')"] 로 감싸여 있다.
+    (서울예술상·커넥트 스테이지 같은 '기획 프로그램 카드'는 goPage 전용페이지 구조라 여기선 제외 — 상당수는 아트누리에서 이미 수집된다.)"""
     soup = BeautifulSoup(html, "html.parser")
     rows, skipped, seen = [], 0, set()
-    for card in soup.select("div.frame_g"):
-        state_el = card.select_one("span.state")
-        state = state_el.get_text(strip=True) if state_el else ""
-        tit_el = card.select_one("p.tit")
-        title = " ".join(tit_el.get_text(" ", strip=True).split()) if tit_el else ""
-        if state != "접수중" or not _is_target(title):
-            skipped += 1
+    for a in soup.select("a[href*='doUserView']"):
+        m = _PRJ_RE.search(a.get("href") or "")
+        if not m:
             continue
-        key, url = _link_for(card)
-        if not key:   # 상위 앵커를 못 찾으면 제목 기반 키 + 목록 페이지로 폴백(그래도 담는다)
-            key, url = "t" + re.sub(r"\W+", "", title)[:40], LIST_URL
-        if key in seen:
+        state_el = a.select_one("span.state")
+        state = state_el.get_text(strip=True) if state_el else ""
+        tit_el = a.select_one("p.tit")
+        title = " ".join(tit_el.get_text(" ", strip=True).split()) if tit_el else ""
+        key = f"g{m.group(1)}"
+        if state != "접수중" or not _is_target(title) or key in seen:
             skipped += 1
             continue
         seen.add(key)
@@ -90,9 +73,9 @@ def parse_list(html):
             "employment_raw": None,
             **cls,
             "apply_start": None,
-            "apply_end": None,          # 마감일은 상세 안 → 목록만으론 모름. 접수중 상태로 판단.
+            "apply_end": None,          # 마감일은 상세(POST) 안 → 목록만으론 모름. 접수중 상태로 판단.
             "source_key": key,
-            "source_url": url,
+            "source_url": LIST_URL,     # 상세가 POST 전용이라 공모 목록 페이지로 링크
         })
     return rows, skipped
 
