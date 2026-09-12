@@ -18,6 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${SITE_URL}/notices`, changeFrequency: "weekly", priority: 0.4 },
     { url: `${SITE_URL}/support`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE_URL}/feedback`, changeFrequency: "weekly", priority: 0.3 },
+    { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.2 },
     ...postings.map((p) => ({
       url: `${SITE_URL}/${p.board === "audition" ? "auditions" : "jobs"}/${p.id}`,
       changeFrequency: "weekly" as const,

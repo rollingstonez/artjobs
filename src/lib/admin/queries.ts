@@ -32,17 +32,19 @@ export interface AdminBadges {
   pendingOrgs: number | null;
   openReports: number | null;
   newContacts: number | null;
+  newFeedback: number | null;
   suspended: number | null;
 }
 
 export async function getAdminBadges(supabase: Supa): Promise<AdminBadges> {
-  const [pendingOrgs, openReports, newContacts, suspended] = await Promise.all([
+  const [pendingOrgs, openReports, newContacts, newFeedback, suspended] = await Promise.all([
     safeCount(supabase.from("org_profiles").select("user_id", { count: "exact", head: true }).eq("is_verified", false)),
     safeCount(supabase.from("user_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount(supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new")),
+    safeCount(supabase.from("feedback").select("id", { count: "exact", head: true }).eq("status", "new")),
     safeCount(supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "suspended")),
   ]);
-  return { pendingOrgs, openReports, newContacts, suspended };
+  return { pendingOrgs, openReports, newContacts, newFeedback, suspended };
 }
 
 /** 이름표 조회: 여러 화면이 profiles 에서 표시 이름을 붙일 때 쓴다. */

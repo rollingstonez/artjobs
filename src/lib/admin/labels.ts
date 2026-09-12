@@ -27,6 +27,8 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   notice_update: "공지 수정",
   notice_delete: "공지 삭제",
   purge_applications: "만료 지원서 파기",
+  feedback_update: "의견 처리",
+  feedback_delete: "의견 삭제",
   channel_create: "채널 링크 만듦",
   channel_update: "채널 링크 수정",
   channel_delete: "채널 링크 삭제",
@@ -42,6 +44,7 @@ export const ADMIN_TARGET_LABEL: Record<string, string> = {
   source: "크롤 소스",
   contact: "문의",
   notice: "공지",
+  feedback: "의견",
   channel: "채널 링크",
   system: "시스템",
 };
@@ -67,6 +70,34 @@ export const CONTACT_STATUS: Record<string, { label: string; tone: string }> = {
   replied: { label: "답변 완료", tone: "bg-emerald-50 text-emerald-700" },
   closed: { label: "종결", tone: "bg-stone-100 text-stone-500" },
 };
+
+export const FEEDBACK_CATEGORY = [
+  { code: "idea", label: "이런 기능이 있으면", emoji: "💡" },
+  { code: "inconvenience", label: "이 점이 불편해요", emoji: "😕" },
+  { code: "praise", label: "좋았어요", emoji: "👍" },
+  { code: "bug", label: "오류 같아요", emoji: "🐛" },
+  { code: "other", label: "기타", emoji: "💬" },
+] as const;
+
+export type FeedbackCategory = (typeof FEEDBACK_CATEGORY)[number]["code"];
+
+export function feedbackCategory(code: string | null) {
+  return FEEDBACK_CATEGORY.find((c) => c.code === code) ?? FEEDBACK_CATEGORY[4];
+}
+
+export const FEEDBACK_STATUS: Record<string, { label: string; tone: string }> = {
+  new: { label: "새 의견", tone: "bg-red-50 text-red-700" },
+  reviewed: { label: "확인함", tone: "bg-amber-50 text-amber-700" },
+  done: { label: "처리 완료", tone: "bg-emerald-50 text-emerald-700" },
+};
+
+/** 목록에 보일 이름 가리기: 김석희 → 김O희, 김석 → 김O */
+export function maskName(name: string): string {
+  const n = (name ?? "").trim();
+  if (n.length <= 1) return n;
+  if (n.length === 2) return `${n[0]}O`;
+  return `${n[0]}${"O".repeat(n.length - 2)}${n[n.length - 1]}`;
+}
 
 export const NOTICE_KIND = [
   { code: "notice", label: "공지" },

@@ -298,6 +298,47 @@ export async function deleteNotice(id: string): Promise<void> {
   back("/admin/notices", { ok: "공지를 삭제했습니다." });
 }
 
+// ───────────────────────── 의견(/feedback) ─────────────────────────
+export async function updateFeedback(id: string, formData: FormData): Promise<void> {
+  const me = await requireAdmin("/admin/feedback");
+  const status = str(formData, "status");
+  const reply = str(formData, "admin_reply");
+  const memo = str(formData, "admin_memo");
+  const hide = formData.get("hide") === "on";
+  const returnTo = str(formData, "return_to") || "/admin/feedback";
+  if (!["new", "reviewed", "done"].includes(status)) back(returnTo, { err: "상태 값이 잘못됐습니다." });
+  const supabase = (await createClient())!;
+  const { data: before } = await supabase.from("feedback").select("admin_reply").eq("id", id).maybeSingle();
+  const replyChanged = reply !== (before?.admin_reply ?? "");
+  const patch: Record<string, unknown> = { status, admin_memo: memo || null, is_public: !hide };
+  if (replyChanged) {
+    patch.admin_reply = reply || null;
+    if (reply) {
+      patch.admin_reply_by = me.id;
+      patch.admin_reply_at = new Date().toISOString();
+      if (status === "new") patch.status = "reviewed";
+    }
+  }
+  const { error } = await supabase.from("feedback").update(patch).eq("id", id);
+  if (error) back(returnTo, { err: error.message });
+  await log(supabase, me.id, "feedback_update", "feedback", id, { status: patch.status, replied: replyChanged && Boolean(reply), hidden: hide });
+  revalidatePath("/admin/feedback");
+  revalidatePath("/feedback");
+  revalidatePath("/admin");
+  back(returnTo, { ok: replyChanged && reply ? "답글을 저장했습니다. 게시판에 공개로 붙습니다." : "저장했습니다." });
+}
+
+export async function deleteFeedback(id: string): Promise<void> {
+  const me = await requireAdmin("/admin/feedback");
+  const supabase = (await createClient())!;
+  const { error } = await supabase.from("feedback").delete().eq("id", id);
+  if (error) back("/admin/feedback", { err: error.message });
+  await log(supabase, me.id, "feedback_delete", "feedback", id);
+  revalidatePath("/admin/feedback");
+  revalidatePath("/feedback");
+  back("/admin/feedback", { ok: "의견을 삭제했습니다." });
+}
+
 // ───────────────────────── 채널 단축링크(/r/{code}) ─────────────────────────
 export async function saveChannel(formData: FormData): Promise<void> {
   const me = await requireAdmin("/admin/traffic");

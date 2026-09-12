@@ -44,6 +44,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     title: "소통",
     items: [
       { href: "/admin/support", label: "고객 문의", icon: "📮", badgeKey: "newContacts", note: "문의 답변·상태 관리" },
+      { href: "/admin/feedback", label: "의견", icon: "💡", badgeKey: "newFeedback", note: "회원이 남긴 의견·답글" },
       { href: "/admin/notices", label: "공지사항", icon: "📢", note: "공지 작성·게시" },
       { href: "/admin/sent", label: "운영팀 발신함", icon: "📤", note: "회원에게 보낸 알림" },
     ],

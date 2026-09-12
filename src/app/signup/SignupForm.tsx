@@ -53,13 +53,13 @@ export default function SignupForm({ initialRole }: { initialRole: AccountRole |
             <label className="flex items-start gap-2">
               <input type="checkbox" name="agree_terms" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="mt-0.5" />
               <span>
-                <Link href="/about" className="underline underline-offset-2">이용약관</Link>에 동의합니다 (필수)
+                <Link href="/terms" target="_blank" className="underline underline-offset-2">이용약관</Link>에 동의합니다 (필수)
               </span>
             </label>
             <label className="flex items-start gap-2">
               <input type="checkbox" name="agree_privacy" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} className="mt-0.5" />
               <span>
-                <Link href="/about" className="underline underline-offset-2">개인정보 처리방침</Link>에 동의합니다 (필수)
+                <Link href="/privacy" target="_blank" className="underline underline-offset-2">개인정보처리방침</Link>에 동의합니다 (필수)
               </span>
             </label>
             <p className="pt-1 text-xs text-stone-500">
