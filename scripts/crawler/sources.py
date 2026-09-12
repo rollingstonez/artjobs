@@ -217,67 +217,67 @@ SITES = [
     dict(code="ggcf", name="경기문화재단",
          base_url="https://www.ggcf.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="경기", fetch="html", verified=False, priority=2,
-         note="채용은 ggcf.saramin.co.kr(사람인 채용관 → 수집 대상 아님). 공모는 경기예술인지원센터(artist.ggcf.kr) 확인."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용은 ggcf.saramin.co.kr(사람인 채용관 → 수집 대상 아님). 공모는 경기예술인지원센터(artist.ggcf.kr) 확인."),
     dict(code="ifac", name="인천문화재단",
          base_url="https://www.ifac.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="인천", fetch="html", verified=False, priority=2,
-         note="채용관 ifac.incruit.com. 인천아트플랫폼 레지던시는 별도(inartplatform)."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 ifac.incruit.com. 인천아트플랫폼 레지던시는 별도(inartplatform)."),
     dict(code="bscf", name="부산문화재단",
          base_url="https://www.bscf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="부산", fetch="html", verified=False, priority=2,
-         note="채용관 busancf.saramin.co.kr. 홍티아트센터 레지던시 공모 포함."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 busancf.saramin.co.kr. 홍티아트센터 레지던시 공모 포함."),
     dict(code="dgfac", name="대구문화예술진흥원",
          base_url="https://www.dgfac.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="대구", fetch="html", verified=False, priority=3,
-         note="도메인·경로 실측(대구예술발전소는 별도 daeguartfactory)."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 도메인·경로 실측(대구예술발전소는 별도 daeguartfactory)."),
     dict(code="gjcf", name="광주문화재단 채용공고",
          base_url="https://www.gjcf.or.kr", list_path="/cf/news/hire.do",
          tier=3, kind="채용+공모", categories=["all"], region="광주", fetch="html", verified=True, priority=2,
-         note="열린광장 > 채용공고."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 열린광장 > 채용공고."),
     dict(code="dcaf", name="대전문화재단",
          base_url="https://www.dcaf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="대전", fetch="html", verified=False, priority=3,
-         note="경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측."),
     dict(code="uctf", name="울산문화관광재단",
          base_url="https://www.uctf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="울산", fetch="html", verified=False, priority=3,
-         note="채용관 uctf.saramin.co.kr / recruit.incruit.com/uctf. 본 사이트 공고 경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 uctf.saramin.co.kr / recruit.incruit.com/uctf. 본 사이트 공고 경로 실측."),
     dict(code="sjcf", name="세종시문화관광재단",
          base_url="https://www.sjcf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="세종", fetch="html", verified=False, priority=3,
-         note="경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측."),
     dict(code="gwcf", name="강원문화재단",
          base_url="https://www.gwcf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="강원", fetch="html", verified=False, priority=3,
-         note="경로 실측. 강원국제트리엔날레 공모 포함 가능."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측. 강원국제트리엔날레 공모 포함 가능."),
     dict(code="cbfc", name="충북문화재단",
          base_url="https://www.cbfc.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="충북", fetch="html", verified=False, priority=3,
-         note="경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측."),
     dict(code="ctcf", name="충남문화관광재단",
          base_url="https://www.ctcf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="충남", fetch="html", verified=False, priority=3,
-         note="경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측."),
     dict(code="jbct", name="전북문화관광재단",
          base_url="https://www.jbct.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="전북", fetch="html", verified=False, priority=3,
-         note="경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 경로 실측."),
     dict(code="jncf", name="전남문화재단",
          base_url="https://www.jncf.or.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="전남", fetch="html", verified=False, priority=3,
-         note="채용관 jeonnam.saramin.co.kr. 본 사이트 경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 jeonnam.saramin.co.kr. 본 사이트 경로 실측."),
     dict(code="gacf", name="경북문화재단",
          base_url="http://www.gacf.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="경북", fetch="html", verified=False, priority=3,
-         note="https 지원 여부·경로 실측."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. https 지원 여부·경로 실측."),
     dict(code="gcaf", name="경남문화예술진흥원 공고",
          base_url="https://www.gcaf.or.kr", list_path="/bbs/board.php?bo_table=sub4_1",
          tier=3, kind="채용+공모", categories=["all"], region="경남", fetch="html", verified=True, priority=2,
-         note="그누보드 공고 게시판(sub4_1). 마산현대미술관 레지던시 공모 등."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 그누보드 공고 게시판(sub4_1). 마산현대미술관 레지던시 공모 등."),
     dict(code="jfac", name="제주문화예술재단 채용공고",
          base_url="http://www.jcaf.or.kr", list_path="/contents/index.php?mid=070102",
          tier=3, kind="채용+공모", categories=["all"], region="제주", fetch="html", verified=True, priority=2,
-         note="채용관 recruit.incruit.com/jfac. 레지던시 입주작가 통합공모 매년 게시."),
+         note="아트누리와 공모 중복 — 공모·지원사업은 아트누리(통합안내)가 모아 오므로 개별 파서는 만들지 않음. 직원 채용만 별도 확인 필요. 채용관 recruit.incruit.com/jfac. 레지던시 입주작가 통합공모 매년 게시."),
 
     # ───────────────────────── 4. 레지던시·비엔날레·사립·전문분야 ─────────────────────────
     dict(code="inartplatform", name="인천아트플랫폼 공지사항",
@@ -376,6 +376,24 @@ EXCLUDED = [
     ("구직·인력풀·이력서 게시판 전부", "구직자 개인정보. 어떤 사이트든 구인 게시판만 대상."),
     ("예술의전당·국립극장 등 공연예술 전용 기관", "아트잡스 분야(시각예술) 밖. 문예회관 통합(kocaca)에서 시각예술 공고만 거른다."),
 ]
+
+
+# ── 민간·협의대기 ──────────────────────────────────────────────────────────
+# 사기업·사립기관·상업 플랫폼 등 "정보수집에 민감할 수 있는 민간 사업체". 운영 방침상
+# 서면 협의 전까지는 수집하지 않는다(is_active 를 켜지 않는다). 목록에서 지우지는 않고,
+# 시드·문서·운영자 화면에 '민간·협의대기' 로 표시만 해 실수로 켜지지 않게 한다.
+# 공공·준공공(문체부·시도·공공기관·공공 문화재단·비엔날레 조직위)은 여기 넣지 않는다.
+PRIVATE_CONSULT = {
+    "momo365", "curatorjob", "neolook", "arthub", "artmap", "daljin", "art1", "artnet",
+    "artistmap", "artculture",                                   # 민간 미술정보·커뮤니티 플랫폼
+    "leeum", "ilmin", "artsonje", "apma", "songeun", "museumhanmi", "goeun", "nabi",  # 사립미술관·센터
+    "galleries", "kiaf", "artmuseums",                           # 상업 화랑협회·아트페어·사립미술관협회
+    "contestkorea", "wevity", "thinkcontest",                    # 민간 공모전 포털
+}
+
+
+def is_private(code):
+    return code in PRIVATE_CONSULT
 
 
 def by_code(code):

@@ -29,7 +29,10 @@ export default async function AdminSourcesPage({ searchParams }: PageProps<"/adm
       {err && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">저장 실패: {err}</p>}
       {ok && <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{ok} 을(를) {sp.on === "1" ? "켰습니다" : "껐습니다"}.</p>}
       <p className="text-xs text-stone-500">
-        스위치를 켜면 크롤러가 그 사이트를 수집합니다. robots 판정이 &lsquo;허용&rsquo; 또는 &lsquo;협의 완료&rsquo;인 곳만 켜세요. 판정은 GitHub Actions 의 robots-check 로 갱신하고, 파서가 준비된 소스만 실제로 돕니다(`docs/collection-status.md`).
+        <b>&lsquo;허용&rsquo;</b>은 &ldquo;robots.txt 상 긁어가도 된다&rdquo;는 뜻일 뿐, 켠다고 바로 수집되는 건 아닙니다. 실제로 수집되려면 그 사이트 전용 <b>수집기(파서)</b>가 있어야 하고, 지금은 <b>아트모아·서울문화포털·서울문화재단·KCDF·서울시립미술관·국립현대미술관·아트누리</b> 7곳만 파서가 완성돼 매일 돕니다(`docs/collection-status.md`). 파서 없는 소스는 켜도 0건입니다.
+      </p>
+      <p className="text-xs text-stone-500">
+        <span className="rounded-full bg-orange-50 px-1.5 py-0.5 text-[11px] font-semibold text-orange-700">민간·협의대기</span> 표시는 사기업·사립기관 등 민간 사업체입니다. 정보수집에 민감할 수 있어 <b>서면 협의(수집 안내) 전까지는 켜지 않습니다</b>. · <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700">아트누리 중복</span> 표시는 공모·지원사업이 <b>아트누리(통합안내)</b>에 이미 다 모이는 지역 문화재단이라 개별 수집에서 빼 둔 곳입니다(꺼진 채 보관, 직원 채용만 필요할 때 켜기).
       </p>
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
@@ -40,6 +43,8 @@ export default async function AdminSourcesPage({ searchParams }: PageProps<"/adm
           {rows.map((s) => {
             const r = ROBOTS[s.robots_status] ?? ROBOTS.unchecked;
             const canEnable = s.robots_status === "clean" || s.robots_status === "agreed";
+            const isDup = (s.note ?? "").includes("아트누리와 공모 중복");
+            const isPrivate = (s.note ?? "").includes("민간·협의대기");
             return (
               <li key={s.code} className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
                 <div className="min-w-0 flex-1">
@@ -51,6 +56,22 @@ export default async function AdminSourcesPage({ searchParams }: PageProps<"/adm
                     {s.note && <> · {s.note}</>}
                   </p>
                 </div>
+                {isPrivate && (
+                  <span
+                    className="rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700"
+                    title="사기업·사립기관 등 민간 사업체입니다. 서면 협의(수집 안내) 전까지는 켜지 않습니다."
+                  >
+                    민간·협의대기
+                  </span>
+                )}
+                {isDup && (
+                  <span
+                    className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700"
+                    title="공모·지원사업은 아트누리(통합안내)가 전국 문화재단 것을 모아 오므로, 이 소스는 개별 수집 대상에서 제외했습니다. 직원 채용만 따로 필요할 때 켜세요."
+                  >
+                    아트누리 중복
+                  </span>
+                )}
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.tone}`}>{r.label}</span>
                 <SourceToggle action={setSourceActive.bind(null, s.code, !s.is_active)} active={s.is_active} canEnable={canEnable} />
               </li>
