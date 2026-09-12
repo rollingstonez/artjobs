@@ -7,10 +7,11 @@
 켜 두면 채용·공모가 함께 수집된다 — 새 소스 등록 불필요). 공모 키는 채용 키(bcIdx)와 겹치지 않게 "g" 접두사.
 
 사이트 구조(2026-09 실측, fetch-sample):
-  - 목록은 폼(ProjectVO) 기반이지만 GET 하면 1페이지가 HTML 로 그려져 온다.
-      a[href="javascript:doUserView('306')"]  > div.frame_g > span.state(접수중/진행전/마감) + p.tit(제목)
-  - 상세는 폼 POST(doUserView) 라 공유 가능한 GET 주소가 없다 → 원문 링크는 공모 목록 페이지로 둔다.
-  - 접수 상태가 목록에 있으므로(span.state) '접수중'만 담는다. 마감일은 상세(POST) 안이라 목록만으론 알 수 없어 비워 둔다.
+  - 목록은 폼(ProjectVO) 기반이지만 GET 하면 1페이지가 HTML 로 그려져 온다. 카드는 두 종류가 섞여 있다.
+      · 일반 공모 항목: a[href="javascript:doUserView('306')"] > div.frame_g > span.state + p.tit  (상세는 POST 전용)
+      · 프로그램 카드(서울예술상·커넥트 스테이지 등): a[onclick="goPage('/전용페이지')"] > div.frame_g > span.state + p.tit
+    그래서 div.frame_g 카드를 직접 순회하고, 상위 <a> 의 doUserView/goPage 로 링크를 만든다.
+  - 접수 상태가 카드에 있으므로(span.state) '접수중'만 담는다. 마감일은 상세(POST/전용페이지) 안이라 목록만으론 모름 → 비워 둔다.
   - robots.txt: allow /, 우리 경로 막지 않음(flexer·search 만 금지).
 
 실행: python scripts/crawler/crawl_sfac_gongmo.py [--dry-run]
@@ -31,6 +32,7 @@ LIST_URL = f"{BASE}/participation/participation/artspace_project.do"
 PARSER_READY = True
 
 _PRJ_RE = re.compile(r"doUserView\('(\d+)'\)")
+_GOPAGE_RE = re.compile(r"goPage(?:Blank)?\('([^']+)'\)")
 # 예술인 응모가 아닌 것(수강생·기업 대상·결과 등)은 뺀다. 지원사업 공모는 대체로 예술인 대상이라 가볍게만.
 _SKIP_WORDS = (
     "수강생", "교육생", "공급기업", "참여기업", "입찰", "용역", "결과 발표", "선정 결과", "합격자", "설명회", "간담회",
@@ -41,21 +43,39 @@ def _is_target(title):
     return title and not any(w in title for w in _SKIP_WORDS)
 
 
+def _link_for(card):
+    """카드를 감싼 <a> 의 doUserView/goPage 로 (source_key, source_url) 을 만든다."""
+    a = card.find_parent("a")
+    blob = f"{a.get('href','')} {a.get('onclick','') or ''}" if a else ""
+    m = _PRJ_RE.search(blob)
+    if m:
+        return f"g{m.group(1)}", LIST_URL           # 상세 POST 전용 → 목록 페이지로 링크
+    g = _GOPAGE_RE.search(blob)
+    if g:
+        path = g.group(1)
+        url = path if path.startswith("http") else BASE + path
+        key = "p" + re.sub(r"\W+", "", path)[-40:]  # 전용 페이지 경로로 고유 키
+        return key, url
+    return None, None
+
+
 def parse_list(html):
-    """목록 HTML → 접수중 공모 dict 목록."""
+    """목록 HTML → 접수중 공모 dict 목록. div.frame_g 카드를 직접 순회한다."""
     soup = BeautifulSoup(html, "html.parser")
-    rows, skipped = [], 0
-    for a in soup.select("a[href*='doUserView']"):
-        m = _PRJ_RE.search(a.get("href") or "")
-        if not m:
-            continue
-        state_el = a.select_one("span.state")
+    rows, skipped, seen = [], 0, set()
+    for card in soup.select("div.frame_g"):
+        state_el = card.select_one("span.state")
         state = state_el.get_text(strip=True) if state_el else ""
-        tit_el = a.select_one("p.tit")
+        tit_el = card.select_one("p.tit")
         title = " ".join(tit_el.get_text(" ", strip=True).split()) if tit_el else ""
         if state != "접수중" or not _is_target(title):
             skipped += 1
             continue
+        key, url = _link_for(card)
+        if not key or key in seen:
+            skipped += 1
+            continue
+        seen.add(key)
         cls = classify_all(title)
         cls["board"] = "audition"
         if not cls.get("employment_type"):
@@ -68,9 +88,9 @@ def parse_list(html):
             "employment_raw": None,
             **cls,
             "apply_start": None,
-            "apply_end": None,          # 마감일은 상세(POST) 안 → 목록만으론 모름. 접수중 상태로 판단.
-            "source_key": f"g{m.group(1)}",
-            "source_url": LIST_URL,     # 상세가 POST 전용이라 공모 목록 페이지로 링크
+            "apply_end": None,          # 마감일은 상세 안 → 목록만으론 모름. 접수중 상태로 판단.
+            "source_key": key,
+            "source_url": url,
         })
     return rows, skipped
 
