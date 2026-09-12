@@ -34,6 +34,9 @@ function Chip({ children }: { children: React.ReactNode }) {
 
 // 공고 내용 표시. 크롤러가 만든 "라벨: 값 · 라벨: 값" 구조는 항목별로 줄을 나눠 보여주고,
 // 자유 서술형 본문(예: 국립현대미술관 채용 본문)은 " · " 로 나뉘지 않으니 그대로 둔다.
+// 위쪽 표(지역·접수기간·원문 분야·기관명)와 겹치는 항목은 두 번 보이지 않게 건너뛴다.
+const DESC_SKIP_LABELS = new Set(["주관기관", "지역", "신청기간", "분야"]);
+
 function Description({ text }: { text: string }) {
   const segments = text
     .split(" · ")
@@ -44,22 +47,31 @@ function Description({ text }: { text: string }) {
     return <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-800">{text}</p>;
   }
 
+  const rows = segments
+    .map((seg) => {
+      const m = seg.match(/^([^:：]{1,16})[:：]\s*(.+)$/);
+      if (!m) return { label: null as string | null, value: seg };
+      return { label: m[1].trim(), value: m[2].trim() };
+    })
+    .filter((r) => !(r.label && DESC_SKIP_LABELS.has(r.label)));
+
+  if (rows.length === 0) return null;
+
   return (
     <dl className="mt-2 space-y-2 text-sm">
-      {segments.map((seg, i) => {
-        const m = seg.match(/^([^:：]{1,16})[:：]\s*(.+)$/);
-        if (!m) {
+      {rows.map((r, i) => {
+        if (!r.label) {
           return (
             <p key={i} className="text-stone-800">
-              {seg}
+              {r.value}
             </p>
           );
         }
         // 첨부처럼 " / " 로 여러 개 이어진 값은 줄을 나눈다.
-        const value = m[2].includes(" / ") ? m[2].split(" / ").map((v) => v.trim()).join("\n") : m[2];
+        const value = r.value.includes(" / ") ? r.value.split(" / ").map((v) => v.trim()).join("\n") : r.value;
         return (
           <div key={i} className="grid grid-cols-[72px_1fr] gap-3 md:grid-cols-[88px_1fr]">
-            <dt className="text-stone-500">{m[1].trim()}</dt>
+            <dt className="text-stone-500">{r.label}</dt>
             <dd className="whitespace-pre-line text-stone-800">{value}</dd>
           </div>
         );

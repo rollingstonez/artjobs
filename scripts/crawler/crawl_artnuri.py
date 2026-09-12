@@ -189,7 +189,7 @@ def parse_detail(html):
 
 
 def fetch_detail(key):
-    """상세: 신청기간(시작·끝)·지역·사업유형·분야·원문 신청 링크·첨부·문의처."""
+    """상세: 신청기간(시작·끝)·지역·원문 신청 링크는 컬럼으로, 공고 내용에는 지원대상·사업유형·첨부·문의처만 담는다."""
     org, se_no = _META.get(key, ("", "001"))
     html = fetch_html(view_url(key, org, se_no))
     info, contact = parse_detail(html)
@@ -208,7 +208,7 @@ def fetch_detail(key):
     if isinstance(link, str) and link.startswith("http"):
         fields["apply_method"] = f"온라인 신청: {link}"
     parts = []
-    for k in ("주관기관", "지원대상", "지역", "신청기간", "사업유형", "분야"):
+    for k in ("지원대상", "사업유형"):
         v = info.get(k)
         if v:
             parts.append(f"{k}: {', '.join(v) if isinstance(v, list) else v}")
