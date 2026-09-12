@@ -113,7 +113,7 @@ SITES = [
     dict(code="mmca", name="국립현대미술관 채용",
          base_url="https://www.mmca.go.kr", list_path="/pr/employmentList.do",
          tier=2, kind="채용+공모", categories=["curation", "art_education", "residency_open_call"], region="서울", fetch="html", verified=True, priority=1,
-         note="학예연구직·기간제·인턴 채용. 고양·창동 레지던시 입주작가 공모는 공지사항(/pr/noticeList.do 추정)에 뜸."),
+         note="직접 수집 제외(해외 IP 접속 불안정) — www.mmca.go.kr 이 GitHub 러너에서 자주 접속 끊김(ConnectTimeout), 채용 물량도 적어 무시. 국현 채용은 안정적 공적 경로(문체부 mcst_job·잡알리오 alio_api)로 대체 예정. 학예연구직·기간제·인턴 채용."),
     dict(code="sema", name="서울시립미술관 채용시험",
          base_url="https://sema.seoul.go.kr", list_path="/kr/bbs/611389/getBbsList",
          tier=2, kind="채용+공모", categories=["curation", "art_education", "photography", "media_art"], region="서울", fetch="html", verified=True, priority=1,

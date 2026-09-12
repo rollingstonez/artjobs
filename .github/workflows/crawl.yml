@@ -50,9 +50,10 @@ jobs:
       - name: 서울시립미술관 (sema)
         if: always()
         run: python scripts/crawler/crawl_sema.py $DRY
-      - name: 국립현대미술관 (mmca)
-        if: always()
-        run: python scripts/crawler/crawl_mmca.py $DRY
+      # 국립현대미술관(mmca)은 일일 수집에서 제외 — www.mmca.go.kr(.go.kr)이 GitHub 러너
+      # (해외 IP)에서 접속이 자주 끊겨(ConnectTimeout) 수집이 불안정하다. 국현 채용 물량도
+      # 적어 무시. 필요하면 안정적인 공적 경로(문체부 mcst_job·잡알리오 alio_api)로 대체한다.
+      #   run: python scripts/crawler/crawl_mmca.py $DRY
       - name: 아트누리 (artnuri)
         if: always()
         run: python scripts/crawler/crawl_artnuri.py $DRY
