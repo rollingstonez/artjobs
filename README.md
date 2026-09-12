@@ -42,6 +42,7 @@
   - `crawl_mmca.py` 국립현대미술관 채용(AJAX JSON 에 본문 포함 → 접수 기간은 `common.parse_period_text` 로 판독, 합격자·면접 공고 제외)
   - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처
   - `crawl_artmore.py` 아트모아(예술경영지원센터 예술 일자리 플랫폼) — 미술 분야 필터 목록에서 진행중 채용만. 목록에 제목·회사·근무지·고용형태·마감일이 다 있어 상세는 열지 않음
+  - `crawl_seoul_culture.py` 서울문화포털(서울시 문화기관 채용 모음) — 제목 앞 [기관명] 으로 회사, 상세에서 등록일·첨부(접수기간은 첨부 안이라 마감일 없음, sema 방식)
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
 - `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음

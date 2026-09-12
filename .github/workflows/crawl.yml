@@ -59,3 +59,6 @@ jobs:
       - name: 아트모아 (artmore)
         if: always()
         run: python scripts/crawler/crawl_artmore.py $DRY
+      - name: 서울문화포털 (seoul_culture)
+        if: always()
+        run: python scripts/crawler/crawl_seoul_culture.py $DRY
