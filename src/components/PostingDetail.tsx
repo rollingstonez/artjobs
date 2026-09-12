@@ -32,6 +32,42 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 공고 내용 표시. 크롤러가 만든 "라벨: 값 · 라벨: 값" 구조는 항목별로 줄을 나눠 보여주고,
+// 자유 서술형 본문(예: 국립현대미술관 채용 본문)은 " · " 로 나뉘지 않으니 그대로 둔다.
+function Description({ text }: { text: string }) {
+  const segments = text
+    .split(" · ")
+    .map((seg) => seg.trim())
+    .filter(Boolean);
+
+  if (segments.length < 2) {
+    return <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-800">{text}</p>;
+  }
+
+  return (
+    <dl className="mt-2 space-y-2 text-sm">
+      {segments.map((seg, i) => {
+        const m = seg.match(/^([^:：]{1,16})[:：]\s*(.+)$/);
+        if (!m) {
+          return (
+            <p key={i} className="text-stone-800">
+              {seg}
+            </p>
+          );
+        }
+        // 첨부처럼 " / " 로 여러 개 이어진 값은 줄을 나눈다.
+        const value = m[2].includes(" / ") ? m[2].split(" / ").map((v) => v.trim()).join("\n") : m[2];
+        return (
+          <div key={i} className="grid grid-cols-[72px_1fr] gap-3 md:grid-cols-[88px_1fr]">
+            <dt className="text-stone-500">{m[1].trim()}</dt>
+            <dd className="whitespace-pre-line text-stone-800">{value}</dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
+}
+
 export interface ViewerState {
   loggedIn: boolean;
   role: AccountRole | null;
@@ -110,9 +146,7 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
         {p.description && (
           <section className="mt-6">
             <h2 className="text-sm font-bold text-stone-700">공고 내용</h2>
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-800">
-              {p.description}
-            </p>
+            <Description text={p.description} />
           </section>
         )}
 
