@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { contactError } from "@/lib/validation/contact";
 import { EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
 import type { ActionResult } from "./auth";
 
@@ -30,6 +31,8 @@ export async function saveSeeking(_p: ActionResult | null, fd: FormData): Promis
   const body = str(fd, "body");
   if (title.length < 5) return { ok: false, error: "제목을 5자 이상 적어주세요." };
   if (body.length < 20) return { ok: false, error: "내용을 20자 이상 적어주세요. 어떤 일을 할 수 있고 언제부터 가능한지가 핵심입니다." };
+  const contact = contactError(`${title}\n${body}`, "seeking");
+  if (contact) return { ok: false, error: contact };
   const field = inSet(str(fd, "field"), FIELDS.map((f) => f.code));
   const patch = {
     display_name: me.profile.display_name,

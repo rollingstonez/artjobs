@@ -2,8 +2,10 @@
 // 회원가입 · 로그인 · 로그아웃 서버 액션.
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ATTRIBUTION_COOKIE, parseAttributionCookie, parseUserAgent } from "@/lib/traffic";
+import { emailTypoError } from "@/lib/validation/email";
 import { ACCOUNT_ROLES } from "@/types/account";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -26,6 +28,8 @@ export async function signUp(_prev: ActionResult | null, formData: FormData): Pr
 
   if (!ACCOUNT_ROLES.some((r) => r.code === role)) return { ok: false, error: "역할을 골라주세요." };
   if (!email.includes("@")) return { ok: false, error: "이메일을 확인해주세요." };
+  const typo = emailTypoError(email);
+  if (typo) return { ok: false, error: typo };
   if (password.length < 8) return { ok: false, error: "비밀번호는 8자 이상이어야 합니다." };
   if (!displayName) return { ok: false, error: role === "artist" ? "이름(또는 활동명)을 적어주세요." : "담당자 이름을 적어주세요." };
   if (role === "organization" && !orgName) return { ok: false, error: "기관명을 적어주세요." };
@@ -67,6 +71,24 @@ export async function signIn(_prev: ActionResult | null, formData: FormData): Pr
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: "이메일 또는 비밀번호가 맞지 않습니다." };
   redirect(next);
+}
+
+/** 회원 탈퇴 — 개인정보를 지우고 계정을 잠근다(0014 delete_my_account).
+ *  되돌릴 수 없으므로 확인 문구를 정확히 적어야 실행된다. 처리 뒤에는 로그아웃시킨다. */
+export async function deleteMyAccount(_p: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await requireUser("/me/settings");
+  if (String(formData.get("confirm") ?? "").trim() !== "탈퇴합니다") {
+    return { ok: false, error: "확인 문구를 정확히 적어 주세요. (탈퇴합니다)" };
+  }
+  if (me.profile.is_admin) {
+    return { ok: false, error: "운영자 계정은 여기서 탈퇴할 수 없습니다. 다른 운영자에게 권한 해제를 먼저 요청하세요." };
+  }
+  const supabase = (await createClient())!;
+  const { data, error } = await supabase.rpc("delete_my_account");
+  if (error) return { ok: false, error: `탈퇴 처리에 실패했습니다: ${error.message}` };
+  if (data !== true) return { ok: false, error: "탈퇴 처리에 실패했습니다. 잠시 뒤 다시 시도해 주세요." };
+  await supabase.auth.signOut();
+  redirect("/goodbye");
 }
 
 export async function signOut(): Promise<void> {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import JobPostingJsonLd from "@/components/JobPostingJsonLd";
 import PostingDetail from "@/components/PostingDetail";
+import { isLivingPosting } from "@/lib/living";
 import { getPosting } from "@/lib/postings";
 import { getViewerState } from "@/lib/viewer";
 
@@ -22,5 +24,11 @@ export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">)
   if (!p) notFound();
   if (p.board === "audition") redirect(`/auditions/${p.id}`);
   const viewer = await getViewerState(p.id);
-  return <PostingDetail p={p} viewer={viewer} />;
+  // 구글 일자리 노출용 구조화 데이터 — 모집중인 공고에만 넣는다.
+  return (
+    <>
+      <JobPostingJsonLd posting={p} living={isLivingPosting(p.applyEnd, p.createdAt)} />
+      <PostingDetail p={p} viewer={viewer} />
+    </>
+  );
 }
