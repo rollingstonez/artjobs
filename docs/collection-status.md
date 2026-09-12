@@ -1,7 +1,7 @@
 # 아트잡스 수집 가능 여부 판정표
 
 - 판정 시각: 2026-09-10 03:54 UTC (GitHub Actions `robots-check`)
-- User-Agent: `ArtjobsBot/0.1 (+https://artjobs.kr; contact: support@artjobs.kr)`
+- User-Agent: `ArtjobsBot/0.1 (+https://artjobs.kr; contact: barohaus.com@gmail.com)`
 - 이 문서는 `scripts/crawler/collection_status.py` 가 자동 생성한다. 판정을 다시 하려면 GitHub → Actions → robots-check → Run workflow.
 
 ## 한눈에 보기

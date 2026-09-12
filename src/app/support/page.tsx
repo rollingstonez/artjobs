@@ -39,7 +39,7 @@ export default async function SupportPage({ searchParams }: PageProps<"/support"
       {err && <div className="mb-4"><Notice kind="error">{err}</Notice></div>}
 
       {!HAS_SUPABASE ? (
-        <Notice>지금은 문의 폼을 쓸 수 없습니다. support@artjobs.kr 로 메일 주세요.</Notice>
+        <Notice>지금은 문의 폼을 쓸 수 없습니다. barohaus.com@gmail.com 로 메일 주세요.</Notice>
       ) : (
         <form action={submitContact} className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5 md:p-6">
           <div className="grid gap-4 sm:grid-cols-2">

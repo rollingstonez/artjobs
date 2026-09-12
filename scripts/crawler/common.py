@@ -27,7 +27,7 @@ import requests
 
 from http_retry import _retry
 
-CONTACT_EMAIL = "support@artjobs.kr"  # 실제 운영 주소로 교체할 것
+CONTACT_EMAIL = "barohaus.com@gmail.com"  # 수집 문의를 받는 운영 주소(robots UA 에 표기)
 USER_AGENT = (
     "ArtjobsBot/0.1 (+https://artjobs.kr; "
     f"job-posting aggregator for fine-art professionals; contact: {CONTACT_EMAIL})"

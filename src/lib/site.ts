@@ -28,7 +28,7 @@ export const BUSINESS = {
   /** 직업정보제공사업신고번호 — 확인 전까지 비워 둔다 */
   jobInfoNo: "",
   /** 문의 이메일 */
-  email: "support@artjobs.kr",
+  email: "barohaus.com@gmail.com",
   /** 개인정보 보호책임자 */
   privacyOfficer: "김석 (대표)",
   /** 약관·개인정보처리방침 시행일 */
