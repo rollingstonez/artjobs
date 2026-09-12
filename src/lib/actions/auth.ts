@@ -1,7 +1,9 @@
 "use server";
 // 회원가입 · 로그인 · 로그아웃 서버 액션.
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ATTRIBUTION_COOKIE, parseAttributionCookie, parseUserAgent } from "@/lib/traffic";
 import { ACCOUNT_ROLES } from "@/types/account";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -29,11 +31,13 @@ export async function signUp(_prev: ActionResult | null, formData: FormData): Pr
   if (role === "organization" && !orgName) return { ok: false, error: "기관명을 적어주세요." };
   if (!agreeTerms || !agreePrivacy) return { ok: false, error: "이용약관과 개인정보 처리방침에 동의해주세요." };
 
+  // 가입 귀속(first-touch): VisitTracker 가 구운 쿠키 + 지금 기기. 가입 트리거(0011)가 profiles.signup_* 에 넣는다. 실패해도 가입은 진행.
+  const attribution = await readSignupAttribution();
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { role, display_name: role === "organization" ? orgName : displayName, org_name: orgName, contact_name: displayName },
+      data: { role, display_name: role === "organization" ? orgName : displayName, org_name: orgName, contact_name: displayName, ...attribution },
     },
   });
   if (error) {
@@ -41,6 +45,17 @@ export async function signUp(_prev: ActionResult | null, formData: FormData): Pr
     return { ok: false, error: error.message };
   }
   redirect("/me/profile?welcome=1");
+}
+
+/** 첫 유입 쿠키(aj_attr)와 User-Agent 로 가입 귀속 3칸을 만든다. 쿠키가 없으면 unknown. */
+export async function readSignupAttribution(): Promise<{ signup_source: string; signup_device_type: string; signup_attribution: Record<string, unknown> | null }> {
+  try {
+    const attr = parseAttributionCookie((await cookies()).get(ATTRIBUTION_COOKIE)?.value);
+    const device = parseUserAgent((await headers()).get("user-agent")).deviceType;
+    return { signup_source: attr?.source ?? "unknown", signup_device_type: device, signup_attribution: attr ? { ...attr } : null };
+  } catch {
+    return { signup_source: "unknown", signup_device_type: "pc", signup_attribution: null };
+  }
 }
 
 export async function signIn(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {

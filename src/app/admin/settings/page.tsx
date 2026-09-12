@@ -72,7 +72,7 @@ export default async function AdminSettingsPage({ searchParams }: PageProps<"/ad
           <KV label="소셜 로그인">{providers.length ? providers.map((p) => <Badge key={p.code} className="mr-1">{p.shortLabel}</Badge>) : <span className="text-xs text-stone-500">이메일 가입만 (NEXT_PUBLIC_AUTH_PROVIDERS 비어 있음)</span>}</KV>
           <KV label="크롤 파서">{PARSER_READY_SOURCES.map((c) => <Badge key={c} tone="indigo" className="mr-1">{c}</Badge>)} <span className="text-xs text-stone-500">scripts/crawler/crawl_&lt;code&gt;.py · GitHub Actions 에서 매일 실행</span></KV>
           <KV label="이메일 발송"><span className="text-xs text-stone-500">아직 없음 — 문의 답변은 알림(회원) 또는 직접 메일. 알림 메일을 붙이려면 Resend 같은 발송 서비스 연동이 필요합니다.</span></KV>
-          <KV label="방문 통계"><span className="text-xs text-stone-500">아직 없음 — Vercel Analytics 를 켜면 방문·유입을 볼 수 있습니다.</span></KV>
+          <KV label="방문 통계"><span className="text-xs text-stone-500">자체 기록(visit_logs, 0011) — <Link href="/admin/traffic" className="underline underline-offset-2">유입·방문</Link>. IP 저장 없음, 봇 제외, /admin 제외.</span></KV>
         </KVGrid>
       </Card>
 

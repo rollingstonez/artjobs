@@ -298,6 +298,48 @@ export async function deleteNotice(id: string): Promise<void> {
   back("/admin/notices", { ok: "공지를 삭제했습니다." });
 }
 
+// ───────────────────────── 채널 단축링크(/r/{code}) ─────────────────────────
+export async function saveChannel(formData: FormData): Promise<void> {
+  const me = await requireAdmin("/admin/traffic");
+  const code = str(formData, "code").toLowerCase();
+  const name = str(formData, "name");
+  const memberCount = parseInt(str(formData, "member_count"), 10);
+  const utmSource = str(formData, "utm_source") || "kakao";
+  const utmMedium = str(formData, "utm_medium") || "community";
+  const utmCampaign = str(formData, "utm_campaign") || "room";
+  const note = str(formData, "note");
+  if (!/^[a-z0-9]{2,12}$/.test(code)) back("/admin/traffic", { err: "코드는 영문 소문자·숫자 2~12자로 적어 주세요. (예: gugak1)" });
+  if (name.length < 1) back("/admin/traffic", { err: "채널 이름을 적어 주세요." });
+  const supabase = (await createClient())!;
+  const { data: exists } = await supabase.from("referral_channels").select("code").eq("code", code).maybeSingle();
+  const row = { code, name, member_count: Number.isFinite(memberCount) ? memberCount : null, utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign, note: note || null };
+  const { error } = exists
+    ? await supabase.from("referral_channels").update(row).eq("code", code)
+    : await supabase.from("referral_channels").insert({ ...row, created_by: me.id });
+  if (error) back("/admin/traffic", { err: error.message });
+  await log(supabase, me.id, exists ? "channel_update" : "channel_create", "channel", code, { name });
+  revalidatePath("/admin/traffic");
+  back("/admin/traffic", { ok: exists ? `${code} 를 수정했습니다.` : `링크를 만들었습니다: /r/${code}` });
+}
+
+export async function setChannelActive(code: string, active: boolean): Promise<void> {
+  const me = await requireAdmin("/admin/traffic");
+  const supabase = (await createClient())!;
+  await supabase.from("referral_channels").update({ is_active: active }).eq("code", code);
+  await log(supabase, me.id, "channel_update", "channel", code, { is_active: active });
+  revalidatePath("/admin/traffic");
+}
+
+export async function deleteChannel(code: string): Promise<void> {
+  const me = await requireAdmin("/admin/traffic");
+  const supabase = (await createClient())!;
+  const { error } = await supabase.from("referral_channels").delete().eq("code", code);
+  if (error) back("/admin/traffic", { err: error.message });
+  await log(supabase, me.id, "channel_delete", "channel", code);
+  revalidatePath("/admin/traffic");
+  back("/admin/traffic", { ok: `${code} 를 삭제했습니다(클릭 기록도 함께 지워집니다).` });
+}
+
 // ───────────────────────── 시스템 ─────────────────────────
 /** 보관 기간이 지난 지원서의 개인정보(스냅샷·지원 메시지)를 지운다. */
 export async function purgeExpiredApplications(): Promise<void> {

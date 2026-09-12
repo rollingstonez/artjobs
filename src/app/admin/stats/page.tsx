@@ -19,7 +19,8 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
   const days = ["7", "30", "90"].includes(sp(s.days)) ? parseInt(sp(s.days), 10) : 30;
   const supabase = (await createClient())!;
 
-  const [daily, activity, artists, orgs, verified, publicArtists, newUsers, apps, openTotal, ...dists] = await Promise.all([
+  const [traffic, daily, activity, artists, orgs, verified, publicArtists, newUsers, apps, openTotal, ...dists] = await Promise.all([
+    supabase.rpc("admin_traffic", { p_days: days }),
     safeRpc<Daily>(supabase, "admin_daily_counts", { p_days: days }),
     safeRpc<Activity>(supabase, "admin_activity_7d"),
     safeCount(supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "artist").neq("status", "deleted")),
@@ -32,6 +33,7 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
     ...["posting_field", "posting_region", "posting_board", "posting_employment", "artist_field", "artist_region", "org_type", "org_region", "application_status"].map((k) => safeRpc<Dist>(supabase, "admin_distribution", { p_kind: k })),
   ]);
   const [pField, pRegion, pBoard, pEmp, aField, aRegion, oType, oRegion, appStatus] = dists;
+  const visits = traffic.error ? null : Number((traffic.data as { total_visits?: number } | null)?.total_visits ?? 0);
   const rows = daily.data.map((d) => ({ ...d, key: String(d.day).slice(0, 10) }));
   const signupBuckets: DayBucket[] = rows.map((d) => ({ key: d.key, label: label(d.key), values: { artist: Number(d.signup_artist), org: Number(d.signup_org) } }));
   const postingBuckets: DayBucket[] = rows.map((d) => ({ key: d.key, label: label(d.key), values: { crawled: Number(d.crawled_postings), org: Number(d.org_postings) } }));
@@ -55,7 +57,8 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
       />
 
       {/* 요약 */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        <Stat title={`방문(${days}일)`} value={visits} href={`/admin/traffic?days=${days}`} note={visits != null && newUsers != null && visits > 0 ? `가입 전환 ${Math.round((newUsers / visits) * 1000) / 10}%` : "봇 제외"} />
         <Stat title="총 회원" value={roleTotal} href="/admin/users" note={`예술가 ${a} · 기관 ${o}`} />
         <Stat title={`신규 가입(${days}일)`} value={newUsers} href={`/admin/users?days=${days <= 30 ? days : 30}`} />
         <Stat title="인증 기관" value={verified} href="/admin/orgs?show=verified" note={o ? `기관의 ${Math.round(((verified ?? 0) / o) * 100)}%` : undefined} />
@@ -137,7 +140,7 @@ export default async function AdminStatsPage({ searchParams }: PageProps<"/admin
           </div>
         </>
       )}
-      <p className="text-[11px] text-stone-400">방문자 수·유입 경로는 아직 집계하지 않습니다(방문 로그 테이블이 없음). 필요해지면 Vercel Analytics 를 켜거나 visit_logs 를 추가하는 작업이 따로 필요합니다.</p>
+      <p className="text-[11px] text-stone-400">방문자·유입 경로·가입 귀속은 <Link href="/admin/traffic" className="underline underline-offset-2">유입·방문</Link>에서 봅니다.</p>
     </div>
   );
 }

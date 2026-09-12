@@ -27,6 +27,9 @@ export const ADMIN_ACTION_LABEL: Record<string, string> = {
   notice_update: "공지 수정",
   notice_delete: "공지 삭제",
   purge_applications: "만료 지원서 파기",
+  channel_create: "채널 링크 만듦",
+  channel_update: "채널 링크 수정",
+  channel_delete: "채널 링크 삭제",
 };
 
 export const ADMIN_TARGET_LABEL: Record<string, string> = {
@@ -39,6 +42,7 @@ export const ADMIN_TARGET_LABEL: Record<string, string> = {
   source: "크롤 소스",
   contact: "문의",
   notice: "공지",
+  channel: "채널 링크",
   system: "시스템",
 };
 

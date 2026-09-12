@@ -53,6 +53,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     items: [
       { href: "/admin/sources", label: "크롤 소스", icon: "🔌", note: "수집 스위치·소스별 현황" },
       { href: "/admin/stats", label: "통계", icon: "📊", note: "가입·공고·지원·대화 추이" },
+      { href: "/admin/traffic", label: "유입·방문", icon: "📈", note: "방문자·유입 경로·가입 전환" },
       { href: "/admin/logs", label: "활동 로그", icon: "🧾", note: "운영자가 한 일" },
       { href: "/admin/settings", label: "환경 설정", icon: "⚙️", note: "운영자·데이터 정리·환경" },
     ],

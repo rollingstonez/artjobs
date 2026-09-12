@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { makeDayBuckets, kstDayKey, StackedBars } from "@/components/admin/charts";
 import MenuGrid from "@/components/admin/MenuGrid";
+import { DailyVisits, HourlyHeatmap, type TrafficData } from "@/components/admin/TrafficCharts";
 import { Bar, Card, ErrorNote, Stat } from "@/components/admin/ui";
 import { ADMIN_ACTION_LABEL, PARSER_READY_SOURCES } from "@/lib/admin/labels";
 import { daysAgoIso, getAdminBadges, nameMap, safeCount, safeRpc } from "@/lib/admin/queries";
@@ -9,6 +10,7 @@ import { fmtDateTime, timeAgo } from "@/lib/format";
 import { todayStr } from "@/lib/living";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminLog } from "@/types/account";
+import { sourceLabel } from "@/lib/traffic";
 
 type Activity = { relogin_count: number; message_sender_count: number; two_way_conversation_count: number; active_ratio: number; new_applications: number; new_conversations: number; messages_count: number; logins: number };
 type SourceStat = { source_code: string; total: number; open_count: number; hidden_count: number; last_created: string | null; last_seen: string | null; week_count: number };
@@ -40,7 +42,7 @@ export default async function AdminHome() {
     apps, apps7, seekingOpen, convs,
     sourcesActive, sourcesTotal,
     signupRows, artistCohort, orgCohort,
-    activity, sourceStats, logs,
+    activity, sourceStats, logs, trafficRes,
   ] = await Promise.all([
     getAdminBadges(supabase),
     safeCount(supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "artist").neq("status", "deleted")),
@@ -63,7 +65,12 @@ export default async function AdminHome() {
     safeRpc<Activity>(supabase, "admin_activity_7d"),
     safeRpc<SourceStat>(supabase, "admin_source_stats"),
     supabase.from("admin_logs").select("*").order("created_at", { ascending: false }).limit(8),
+    supabase.rpc("admin_traffic", { p_days: 7 }),
   ]);
+  const traffic = (trafficRes.data ?? null) as TrafficData | null;
+  const trafficMissing = Boolean(trafficRes.error && /does not exist|could not find|schema cache/i.test(trafficRes.error.message));
+  const topSource = traffic?.sources?.[0] ?? null;
+  const trafficSignups = traffic ? traffic.daily.reduce((n, d) => n + Number(d.signups), 0) : 0;
 
   // ── 가입 추이(14일) ──
   const buckets = makeDayBuckets(14).map((b) => ({ ...b, values: { artist: 0, org: 0 } as Record<string, number> }));
@@ -210,6 +217,24 @@ export default async function AdminHome() {
           )}
         </Card>
       </div>
+
+      {/* ④-2 방문 현황(최근 7일) */}
+      <Card
+        title="방문 현황"
+        sub={traffic ? `최근 7일 방문 ${Number(traffic.total_visits).toLocaleString("ko-KR")}회 · 사람 수(추정) ${Number(traffic.unique_visitors)} · 가입 ${trafficSignups} · 상위 유입 ${topSource ? `${sourceLabel(topSource.key)} ${Number(topSource.cnt)}` : "—"} · 봇 제외·한국시간` : "최근 7일"}
+        action={<Link href="/admin/traffic" className="text-xs font-semibold text-stone-500 hover:text-stone-900">유입·방문 자세히 →</Link>}
+      >
+        {trafficRes.error ? (
+          <ErrorNote message={trafficRes.error.message} missing={trafficMissing} />
+        ) : traffic && Number(traffic.total_visits) > 0 ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div><p className="mb-1 text-xs font-bold text-stone-600">날짜 × 시간대</p><HourlyHeatmap data={traffic} maxDays={7} /></div>
+            <div><p className="mb-1 text-xs font-bold text-stone-600">일별 방문</p><DailyVisits data={traffic} /></div>
+          </div>
+        ) : (
+          <p className="text-sm text-stone-500">아직 방문 기록이 없습니다. 배포 뒤 첫 방문부터 쌓입니다(0011 마이그레이션 필요).</p>
+        )}
+      </Card>
 
       {/* ⑤ 관리 메뉴 */}
       <section>

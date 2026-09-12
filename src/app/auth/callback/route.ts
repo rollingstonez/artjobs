@@ -2,6 +2,7 @@
 // 가입 화면에서 고른 역할(role)이 있으면 첫 로그인 직후 그 역할로 맞춘다 (choose_signup_role, 0005).
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ATTRIBUTION_COOKIE, parseAttributionCookie, parseUserAgent } from "@/lib/traffic";
 
 function safeNext(v: string | null): string {
   return v && v.startsWith("/") && !v.startsWith("//") ? v : "/me";
@@ -36,6 +37,17 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase.from("profiles").select("created_at").eq("id", user.id).maybeSingle();
     const createdAt = profile?.created_at ? new Date(profile.created_at).getTime() : 0;
     if (Date.now() - createdAt < 5 * 60 * 1000) {
+      // 소셜 가입 귀속(first-touch, 0011): VisitTracker 쿠키를 읽어 profiles.signup_* 에. 실패해도 가입 흐름은 그대로.
+      try {
+        const attr = parseAttributionCookie(request.cookies.get(ATTRIBUTION_COOKIE)?.value);
+        await supabase.rpc("set_signup_attribution", {
+          p_source: attr?.source ?? "unknown",
+          p_device: parseUserAgent(request.headers.get("user-agent")).deviceType,
+          p_attr: attr ? { ...attr } : null,
+        });
+      } catch {
+        /* 귀속 실패는 무시 */
+      }
       return NextResponse.redirect(`${origin}/me/profile?welcome=1`);
     }
   }
