@@ -21,7 +21,6 @@ interface Props {
   jobCount: number;
   auditionCount: number;
   orgCount: number;
-  sourceCount: number;
   lastCollected: string | null; // 가장 최근에 수집된 공고 날짜(YYYY-MM-DD)
   items: DashboardItem[];
 }
@@ -33,7 +32,6 @@ export default function CollectionDashboard({
   jobCount,
   auditionCount,
   orgCount,
-  sourceCount,
   lastCollected,
   items,
 }: Props) {
@@ -73,9 +71,7 @@ export default function CollectionDashboard({
       {/* 총 모집 건수 */}
       <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="text-4xl font-extrabold tabular-nums md:text-5xl">{total.toLocaleString("ko-KR")}</span>
-        <span className="text-sm text-stone-300">
-          건 모집 중{sourceCount > 0 && <> · {sourceCount.toLocaleString("ko-KR")}곳에서 수집</>}
-        </span>
+        <span className="text-sm text-stone-300">건 모집 중</span>
       </div>
 
       {/* 게시판별 건수 */}

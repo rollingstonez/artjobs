@@ -44,7 +44,6 @@ export default async function HomePage() {
   // 현황판(실시간 수집 현황) 데이터 — 지금 모집 중인 실제 공고로 계산한다.
   const all = [...jobs, ...auditions];
   const orgCount = new Set(all.map((p) => p.organization).filter(Boolean)).size;
-  const sourceCount = new Set(all.map((p) => p.sourceName).filter(Boolean)).size;
   const lastCollected = all.reduce<string | null>(
     (max, p) => (p.createdAt && (!max || p.createdAt > max) ? p.createdAt : max),
     null,
@@ -98,7 +97,6 @@ export default async function HomePage() {
           jobCount={jobs.length}
           auditionCount={auditions.length}
           orgCount={orgCount}
-          sourceCount={sourceCount}
           lastCollected={lastCollected}
           items={dashboardItems}
         />
