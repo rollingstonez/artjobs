@@ -60,14 +60,6 @@ SITES = [
          base_url="https://www.gojobs.go.kr", list_path="/apmList.do?menuNo=401",
          tier=1, kind="채용", categories=["curation"], region="전국·온라인", fetch="html", verified=True, priority=2,
          note="국가·지방 학예연구사(직) 임기제·경력채용이 여기에 뜬다. '학예' 검색어로 필터. 공공데이터포털 '인사혁신처_공공취업정보 조회' API(data.go.kr/data/15000485)로 대체 가능."),
-    dict(code="curatorjob", name="큐레이터잡(큐레이터·학예사 구인정보)",
-         base_url="https://www.xn--om2b25z4do96ac6a.com", list_path="/bbs/board.php?bo_table=guin",
-         tier=1, kind="채용", categories=["curation", "art_management", "art_education"], region="전국·온라인", fetch="html", verified=True, priority=1,
-         note="한글 도메인 큐레이터잡.com(그누보드). 구인 게시판만 대상. 구직(개인정보) 게시판은 절대 수집하지 않는다. 민간 운영 → 서면 협의."),
-    dict(code="neolook", name="네오룩(비물질 아카이브) 모집·공모",
-         base_url="https://neolook.com", list_path="/archives",
-         tier=1, kind="채용+공모", categories=["all"], region="전국·온라인", fetch="html", verified=True, priority=2,
-         note="전시·공모·레지던시·채용이 같은 archives 에 섞여 있어 제목 키워드(모집·공모·채용)로 걸러야 함. 게재가 유료(22만원)인 매체라 운영자 협의 필수."),
     dict(code="arthub", name="아트허브 아트잡·공모",
          base_url="https://www.arthub.co.kr", list_path="/m/board/job_list.html",
          tier=1, kind="채용+공모", categories=["all"], region="전국·온라인", fetch="html", verified=True, priority=2,
@@ -354,23 +346,12 @@ SITES = [
          base_url="https://www.work24.go.kr", list_path=None,
          tier=5, kind="채용", categories=["all"], region="전국·온라인", fetch="api", verified=True, priority=3,
          note="공공데이터포털 워크넷 채용정보 API. 직종코드(문화·예술·디자인)로 필터. 공고량은 많으나 예술 특화도는 낮음."),
-    dict(code="contestkorea", name="콘테스트코리아 미술·디자인 공모전",
-         base_url="https://www.contestkorea.com", list_path="/sub/list.php?int_gbn=1&Txt_bcode=030610001",
-         tier=5, kind="공모", categories=["painting", "print_drawing", "media_art", "photography"], region="전국·온라인", fetch="html", verified=True, priority=3,
-         note="미술·디자인·웹툰 분류. 디자인·웹툰은 제목 키워드로 제외."),
-    dict(code="wevity", name="위비티 예체능·미술 공모전",
-         base_url="https://www.wevity.com", list_path=None,
-         tier=5, kind="공모", categories=["painting", "photography", "media_art"], region="전국·온라인", fetch="html", verified=False, priority=3,
-         note="분야 필터 파라미터 실측. 민간 → 협의."),
-    dict(code="thinkcontest", name="씽굿 공모전",
-         base_url="https://www.thinkcontest.com", list_path="/Contest/CateField.html?c=8",
-         tier=5, kind="공모", categories=["painting", "photography", "media_art"], region="전국·온라인", fetch="html", verified=False, priority=3,
-         note="분야 코드(c=8)가 미술인지 실측. 민간 → 협의."),
 ]
 
 # 대상에서 제외한 사이트 — 이유와 함께 기록해 두어 다시 검토하지 않게 한다.
 EXCLUDED = [
     ("사람인·잡코리아·인크루트·인디드·캐치·자소설닷컴", "대형 취업포털. 이용약관에서 자동수집 금지, robots 차단. 기관별 채용관(xxx.saramin.co.kr 등)도 동일."),
+    ("큐레이터잡·네오룩·콘테스트코리아·위비티·씽굿", "유료 공고 게재가 본업인 민간 서비스 — 공고 자체가 그 회사의 상품이라 자료를 공유할 이유가 없다(사람인·인크루트와 동일). 협의 대상이 아니라 아예 수집 제외."),
     ("기관별 인크루트/사람인 채용관(recruit.incruit.com/*, *.saramin.co.kr)", "위와 같음. 기관 본 사이트 공고 게시판을 대신 수집한다."),
     ("네이버 카페·오픈채팅(학예사 준비 카페 등)", "로그인 필요 + 개인 게시물. 수집 불가."),
     ("구직·인력풀·이력서 게시판 전부", "구직자 개인정보. 어떤 사이트든 구인 게시판만 대상."),
@@ -384,11 +365,10 @@ EXCLUDED = [
 # 시드·문서·운영자 화면에 '민간·협의대기' 로 표시만 해 실수로 켜지지 않게 한다.
 # 공공·준공공(문체부·시도·공공기관·공공 문화재단·비엔날레 조직위)은 여기 넣지 않는다.
 PRIVATE_CONSULT = {
-    "momo365", "curatorjob", "neolook", "arthub", "artmap", "daljin", "art1", "artnet",
+    "momo365", "arthub", "artmap", "daljin", "art1", "artnet",
     "artistmap", "artculture",                                   # 민간 미술정보·커뮤니티 플랫폼
     "leeum", "ilmin", "artsonje", "apma", "songeun", "museumhanmi", "goeun", "nabi",  # 사립미술관·센터
     "galleries", "kiaf", "artmuseums",                           # 상업 화랑협회·아트페어·사립미술관협회
-    "contestkorea", "wevity", "thinkcontest",                    # 민간 공모전 포털
 }
 
 

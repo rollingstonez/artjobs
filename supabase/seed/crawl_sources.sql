@@ -10,8 +10,6 @@ insert into crawl_sources (code, name, base_url, list_path, robots_status, is_ac
   ('kocaca', '한국문화예술회관연합회(KoCACA) 채용공고', 'https://www.kocaca.or.kr', '/myboard/myboard10', 'unchecked', false, '[1단계/채용/우선2/curation·art_management·art_education/전국·온라인] 전국 문예회관 채용공고 모음. 구인게시판(/myboard/myboard14)도 있음. 공연 분야가 섞여 있어 분야 분류 필요.'),
   ('mcst_job', '문화체육관광부 채용정보(소속·공공기관)', 'https://www.mcst.go.kr', '/site/s_notice/notice/jobList.jsp?pTab=02', 'unchecked', false, '[1단계/채용/우선2/curation·art_management/전국·온라인] 문체부 소속기관·산하 공공기관 채용 모음(국립현대미술관·아시아문화전당 등 포함). 본부(pTab=01)는 제외.'),
   ('gojobs', '나라일터(인사혁신처) 일반채용 모집공고', 'https://www.gojobs.go.kr', '/apmList.do?menuNo=401', 'unchecked', false, '[1단계/채용/우선2/curation/전국·온라인] 국가·지방 학예연구사(직) 임기제·경력채용이 여기에 뜬다. ''학예'' 검색어로 필터. 공공데이터포털 ''인사혁신처_공공취업정보 조회'' API(data.go.kr/data/15000485)로 대체 가능.'),
-  ('curatorjob', '큐레이터잡(큐레이터·학예사 구인정보)', 'https://www.xn--om2b25z4do96ac6a.com', '/bbs/board.php?bo_table=guin', 'unchecked', false, '[1단계/채용/우선1/curation·art_management·art_education/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 한글 도메인 큐레이터잡.com(그누보드). 구인 게시판만 대상. 구직(개인정보) 게시판은 절대 수집하지 않는다. 민간 운영 → 서면 협의.'),
-  ('neolook', '네오룩(비물질 아카이브) 모집·공모', 'https://neolook.com', '/archives', 'unchecked', false, '[1단계/채용+공모/우선2/all/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 전시·공모·레지던시·채용이 같은 archives 에 섞여 있어 제목 키워드(모집·공모·채용)로 걸러야 함. 게재가 유료(22만원)인 매체라 운영자 협의 필수.'),
   ('arthub', '아트허브 아트잡·공모', 'https://www.arthub.co.kr', '/m/board/job_list.html', 'unchecked', false, '[1단계/채용+공모/우선2/all/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 아트잡(구인)·작가공모·레지던시 게시판 운영. PC 경로(sub04/sub05 board01)는 실측 후 확정.'),
   ('artmap', '아트맵 공모·레지던시 소식', 'https://art-map.co.kr', '/notice/list.php?b_id=002&showtype=3', 'unchecked', false, '[1단계/공모/우선2/residency_open_call/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. b_id=002 레지던시. 공모 게시판 b_id 값은 실측. 문의 info@art-map.co.kr'),
   ('daljin', '김달진미술연구소(서울아트가이드) 구인구직', 'https://www.daljin.com', null, 'unchecked', false, '[1단계/채용/우선3/all/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 구인 게시판 경로(index.php?WS=…) 실측 필요. 구직 글은 제외.'),
@@ -80,10 +78,7 @@ insert into crawl_sources (code, name, base_url, list_path, robots_status, is_ac
   ('songeun', '송은', 'https://www.songeun.or.kr', null, 'unchecked', false, '[4단계/채용+공모/우선3/curation·residency_open_call/서울] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 송은미술대상 공모·채용. 경로 실측.'),
   ('kiaf', '키아프 서울(한국화랑협회)', 'https://kiaf.org', null, 'unchecked', false, '[4단계/채용/우선3/art_management/서울] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 아트페어 스태프 채용. 경로 실측.'),
   ('alio_api', '잡알리오 공공기관 채용정보(공공데이터 API)', 'https://job.alio.go.kr', null, 'unchecked', false, '[5단계/채용/우선2/curation·art_management·art_education/전국·온라인] 공공데이터포털 ''재정경제부_공공기관 채용정보 조회서비스''(data.go.kr/data/15125273) 인증키 신청 후 사용. 예술경영지원센터·문화예술위원회·ACC재단·KCDF·문화예술교육진흥원·국립박물관문화재단 등 기관코드로 필터.'),
-  ('work24_api', '고용24(워크넷) 채용정보 API', 'https://www.work24.go.kr', null, 'unchecked', false, '[5단계/채용/우선3/all/전국·온라인] 공공데이터포털 워크넷 채용정보 API. 직종코드(문화·예술·디자인)로 필터. 공고량은 많으나 예술 특화도는 낮음.'),
-  ('contestkorea', '콘테스트코리아 미술·디자인 공모전', 'https://www.contestkorea.com', '/sub/list.php?int_gbn=1&Txt_bcode=030610001', 'unchecked', false, '[5단계/공모/우선3/painting·print_drawing·media_art·photography/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 미술·디자인·웹툰 분류. 디자인·웹툰은 제목 키워드로 제외.'),
-  ('wevity', '위비티 예체능·미술 공모전', 'https://www.wevity.com', null, 'unchecked', false, '[5단계/공모/우선3/painting·photography·media_art/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 분야 필터 파라미터 실측. 민간 → 협의.'),
-  ('thinkcontest', '씽굿 공모전', 'https://www.thinkcontest.com', '/Contest/CateField.html?c=8', 'unchecked', false, '[5단계/공모/우선3/painting·photography·media_art/전국·온라인] 민간·협의대기 — 서면 협의 전까지 수집하지 않음. 분야 코드(c=8)가 미술인지 실측. 민간 → 협의.')
+  ('work24_api', '고용24(워크넷) 채용정보 API', 'https://www.work24.go.kr', null, 'unchecked', false, '[5단계/채용/우선3/all/전국·온라인] 공공데이터포털 워크넷 채용정보 API. 직종코드(문화·예술·디자인)로 필터. 공고량은 많으나 예술 특화도는 낮음.')
 on conflict (code) do update set
   name = excluded.name,
   base_url = excluded.base_url,
