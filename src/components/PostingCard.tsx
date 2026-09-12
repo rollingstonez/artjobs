@@ -45,7 +45,7 @@ export default function PostingCard({
   return (
     <Link
       href={href}
-      className={`block w-full rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-stone-400 ${
+      className={`block w-full min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-stone-400 ${
         isExpired ? "opacity-60" : ""
       }`}
     >
@@ -60,7 +60,8 @@ export default function PostingCard({
             {nearLabel ? ` · ${nearLabel}` : ""}
           </span>
         )}
-        <h2 className="truncate text-[17px] font-bold leading-snug text-stone-900">
+        {/* min-w-0 이 있어야 긴 기관명이 카드 박스를 밀어내지 않고 말줄임(…)으로 잘린다. */}
+        <h2 className="min-w-0 truncate text-[17px] font-bold leading-snug text-stone-900">
           {posting.organization ?? "기관명 미기재"}
         </h2>
         {posting.orgVerified && (
