@@ -7,7 +7,9 @@ import {
   GENRES,
   REGIONS,
   ROLES,
+  fieldLabel,
   genreCodesForField,
+  type BoardCode,
   type FieldCode,
 } from "@/types/job";
 
@@ -16,7 +18,9 @@ const selectClass =
 
 const FILTER_KEYS = ["field", "genre", "role", "employmentType", "region", "q"];
 
-export default function JobsFilter() {
+// 오디션·공모는 채용이 아니라 "모집·공모"라서 직무·고용형태(정규직·계약직 등) 필터가 맞지 않는다.
+// 채용공고(job)에서만 두 필터를 보여준다.
+export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -78,7 +82,8 @@ export default function JobsFilter() {
           value={params.get("genre") ?? ""}
           onChange={(e) => set({ genre: e.target.value })}
         >
-          <option value="">장르 전체</option>
+          {/* 분야를 고르면 "미술 장르 전체"처럼 그 분야로 좁혀졌음을 라벨에도 드러낸다. */}
+          <option value="">{field ? `${fieldLabel(field)} 장르 전체` : "장르 전체"}</option>
           {genreOptions.map((g) => (
             <option key={g.code} value={g.code}>
               {field === g.field
@@ -88,33 +93,37 @@ export default function JobsFilter() {
           ))}
         </select>
 
-        <select
-          aria-label="직무"
-          className={selectClass}
-          value={params.get("role") ?? ""}
-          onChange={(e) => set({ role: e.target.value })}
-        >
-          <option value="">직무 전체</option>
-          {ROLES.map((r) => (
-            <option key={r.code} value={r.code}>
-              {r.label}
-            </option>
-          ))}
-        </select>
+        {board === "job" && (
+          <>
+            <select
+              aria-label="직무"
+              className={selectClass}
+              value={params.get("role") ?? ""}
+              onChange={(e) => set({ role: e.target.value })}
+            >
+              <option value="">직무 전체</option>
+              {ROLES.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
 
-        <select
-          aria-label="고용형태"
-          className={selectClass}
-          value={params.get("employmentType") ?? ""}
-          onChange={(e) => set({ employmentType: e.target.value })}
-        >
-          <option value="">고용형태 전체</option>
-          {EMPLOYMENT_TYPES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+            <select
+              aria-label="고용형태"
+              className={selectClass}
+              value={params.get("employmentType") ?? ""}
+              onChange={(e) => set({ employmentType: e.target.value })}
+            >
+              <option value="">고용형태 전체</option>
+              {EMPLOYMENT_TYPES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         <select
           aria-label="지역"

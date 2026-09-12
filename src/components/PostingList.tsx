@@ -35,7 +35,13 @@ export default async function PostingList({
   intro?: string;
 }) {
   const [location, { savedIds, loggedIn }] = await Promise.all([getUserLocation(), getSavedIds()]);
-  const postings = await getPostings({ board, near: location, ...pickFilters(searchParams) });
+  const filters = pickFilters(searchParams);
+  // 오디션·공모는 직무·고용형태 필터를 쓰지 않는다(채용 개념이라 맞지 않음).
+  if (board !== "job") {
+    filters.role = undefined;
+    filters.employmentType = undefined;
+  }
+  const postings = await getPostings({ board, near: location, ...filters });
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
@@ -58,7 +64,7 @@ export default async function PostingList({
       </div>
 
       <Suspense>
-        <JobsFilter />
+        <JobsFilter board={board} />
       </Suspense>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
