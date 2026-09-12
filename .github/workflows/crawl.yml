@@ -56,6 +56,8 @@ jobs:
       - name: 아트누리 (artnuri)
         if: always()
         run: python scripts/crawler/crawl_artnuri.py $DRY
+      # 모모365 는 민간 플랫폼(민간·협의대기) → is_active=false 라 서면 협의로 켜기 전까지는
+      # 스스로 건너뛴다(수집 0건). 협의 완료 후 /admin/sources 에서 켜면 실제 수집한다.
       - name: 모모365 (momo365)
         if: always()
         run: python scripts/crawler/crawl_momo365.py $DRY

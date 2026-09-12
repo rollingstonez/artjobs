@@ -378,6 +378,24 @@ EXCLUDED = [
 ]
 
 
+# ── 민간·협의대기 ──────────────────────────────────────────────────────────
+# 사기업·사립기관·상업 플랫폼 등 "정보수집에 민감할 수 있는 민간 사업체". 운영 방침상
+# 서면 협의 전까지는 수집하지 않는다(is_active 를 켜지 않는다). 목록에서 지우지는 않고,
+# 시드·문서·운영자 화면에 '민간·협의대기' 로 표시만 해 실수로 켜지지 않게 한다.
+# 공공·준공공(문체부·시도·공공기관·공공 문화재단·비엔날레 조직위)은 여기 넣지 않는다.
+PRIVATE_CONSULT = {
+    "momo365", "curatorjob", "neolook", "arthub", "artmap", "daljin", "art1", "artnet",
+    "artistmap", "artculture",                                   # 민간 미술정보·커뮤니티 플랫폼
+    "leeum", "ilmin", "artsonje", "apma", "songeun", "museumhanmi", "goeun", "nabi",  # 사립미술관·센터
+    "galleries", "kiaf", "artmuseums",                           # 상업 화랑협회·아트페어·사립미술관협회
+    "contestkorea", "wevity", "thinkcontest",                    # 민간 공모전 포털
+}
+
+
+def is_private(code):
+    return code in PRIVATE_CONSULT
+
+
 def by_code(code):
     return next((s for s in SITES if s["code"] == code), None)
 

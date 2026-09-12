@@ -10,7 +10,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sources import EXCLUDED, SITES  # noqa: E402
+from sources import EXCLUDED, SITES, is_private  # noqa: E402
+
+# 민간·협의대기 소스 note 앞에 붙는 표시(운영자 화면·시드 공통). 이 문구로 배지를 띄운다.
+PRIVATE_MARK = "민간·협의대기 — 서면 협의 전까지 수집하지 않음. "
 
 CATEGORY_LABEL = {
     "all": "시각예술 전반", "painting": "회화", "sculpture_installation": "조각·설치", "media_art": "미디어아트",
@@ -69,7 +72,8 @@ def write_md(path):
             url = s["base_url"] + (s["list_path"] or "")
             url_md = f"[{md_escape(s['base_url'].split('//')[1])}]({url})" if s["list_path"] else f"[{md_escape(s['base_url'].split('//')[1])}]({s['base_url']}) *(경로 실측)*"
             cats = "·".join(CATEGORY_LABEL[c] for c in s["categories"])
-            out.write(f"| {s['priority']} | {'✅' if s['verified'] else '🔍'} | `{s['code']}` | {md_escape(s['name'])} | {s['kind']} | {cats} | {s['region']} | {url_md} | {md_escape(s['note'])} |\n")
+            note_md = (PRIVATE_MARK if is_private(s["code"]) else "") + s["note"]
+            out.write(f"| {s['priority']} | {'✅' if s['verified'] else '🔍'} | `{s['code']}` | {md_escape(s['name'])} | {s['kind']} | {cats} | {s['region']} | {url_md} | {md_escape(note_md)} |\n")
         out.write("\n")
 
     out.write("## 제외한 사이트\n\n")
@@ -99,7 +103,8 @@ def write_sql(path):
     out.write("insert into crawl_sources (code, name, base_url, list_path, robots_status, is_active, note) values\n")
     vals = []
     for s in SITES:
-        note = f"[{s['tier']}단계/{s['kind']}/우선{s['priority']}/{'·'.join(s['categories'])}/{s['region']}] {s['note']}"
+        body = (PRIVATE_MARK if is_private(s["code"]) else "") + s["note"]
+        note = f"[{s['tier']}단계/{s['kind']}/우선{s['priority']}/{'·'.join(s['categories'])}/{s['region']}] {body}"
         vals.append(f"  ({sql_str(s['code'])}, {sql_str(s['name'])}, {sql_str(s['base_url'])}, {sql_str(s['list_path'])}, 'unchecked', false, {sql_str(note)})")
     out.write(",\n".join(vals))
     out.write("\non conflict (code) do update set\n  name = excluded.name,\n  base_url = excluded.base_url,\n  list_path = excluded.list_path,\n  note = excluded.note;\n")
