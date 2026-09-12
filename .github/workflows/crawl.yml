@@ -56,3 +56,6 @@ jobs:
       - name: 아트누리 (artnuri)
         if: always()
         run: python scripts/crawler/crawl_artnuri.py $DRY
+      - name: 아트모아 (artmore)
+        if: always()
+        run: python scripts/crawler/crawl_artmore.py $DRY
