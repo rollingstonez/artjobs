@@ -77,7 +77,8 @@ export default function PostingCard({
         )}
       </div>
 
-      <p className="mt-1 truncate text-[14.5px] font-medium text-stone-700">{posting.title}</p>
+      {/* 제목은 목록에서 두 줄까지 보여 준다(한 줄로 자르면 정보가 너무 부족해 보임). */}
+      <p className="mt-1 line-clamp-2 text-[14.5px] font-medium leading-snug text-stone-700">{posting.title}</p>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {role && (
