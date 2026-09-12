@@ -52,7 +52,7 @@
 |---|---|---|---|---|---|---|---|---|
 | 1 | ✅ | `arte` | 한국문화예술교육진흥원 채용공고 | 채용+공모 | 예술교육 | 서울 | [arte.or.kr](https://arte.or.kr/notice/job/notice/Job_BoardList.do) | 직원 채용 + 예술강사 모집 공고. 학교 예술강사 지원사업은 aschool.arte.or.kr 별도. |
 | 1 | ✅ | `kcdf` | 한국공예·디자인문화진흥원 채용공고 | 채용+공모 | 공예 | 서울 | [www.kcdf.or.kr](https://www.kcdf.or.kr/brd/board/342/L/menu/288) | 채용공고(342/288)·사업공모(/brd/board/337/L/menu/284). 공예청년인턴십 등 공예 분야 핵심 소스. |
-| 1 | ✅ | `mmca` | 국립현대미술관 채용 | 채용+공모 | 전시기획·큐레이션·예술교육·레지던시·공모 | 서울 | [www.mmca.go.kr](https://www.mmca.go.kr/pr/employmentList.do) | 학예연구직·기간제·인턴 채용. 고양·창동 레지던시 입주작가 공모는 공지사항(/pr/noticeList.do 추정)에 뜸. |
+| 1 | ✅ | `mmca` | 국립현대미술관 채용 | 채용+공모 | 전시기획·큐레이션·예술교육·레지던시·공모 | 서울 | [www.mmca.go.kr](https://www.mmca.go.kr/pr/employmentList.do) | 직접 수집 제외(해외 IP 접속 불안정) — www.mmca.go.kr 이 GitHub 러너에서 자주 접속 끊김(ConnectTimeout), 채용 물량도 적어 무시. 국현 채용은 안정적 공적 경로(문체부 mcst_job·잡알리오 alio_api)로 대체 예정. 학예연구직·기간제·인턴 채용. |
 | 1 | ✅ | `sema` | 서울시립미술관 채용시험 | 채용+공모 | 전시기획·큐레이션·예술교육·사진·미디어아트 | 서울 | [sema.seoul.go.kr](https://sema.seoul.go.kr/kr/bbs/611389/getBbsList) | 채용시험(611389)·공지사항/공고·공모(610221) 두 게시판. 사진미술관·미디어시티비엔날레·난지창작스튜디오 공모 포함. |
 | 2 | ✅ | `acc` | 국립아시아문화전당 채용공고 | 채용+공모 | 전시기획·큐레이션·미디어아트·레지던시·공모 | 광주 | [www.acc.go.kr](https://www.acc.go.kr/main/board/board.do?PID=0702) | ACC_R 레지던시·아시아창작스튜디오 공모는 공지 게시판. 재단 채용은 recruit.incruit.com/accf(인크루트 채용관 → 수집 대상 아님). |
 | 2 | 🔍 | `arko` | 한국문화예술위원회(ARKO) 채용 | 채용 | 아트매니지먼트·전시기획·큐레이션 | 전남 | [www.arko.or.kr](https://www.arko.or.kr) *(경로 실측)* | 채용관(arko.recruiton.kr)은 목록 주소가 welcome 페이지로 넘어가 수집 불가 → 본 사이트 채용모집 게시판(board/list/4054 추정) 주소 실측. 지원사업 공모는 아트누리로 통합됨. |
