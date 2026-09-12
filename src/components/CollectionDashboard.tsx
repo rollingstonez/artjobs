@@ -52,7 +52,7 @@ export default function CollectionDashboard({
   const total = jobCount + auditionCount;
 
   return (
-    <div className="rounded-3xl bg-stone-900 p-5 text-white shadow-xl md:p-6">
+    <div className="min-w-0 rounded-3xl bg-stone-900 p-5 text-white shadow-xl md:p-6">
       {/* 헤더: 살아 있는 초록 점 + 현재 시각 */}
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm font-semibold text-stone-200">

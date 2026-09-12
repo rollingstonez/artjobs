@@ -64,11 +64,12 @@ export default async function HomePage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
       <section className="grid items-start gap-8 py-12 md:grid-cols-2 md:gap-10 md:py-20">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-stone-500">순수예술 구인구직</p>
-          <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
-            미술·음악·무용·국악·연극
-            <br />
+          <h1 className="mt-2 text-[26px] font-extrabold leading-tight tracking-tight [word-break:keep-all] sm:text-3xl md:text-5xl">
+            {/* 좁은 화면에서 분야 나열이 한 덩어리로 안 쪼개져 넘치던 문제 → 각 분야 사이에 줄바꿈 지점(<wbr/>)을 준다. */}
+            미술<wbr />·음악<wbr />·무용<wbr />·국악<wbr />·연극
+            <br className="hidden sm:block" />{" "}
             일자리를 내 집 근처부터.
           </h1>
           <p className="mt-4 max-w-xl text-base text-stone-600 md:text-lg">

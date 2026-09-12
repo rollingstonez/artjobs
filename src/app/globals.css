@@ -6,7 +6,15 @@
 
 body {
   font-family: var(--font-sans);
+  /* 한국어는 단어 중간에서 끊지 않는다(keep-all). 다만 "미술·음악·무용·국악·연극"처럼
+     가운뎃점으로 이어진 긴 덩어리가 화면보다 넓어지면, 그때만 끊어 넘침을 막는다(anywhere).
+     anywhere 는 min-content 도 줄여 줘서 그리드·플렉스가 화면 밖으로 밀리지 않는다. */
   word-break: keep-all;
+  overflow-wrap: anywhere;
+  /* 안전장치: 어떤 요소가 실수로 화면보다 넓어져도 페이지가 가로로 밀리지 않게 한다.
+     overflow-x:hidden 과 달리 clip 은 스크롤 컨테이너를 만들지 않아 sticky 상단바를 깨지 않는다.
+     (내부에서 일부러 가로 스크롤하는 영역은 각자 overflow-x-auto 를 가지므로 영향 없음) */
+  overflow-x: clip;
 }
 
 /* 공항 전광판처럼 공고가 아래에서 위로 끝없이 흘러 올라가는 세로 마퀴.
