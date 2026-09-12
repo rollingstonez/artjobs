@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CollectionDashboard, { type DashboardItem } from "@/components/CollectionDashboard";
 import NearMeBar from "@/components/NearMeBar";
 import PostingCard from "@/components/PostingCard";
 import { getSavedIds } from "@/lib/bookmarks";
@@ -40,36 +41,67 @@ export default async function HomePage() {
     getSavedIds(),
   ]);
 
+  // 현황판(실시간 수집 현황) 데이터 — 지금 모집 중인 실제 공고로 계산한다.
+  const all = [...jobs, ...auditions];
+  const orgCount = new Set(all.map((p) => p.organization).filter(Boolean)).size;
+  const sourceCount = new Set(all.map((p) => p.sourceName).filter(Boolean)).size;
+  const lastCollected = all.reduce<string | null>(
+    (max, p) => (p.createdAt && (!max || p.createdAt > max) ? p.createdAt : max),
+    null,
+  );
+  const dashboardItems: DashboardItem[] = [...all]
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, 14)
+    .map((p) => ({
+      id: p.id,
+      board: p.board,
+      region: p.region,
+      organization: p.organization,
+      title: p.title,
+      applyEnd: p.applyEnd,
+    }));
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16 md:px-6">
-      <section className="py-12 md:py-20">
-        <p className="text-sm font-semibold text-stone-500">순수예술 구인구직</p>
-        <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
-          미술·음악·무용·국악·연극
-          <br />
-          일자리를 내 집 근처부터.
-        </h1>
-        <p className="mt-4 max-w-xl text-base text-stone-600 md:text-lg">
-          미술관·공연장·예술단·재단·학교가 공개한 채용공고와 오디션·공모를 매일 모아
-          분야·장르·직무별로, 그리고 내가 사는 곳에서 가까운 순서로 보여드립니다.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link
-            href="/jobs"
-            className="rounded-lg bg-stone-900 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-700"
-          >
-            채용공고 보기
-          </Link>
-          <Link
-            href="/auditions"
-            className="rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 hover:border-stone-500"
-          >
-            오디션·공모 보기
-          </Link>
+      <section className="grid items-start gap-8 py-12 md:grid-cols-2 md:gap-10 md:py-20">
+        <div>
+          <p className="text-sm font-semibold text-stone-500">순수예술 구인구직</p>
+          <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+            미술·음악·무용·국악·연극
+            <br />
+            일자리를 내 집 근처부터.
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-stone-600 md:text-lg">
+            미술관·공연장·예술단·재단·학교가 공개한 채용공고와 오디션·공모를 매일 모아
+            분야·장르·직무별로, 그리고 내가 사는 곳에서 가까운 순서로 보여드립니다.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link
+              href="/jobs"
+              className="rounded-lg bg-stone-900 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-700"
+            >
+              채용공고 보기
+            </Link>
+            <Link
+              href="/auditions"
+              className="rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 hover:border-stone-500"
+            >
+              오디션·공모 보기
+            </Link>
+          </div>
+          <div className="mt-6 max-w-2xl">
+            <NearMeBar location={location} />
+          </div>
         </div>
-        <div className="mt-6 max-w-2xl">
-          <NearMeBar location={location} />
-        </div>
+
+        <CollectionDashboard
+          jobCount={jobs.length}
+          auditionCount={auditions.length}
+          orgCount={orgCount}
+          sourceCount={sourceCount}
+          lastCollected={lastCollected}
+          items={dashboardItems}
+        />
       </section>
 
       <section>

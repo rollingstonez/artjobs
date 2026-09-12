@@ -8,3 +8,29 @@ body {
   font-family: var(--font-sans);
   word-break: keep-all;
 }
+
+/* 공항 전광판처럼 공고가 아래에서 위로 끝없이 흘러 올라가는 세로 마퀴.
+   목록을 두 번 이어 붙인 뒤(-50%) 지점까지 올리면 이음매 없이 반복된다.
+   src/components/CollectionDashboard.tsx 에서 쓴다. */
+@keyframes artjobs-marquee-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.artjobs-marquee {
+  animation: artjobs-marquee-up var(--marquee-duration, 40s) linear infinite;
+}
+
+.artjobs-marquee-viewport:hover .artjobs-marquee {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artjobs-marquee {
+    animation: none;
+  }
+}
