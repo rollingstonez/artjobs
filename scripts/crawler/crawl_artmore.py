@@ -2,10 +2,16 @@
 """
 아트모아(ArtMore) 예술 일자리 크롤러 — https://www.artmore.kr/sub/recruit/search_list.do
 
-문체부·예술경영지원센터가 운영하는 예술 분야 채용 통합 플랫폼. 미술 분야 필터로 목록을 받는다.
+문체부·예술경영지원센터가 운영하는 예술 분야 채용 통합 플랫폼(공공 소유).
+분야 필터 없이 전체 목록(최신·진행중)을 받아, 우리 분류기로 아트잡스 5개 순수예술 분야
+(미술·음악·무용·국악·연극)에 해당하는 공고만 남긴다. 영상예술·문학예술·기타예술과
+분야가 안 잡히는 비예술 공고(경비·보안 등)는 제외한다.
+  ※ 아트모아의 장르 필터는 다단계 AJAX 위젯이라 URL 한 줄로 재현이 어렵다. 그래서 사이트
+     필터 대신 우리 분류기(classify_all)로 분야 경계를 정한다 — 추측 없이 안정적으로 동작한다.
+  ※ 민간 갤러리·기업의 채용도 (예술 분야면) 그대로 담는다. 제외 대상은 '민간 소유 플랫폼'뿐.
 
 사이트 구조(2026-09 실측, fetch-sample):
-  - 목록 GET /sub/recruit/search_list.do?search_cd=JD&search_nm=미술분야&search_val=13-17-28&listSize=50&page=N
+  - 목록 GET /sub/recruit/search_list.do?listSize=100&exclude_end_yn=Y&sort_type=1&page=N (분야 무필터·진행중·최신순)
       표(table.jobs_sch_tb)의 각 tr:
         td.ta_l > p.jobs_cname                     회사명(기관/기업)
         td.ta_l > a.jobs_title[href=...rec_idx=N]  제목 (앞에 span.jobs_list_state state01=진행중/state02=마감)
@@ -25,7 +31,7 @@ import sys
 from bs4 import BeautifulSoup
 
 from common import (
-    PAGE_SLEEP,
+    PAGE_SLEEP, FIELD_CODES,
     classify_all, fetch_html, parse_date, today_str, run_crawler,
 )
 
@@ -34,8 +40,9 @@ SOURCE_NAME = "아트모아"
 BASE = "https://www.artmore.kr"
 LIST_URL = f"{BASE}/sub/recruit/search_list.do"
 VIEW_URL = f"{BASE}/sub/recruit/search_view.do?rec_idx={{key}}"
-LIST_PARAMS = {"search_cd": "JD", "search_nm": "미술분야", "search_val": "13-17-28", "listSize": "50"}
-MAX_PAGES = 4
+# 분야 무필터·진행중(exclude_end_yn=Y)·최신순(sort_type=1). 분야 경계는 우리 분류기로 정한다.
+LIST_PARAMS = {"listSize": "100", "exclude_end_yn": "Y", "sort_type": "1"}
+MAX_PAGES = 4  # 100건×4 = 최신 400건을 훑어 5개 분야만 추린다
 PARSER_READY = True
 
 _KEY_RE = re.compile(r"rec_idx=(\d+)")
@@ -68,10 +75,12 @@ def _text(el):
 
 
 def parse_list(html):
-    """목록 HTML → [{진행중 공고 dict}]. 마감(state02)·마감 배지는 뺀다."""
+    """목록 HTML → ([진행중·순수예술 공고 dict], 마감·중복 제외수, 분야밖 제외수).
+    마감(state02)·마감 배지는 빼고, 분류기가 5개 순수예술 분야(art/music/dance/gugak/theater)로
+    잡지 못한 공고(영상·문학·기타·비예술)도 뺀다."""
     today = today_str()
     soup = BeautifulSoup(html, "html.parser")
-    rows, skipped = [], 0
+    rows, skipped, offfield = [], 0, 0
     for a in soup.select("a.jobs_title[href*='rec_idx=']"):
         m = _KEY_RE.search(a.get("href") or "")
         if not m:
@@ -106,6 +115,11 @@ def parse_list(html):
         salary = _text(tr.select_one("p.jobs_salary"))
         if salary and re.sub(r"[^\d]", "", salary) == "00":  # "월급 0원 ~ 0원" = 미기재
             salary = None
+        # 분야 경계: 우리 5개 순수예술 분야로 잡히지 않으면(영상·문학·기타·비예술) 담지 않는다.
+        cls = classify_all(title, org or "", emp_raw or "")
+        if cls.get("field") not in FIELD_CODES:
+            offfield += 1
+            continue
         # 경력 값 자체가 "경력무관/경력 3년/신입" 이라 접두사를 안 붙인다. 학력만 라벨을 붙인다.
         desc_bits = [b for b in (career, f"학력 {edu}" if edu else None) if b]
         rows.append({
@@ -116,27 +130,28 @@ def parse_list(html):
             "category_raw": "예술 채용",
             "employment_raw": emp_raw,
             "salary": salary,
-            **classify_all(title, org or "", emp_raw or ""),
+            **cls,
             "apply_start": posted,
             "apply_end": apply_end,
             "description": " · ".join(desc_bits) or None,
             "source_key": key,
             "source_url": VIEW_URL.format(key=key),
         })
-    return rows, skipped
+    return rows, skipped, offfield
 
 
 def collect_rows():
     all_rows, seen = [], set()
     for page in range(1, MAX_PAGES + 1):
         html = fetch_html(LIST_URL, params={**LIST_PARAMS, "page": str(page)}, sleep=PAGE_SLEEP if page > 1 else 0)
-        rows, skipped = parse_list(html)
+        rows, skipped, offfield = parse_list(html)
         fresh = [r for r in rows if r["source_key"] not in seen]
         seen.update(r["source_key"] for r in fresh)
         all_rows.extend(fresh)
-        print(f"[1] {page}페이지: 진행중 {len(fresh)}건 / 마감·중복 {skipped}건 (누적 {len(all_rows)})")
-        if not fresh:
-            print("[1] 이 페이지부터 진행중 공고가 없음 → 순회 종료")
+        print(f"[1] {page}페이지: 순수예술 {len(fresh)}건 / 분야밖 {offfield}건 / 마감·중복 {skipped}건 (누적 {len(all_rows)})")
+        # 목록에 행 자체가 없으면(순수예술+분야밖+마감 모두 0) 마지막 페이지로 보고 종료.
+        if not (fresh or offfield or skipped):
+            print("[1] 이 페이지에 공고가 없음 → 순회 종료")
             break
     return all_rows
 

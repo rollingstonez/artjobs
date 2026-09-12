@@ -35,7 +35,7 @@ BASE = "https://artnuri.or.kr"
 LIST_URL = f"{BASE}/crawler/info/search.do"
 VIEW_URL = f"{BASE}/crawler/info/view.do"
 PER_PAGE = 50
-MAX_PAGES = 4             # 진행중 공고만 최신순 → 최대 200건
+MAX_PAGES = 8             # 진행중 공고만 최신순 → 최대 400건(공공·비영리 공모·오디션 폭넓게)
 PARSER_READY = True
 
 _GOVIEW_RE = re.compile(r"goView\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)")
