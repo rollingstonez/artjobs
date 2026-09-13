@@ -471,6 +471,21 @@ def dry_run_report(rows, *, source_name="", show_rows=True):
             print(json.dumps(x, ensure_ascii=False))
 
 
+# 기존 공고를 갱신할 때 "목록이 모르는 값(None)" 이 이미 채워진 값을 지우지 않게 한다.
+#   아트누리 목록에는 지역이 없어 region=None 으로 오는데, 그걸 그대로 PATCH 하면 상세 단계에서
+#   채워 둔 지역이 다음 날 갱신 때 지워졌다(서울문화포털의 apply_end 도 같은 경로). 그 뒤 상세 백필은
+#   description 이 비어 있는 행만 다시 읽으므로 지워진 지역은 영영 돌아오지 않았다.
+#   분류 칸은 예외다 — 제목에서 매번 다시 계산한 값이 정답이라 None 도 그대로 보낸다
+#   (예: 오디션이던 글이 대관으로 재분류되면 employment_type 을 비워야 한다).
+_ALWAYS_SEND = {"board", "field", "genre", "role", "space_kind", "employment_type",
+                "status", "last_seen_at", "source_code", "source_name", "source_url", "title"}
+
+
+def update_patch(x):
+    """기존 행 갱신용 PATCH 본문. 내용 칸의 None 은 빼고(기존 값 유지), 분류 칸은 None 이어도 보낸다."""
+    return {k: v for k, v in x.items() if v is not None or k in _ALWAYS_SEND}
+
+
 def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
                 detail_empty_field="apply_email", max_detail=50):
     """
@@ -524,7 +539,7 @@ def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
         chunk = to_insert[i:i + 100]
         inserted_ids.extend(sb.insert_returning_ids("crawled_postings", chunk, "source_code,source_key"))
     for x in to_update:
-        sb.patch("crawled_postings", {"id": f"eq.{existing_map[x['source_key']]}"}, x)
+        sb.patch("crawled_postings", {"id": f"eq.{existing_map[x['source_key']]}"}, update_patch(x))
         time.sleep(0.1)
     print(f"[3] 적재 완료: 신규 {len(to_insert)}건 / 갱신 {len(to_update)}건")
 

@@ -244,6 +244,9 @@ if __name__ == "__main__":
                   json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
         dry_run_report(rows, source_name=SOURCE_NAME)
         raise SystemExit(0)
-    # 상세는 description 이 비어 있는 것부터 채운다(신규는 전량, 나머지는 한 번에 60건).
+    # 상세는 region 이 비어 있는 것부터 채운다(신규는 전량, 나머지는 한 번에 60건).
+    # region 을 표시로 쓰는 이유: 목록에는 지역이 없고 상세에서만 오는 값이라 "상세를 읽었는가" 의 표시가 되고,
+    # 예전 갱신 버그로 지워진 지역(common.update_patch 참조)도 이 백필로 되살아난다.
+    # 아트누리에 지역이 정말 없는 공고는 매번 다시 읽히지만 최근 60건 안에서만이라 감당할 만하다.
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows,
-                fetch_detail=fetch_detail, detail_empty_field="description", max_detail=60)
+                fetch_detail=fetch_detail, detail_empty_field="region", max_detail=60)
