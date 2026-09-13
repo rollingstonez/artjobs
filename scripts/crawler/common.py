@@ -297,11 +297,13 @@ def normalize_period_text(text):
     return re.sub(r"\s+", " ", t)
 
 
-def parse_period_text(text, head=3000):
+def parse_period_text(text, head=3000, labeled_only=False):
     """본문에서 (접수 시작, 접수 끝). 접수기간 → 모집/신청 기간 → 본문 앞 head 자 안의 첫 '날짜 ~ 날짜'.
-    끝 날짜에 연도가 없으면 시작 연도를 쓴다. 못 찾으면 (None, None) — 지어내지 않는다."""
+    끝 날짜에 연도가 없으면 시작 연도를 쓴다. 못 찾으면 (None, None) — 지어내지 않는다.
+    labeled_only=True 면 마지막 단계(라벨 없는 첫 '날짜 ~ 날짜')를 쓰지 않는다 —
+    본문에 메뉴·행사 일정 같은 다른 날짜가 섞이는 화면에서 엉뚱한 기간을 잡지 않으려고."""
     t = normalize_period_text(text)
-    m = PERIOD_RE.search(t) or PERIOD_RE2.search(t) or PAIR_RE.search(t[:head])
+    m = PERIOD_RE.search(t) or PERIOD_RE2.search(t) or (None if labeled_only else PAIR_RE.search(t[:head]))
     if not m:
         return None, None
     start = parse_date(m.group(1))
