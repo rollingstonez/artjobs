@@ -7,7 +7,7 @@ import { REGION_CENTERS } from "@/lib/location";
 import { getPosting, splitPostingId } from "@/lib/postings";
 import { createClient } from "@/lib/supabase/server";
 import { contactError } from "@/lib/validation/contact";
-import { BOARDS, EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES, postingHref } from "@/types/job";
+import { BOARDS, EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES, SPACE_KINDS, postingHref } from "@/types/job";
 import type { ActionResult } from "./auth";
 
 const str = (fd: FormData, k: string) => {
@@ -112,18 +112,22 @@ export async function setApplicationStatus(id: string, status: "viewed" | "short
 
 // ── 기관 공고 ──
 function postingPatch(fd: FormData, orgName: string) {
-  const field = inSet(str(fd, "field"), FIELDS.map((f) => f.code));
+  const board = inSet(str(fd, "board"), BOARDS.map((b) => b.code)) ?? "job";
+  const isRental = board === "rental";
+  // 대관은 공간 종류로 분류한다. 분야·장르·직무·고용형태는 "누구를 뽑나"의 축이라 비운다.
+  const field = isRental ? null : inSet(str(fd, "field"), FIELDS.map((f) => f.code));
   const region = inSet(str(fd, "region"), REGIONS);
   const center = region && region in REGION_CENTERS ? REGION_CENTERS[region as keyof typeof REGION_CENTERS] : null;
   const applyMethod = str(fd, "apply_method") === "external" ? "external" : "messenger";
   return {
-    board: inSet(str(fd, "board"), BOARDS.map((b) => b.code)) ?? "job",
+    board,
     field,
-    genre: inSet(str(fd, "genre"), GENRES.filter((g) => g.field === field).map((g) => g.code)),
-    role: inSet(str(fd, "role"), ROLES.map((r) => r.code)),
+    genre: isRental ? null : inSet(str(fd, "genre"), GENRES.filter((g) => g.field === field).map((g) => g.code)),
+    role: isRental ? null : inSet(str(fd, "role"), ROLES.map((r) => r.code)),
+    space_kind: isRental ? inSet(str(fd, "space_kind"), SPACE_KINDS.map((k) => k.code)) : null,
     title: str(fd, "title"),
     organization: orgName,
-    employment_type: inSet(str(fd, "employment_type"), EMPLOYMENT_TYPES.map((e) => e.code)),
+    employment_type: isRental ? null : inSet(str(fd, "employment_type"), EMPLOYMENT_TYPES.map((e) => e.code)),
     employment_raw: strOrNull(fd, "employment_raw"),
     region,
     address: strOrNull(fd, "address"),
@@ -143,6 +147,12 @@ function postingPatch(fd: FormData, orgName: string) {
   };
 }
 
+/** 게시판에 맞는 분류가 골라졌는지. 대관은 공간 종류, 나머지는 분야. */
+function postingClassificationError(patch: { board: string; field: string | null; space_kind: string | null }): string | null {
+  if (patch.board === "rental") return patch.space_kind ? null : "공간 종류를 골라주세요.";
+  return patch.field ? null : "분야를 골라주세요.";
+}
+
 /** 공고 본문에 개인 연락처가 들어갔는지 확인한다(기관 대표번호는 허용). */
 function postingContactError(patch: { description?: string | null; required_docs?: string | null; title?: string }): string | null {
   return contactError([patch.title, patch.description, patch.required_docs].filter(Boolean).join("\n"), "posting");
@@ -153,7 +163,8 @@ export async function createOrgPosting(_p: ActionResult | null, fd: FormData): P
   const supabase = (await createClient())!;
   const patch = postingPatch(fd, me.org?.org_name ?? me.profile.display_name);
   if (patch.title.length < 5) return { ok: false, error: "공고 제목을 5자 이상 적어주세요." };
-  if (!patch.field) return { ok: false, error: "분야를 골라주세요." };
+  const missing = postingClassificationError(patch);
+  if (missing) return { ok: false, error: missing };
   const contact = postingContactError(patch);
   if (contact) return { ok: false, error: contact };
   if (!patch.region) return { ok: false, error: "지역을 골라주세요." };
@@ -166,6 +177,7 @@ export async function createOrgPosting(_p: ActionResult | null, fd: FormData): P
   if (error) return { ok: false, error: error.message };
   revalidatePath("/jobs");
   revalidatePath("/auditions");
+  revalidatePath("/rentals");
   revalidatePath("/me/postings");
   redirect(postingHref({ board: patch.board, id: data.id }, { prefix: "org:" }));
 }
@@ -176,7 +188,8 @@ export async function updateOrgPosting(_p: ActionResult | null, fd: FormData): P
   const supabase = (await createClient())!;
   const patch = postingPatch(fd, me.org?.org_name ?? me.profile.display_name);
   if (patch.title.length < 5) return { ok: false, error: "공고 제목을 5자 이상 적어주세요." };
-  if (!patch.field) return { ok: false, error: "분야를 골라주세요." };
+  const missing = postingClassificationError(patch);
+  if (missing) return { ok: false, error: missing };
   if (!patch.region) return { ok: false, error: "지역을 골라주세요." };
   const contact = postingContactError(patch);
   if (contact) return { ok: false, error: contact };
@@ -184,6 +197,7 @@ export async function updateOrgPosting(_p: ActionResult | null, fd: FormData): P
   if (error) return { ok: false, error: error.message };
   revalidatePath("/jobs");
   revalidatePath("/auditions");
+  revalidatePath("/rentals");
   revalidatePath("/me/postings");
   redirect("/me/postings");
 }
@@ -194,6 +208,7 @@ export async function closeOrgPosting(id: string): Promise<void> {
   await supabase.from("org_postings").update({ status: "closed" }).eq("id", id).eq("org_user_id", me.id);
   revalidatePath("/jobs");
   revalidatePath("/auditions");
+  revalidatePath("/rentals");
   revalidatePath("/me/postings");
 }
 

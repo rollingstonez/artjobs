@@ -4,25 +4,28 @@ import { useActionState, useState } from "react";
 import type { ActionResult } from "@/lib/actions/auth";
 import { createOrgPosting, updateOrgPosting } from "@/lib/actions/postings";
 import { SELECTABLE_REGIONS } from "@/lib/location";
-import { BOARDS, EMPLOYMENT_TYPES, FIELDS, ROLES, genresOf } from "@/types/job";
+import { BOARDS, EMPLOYMENT_TYPES, FIELDS, ROLES, SPACE_KINDS, genresOf } from "@/types/job";
 import { Field, Notice, inputClass, primaryBtn, textareaClass } from "./ui";
 
 export type PostingFormValues = {
-  id?: string; board: string; field: string; genre: string; role: string; title: string; employment_type: string; employment_raw: string;
+  id?: string; board: string; field: string; genre: string; role: string; space_kind: string; title: string; employment_type: string; employment_raw: string;
   region: string; address: string; salary: string; recruit_count: string; apply_start: string; apply_end: string; work_start: string; work_end: string;
   apply_method: string; apply_url: string; required_docs: string; description: string; status: string;
 };
 
 export const EMPTY_POSTING: PostingFormValues = {
-  board: "job", field: "", genre: "", role: "", title: "", employment_type: "", employment_raw: "", region: "", address: "", salary: "",
+  board: "job", field: "", genre: "", role: "", space_kind: "", title: "", employment_type: "", employment_raw: "", region: "", address: "", salary: "",
   recruit_count: "", apply_start: "", apply_end: "", work_start: "", work_end: "", apply_method: "messenger", apply_url: "", required_docs: "", description: "", status: "open",
 };
 
 export default function PostingForm({ initial, orgAddress, orgRegion }: { initial: PostingFormValues; orgAddress?: string | null; orgRegion?: string | null }) {
   const isEdit = Boolean(initial.id);
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(isEdit ? updateOrgPosting : createOrgPosting, null);
+  const [board, setBoard] = useState(initial.board);
   const [field, setField] = useState(initial.field);
   const [applyMethod, setApplyMethod] = useState(initial.apply_method);
+  // 대관은 "누구를 뽑나"가 아니라 "어떤 공간을 빌려주나"라서 분야·장르·직무·고용형태 대신 공간 종류를 받는다.
+  const isRental = board === "rental";
 
   return (
     <form action={action} className="space-y-6">
@@ -33,18 +36,32 @@ export default function PostingForm({ initial, orgAddress, orgRegion }: { initia
           <div className="grid grid-cols-2 gap-1.5">
             {BOARDS.map((b) => (
               <label key={b.code} className="flex cursor-pointer items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm has-[:checked]:border-stone-900 has-[:checked]:bg-stone-900 has-[:checked]:text-white">
-                <input type="radio" name="board" value={b.code} defaultChecked={initial.board === b.code} className="sr-only" />
+                <input type="radio" name="board" value={b.code} checked={board === b.code} onChange={() => setBoard(b.code)} className="sr-only" />
                 {b.label}
               </label>
             ))}
           </div>
         </Field>
         <Field label="공고 제목">
-          <input name="title" defaultValue={initial.title} required minLength={5} placeholder="예: 2027 시즌 단원 오디션 (바이올린)" className={inputClass} />
+          <input name="title" defaultValue={initial.title} required minLength={5} placeholder={isRental ? "예: 2027년 상반기 소극장 정기대관 공고" : "예: 2027 시즌 단원 오디션 (바이올린)"} className={inputClass} />
         </Field>
-        <div className="grid gap-3 sm:grid-cols-3">
+        {isRental && (
+          <Field label="공간 종류">
+            <div className="grid gap-1.5 sm:grid-cols-3">
+              {SPACE_KINDS.map((k) => (
+                <label key={k.code} className="flex cursor-pointer flex-col rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm has-[:checked]:border-stone-900 has-[:checked]:bg-stone-900 has-[:checked]:text-white">
+                  <input type="radio" name="space_kind" value={k.code} defaultChecked={initial.space_kind === k.code} required className="sr-only" />
+                  <span className="font-semibold">{k.label}</span>
+                  <span className="text-[11px] opacity-70">{k.note}</span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-stone-500">전시 공간은 미술 탭에, 공연·연습 공간은 음악·무용·국악·연극 탭에, 복합 공간은 모든 탭에 보입니다.</p>
+          </Field>
+        )}
+        <div className={`grid gap-3 sm:grid-cols-3 ${isRental ? "hidden" : ""}`}>
           <Field label="분야">
-            <select name="field" value={field} onChange={(e) => setField(e.target.value)} className={inputClass} required>
+            <select name="field" value={field} onChange={(e) => setField(e.target.value)} className={inputClass} required={!isRental}>
               <option value="">선택</option>
               {FIELDS.map((f) => <option key={f.code} value={f.code}>{f.label}</option>)}
             </select>
@@ -62,7 +79,7 @@ export default function PostingForm({ initial, orgAddress, orgRegion }: { initia
             </select>
           </Field>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={`grid gap-3 sm:grid-cols-2 ${isRental ? "hidden" : ""}`}>
           <Field label="고용형태">
             <select name="employment_type" defaultValue={initial.employment_type} className={inputClass}>
               <option value="">선택</option>

@@ -77,6 +77,8 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
           set({ q: q.trim() });
         }}
       >
+        {/* 대관은 공간을 빌리는 것이라 장르(회화·현악…) 필터가 맞지 않는다. 분야 탭은 공간 종류로 걸러진다. */}
+        {board !== "rental" && (
         <select
           aria-label="장르"
           className={selectClass}
@@ -93,6 +95,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
             </option>
           ))}
         </select>
+        )}
 
         {isHiringBoard(board) && (
           <>

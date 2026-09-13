@@ -102,6 +102,27 @@ export function isHiringBoard(code: string | null | undefined): boolean {
   return code === "job";
 }
 
+// ── 공간 종류(대관 전용) ──
+// 대관 공고는 "예술가의 장르"가 아니라 "공간의 종류"로 분류한다. 공연장은 음악·무용·국악·연극이 다 쓰고,
+// 다목적홀·생활문화센터는 누구나 쓴다. 그래서 분야(field) 대신 공간 종류로 어느 분야 탭에 보일지 정한다.
+// 크롤러 판정은 scripts/crawler/common.py 의 classify_space_kind(), DB 칸은 0016_space_kind.sql.
+export const SPACE_KINDS = [
+  { code: "exhibition", label: "전시 공간", note: "전시실·갤러리·미술관·화랑", fields: ["art"] },
+  { code: "performance", label: "공연·연습 공간", note: "공연장·극장·아트홀·연습실", fields: ["music", "dance", "gugak", "theater"] },
+  { code: "multi", label: "복합 공간", note: "다목적홀·생활문화센터·문화회관·공연+전시", fields: ["art", "music", "dance", "gugak", "theater"] },
+] as const;
+
+export type SpaceKindCode = (typeof SPACE_KINDS)[number]["code"];
+
+export function spaceKindLabel(code: string | null | undefined): string | null {
+  return SPACE_KINDS.find((k) => k.code === code)?.label ?? null;
+}
+
+/** 이 공간 종류의 대관이 보일 분야 탭. 종류를 모르면(null) 복합 공간으로 보고 모든 탭에 보인다. */
+export function spaceKindFields(code: string | null | undefined): readonly FieldCode[] {
+  return (SPACE_KINDS.find((k) => k.code === code) ?? SPACE_KINDS[2]).fields;
+}
+
 // ── 고용형태 ──
 export const EMPLOYMENT_TYPES = [
   { code: "full_time", label: "정규직" },
@@ -146,6 +167,7 @@ export interface Posting {
   field: FieldCode | null;
   genre: GenreCode | null;
   role: RoleCode | null;
+  spaceKind: SpaceKindCode | null; // 대관(rental) 전용: 전시 · 공연·연습 · 복합. 다른 게시판은 null
   categoryRaw: string | null; // 사이트 원문의 분야·직무 표기 (변형 없이 보존)
   employmentType: EmploymentCode | null;
   employmentRaw: string | null;
