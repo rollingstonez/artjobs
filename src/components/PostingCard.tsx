@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { employmentLabel, fieldLabel, genreLabel, postingHref, roleLabel, type Posting } from "@/types/job";
+import { employmentLabel, fieldLabel, genreLabel, postingHref, roleLabel, spaceKindLabel, type Posting } from "@/types/job";
 import { getDeadline, periodText } from "@/lib/format";
 import { nearnessLabel, type UserLocation } from "@/lib/location";
 import SaveButton from "@/components/SaveButton";
@@ -20,6 +20,13 @@ const FIELD_CHIP: Record<string, string> = {
   theater: "bg-indigo-50 text-indigo-700",
 };
 
+// 대관 카드는 분야 대신 공간 종류를 보여 준다(공연장은 한 분야의 것이 아니다).
+const SPACE_CHIP: Record<string, string> = {
+  exhibition: "bg-orange-50 text-orange-700",
+  performance: "bg-indigo-50 text-indigo-700",
+  multi: "bg-teal-50 text-teal-700",
+};
+
 export default function PostingCard({
   posting,
   near = null,
@@ -37,9 +44,11 @@ export default function PostingCard({
   const isExpired = deadline.kind === "expired";
   const period = periodText(posting.workStart, posting.workEnd);
   const employment = employmentLabel(posting.employmentType);
-  const field = fieldLabel(posting.field);
-  const genre = genreLabel(posting.genre);
-  const role = roleLabel(posting.role);
+  const isRental = posting.board === "rental";
+  const field = isRental ? null : fieldLabel(posting.field);
+  const genre = isRental ? null : genreLabel(posting.genre);
+  const role = isRental ? null : roleLabel(posting.role);
+  const space = isRental ? (spaceKindLabel(posting.spaceKind) ?? "복합 공간") : null;
   const href = postingHref(posting);
 
   return (
@@ -74,6 +83,15 @@ export default function PostingCard({
             }`}
           >
             {genre ? `${field} · ${genre}` : field}
+          </span>
+        )}
+        {space && (
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              SPACE_CHIP[posting.spaceKind ?? "multi"] ?? "bg-stone-100 text-stone-700"
+            }`}
+          >
+            {space}
           </span>
         )}
       </div>

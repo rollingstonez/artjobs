@@ -18,6 +18,7 @@ type Seed = Pick<
 function make(s: Seed): Posting {
   const { daysAgo, daysLeft, ...rest } = s;
   return {
+    spaceKind: null,
     address: null,
     lat: null,
     lng: null,
@@ -449,6 +450,7 @@ export const SAMPLE_POSTINGS: Posting[] = [
     field: "art",
     genre: null,
     role: null,
+    spaceKind: "exhibition",
     categoryRaw: "전시실 대관",
     employmentType: null,
     employmentRaw: null,
@@ -472,6 +474,7 @@ export const SAMPLE_POSTINGS: Posting[] = [
     field: "theater",
     genre: null,
     role: null,
+    spaceKind: "performance",
     categoryRaw: "공연장 대관",
     employmentType: null,
     employmentRaw: null,
@@ -495,6 +498,7 @@ export const SAMPLE_POSTINGS: Posting[] = [
     field: "dance",
     genre: null,
     role: null,
+    spaceKind: "performance",
     categoryRaw: "연습실 대관",
     employmentType: null,
     employmentRaw: null,

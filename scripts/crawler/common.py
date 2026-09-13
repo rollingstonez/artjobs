@@ -46,6 +46,7 @@ GENRE_CODES = {
 }
 ROLE_CODES = {"performer", "creator", "education", "planning", "stage_tech", "assistant"}
 BOARD_CODES = {"job", "audition", "rental", "event"}
+SPACE_KIND_CODES = {"exhibition", "performance", "multi"}   # 대관 전용: 전시 · 공연·연습 · 복합
 EMPLOYMENT_CODES = {"full_time", "contract", "freelance", "intern", "open_call"}
 
 # 키워드 → 장르. 반드시 "긴 키워드 먼저" — 먼저 걸린 쪽이 이긴다. 장르가 잡히면 분야는 자동.
@@ -126,6 +127,28 @@ _RENTAL_NOT_WORDS = (
     # 레지던시·입주는 오디션·공모 게시판이 제자리다
     "레지던시", "입주작가",
 )
+
+
+# ── 공간 종류(대관 전용) ──
+# 대관 공고는 "예술가의 장르"가 아니라 "공간의 종류"로 분류한다. 공연장은 음악·무용·국악·연극이 다 쓰고,
+# 다목적홀·생활문화센터는 누구나 쓴다. 아트누리가 기관에 붙인 장르 태그(공예 기관 = '전통예술' 등)는
+# 기관의 장르지 공간을 빌릴 사람의 장르가 아니라서 대관에는 쓰지 않는다.
+# ⚠️ 이 두 목록은 supabase/migrations/0016_space_kind.sql 의 정규식과 같아야 한다. 한쪽을 고치면 다른 쪽도.
+_EXHIBITION_WORDS = ("전시", "갤러리", "미술관", "화랑", "공예관")
+_PERFORMANCE_WORDS = ("공연", "극장", "아트홀", "콘서트홀", "연습")
+
+
+def classify_space_kind(*texts):
+    """대관 공고의 공간 종류. 전시 낱말만 → exhibition, 공연 낱말만 → performance,
+    둘 다(공연장·전시실 통합 공고) 또는 둘 다 없음(다목적홀·생활문화센터) → multi."""
+    text = " ".join(t for t in texts if t)
+    ex = any(w in text for w in _EXHIBITION_WORDS)
+    pf = any(w in text for w in _PERFORMANCE_WORDS)
+    if ex and not pf:
+        return "exhibition"
+    if pf and not ex:
+        return "performance"
+    return "multi"
 
 
 def is_rental(*texts):
@@ -400,6 +423,17 @@ def normalize_codes(x):
         x["board"] = "job"
     if x.get("genre") and not x.get("field"):
         x["field"] = x["genre"].split("_", 1)[0]
+    if x["board"] == "rental":
+        # 대관은 공간 종류로 분류한다. 제목에서 판정하고, 기관 장르 태그·'공연' 낱말로 잡힌 분야는 버린다.
+        # 전시 공간만 미술(field=art)로 두고, 공연·연습·복합 공간은 field 를 비운다 — 어느 분야 탭에 보일지는
+        # 화면(src/lib/postings.ts matchesField)이 space_kind 로 정한다.
+        x["space_kind"] = classify_space_kind(x.get("title"))
+        x["field"] = "art" if x["space_kind"] == "exhibition" else None
+        x["genre"] = None
+        x["role"] = None
+        x["employment_type"] = None
+    else:
+        x["space_kind"] = None
     return x
 
 

@@ -13,7 +13,7 @@ export default async function EditPostPage({ params }: PageProps<"/post/[id]/edi
   if (!data) notFound();
   const v = (k: string) => (data[k] == null ? "" : String(data[k]));
   const initial: PostingFormValues = {
-    id, board: v("board"), field: v("field"), genre: v("genre"), role: v("role"), title: v("title"), employment_type: v("employment_type"), employment_raw: v("employment_raw"),
+    id, board: v("board"), field: v("field"), genre: v("genre"), role: v("role"), space_kind: v("space_kind"), title: v("title"), employment_type: v("employment_type"), employment_raw: v("employment_raw"),
     region: v("region"), address: v("address"), salary: v("salary"), recruit_count: v("recruit_count"), apply_start: v("apply_start"), apply_end: v("apply_end"),
     work_start: v("work_start"), work_end: v("work_end"), apply_method: v("apply_method") || "messenger", apply_url: v("apply_url"), required_docs: v("required_docs"), description: v("description"), status: v("status"),
   };

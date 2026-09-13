@@ -29,6 +29,8 @@
   - 판정은 `scripts/crawler/common.py` 의 `is_rental()` 한 곳에서 한다. `classify_board()` 가 '공모'보다 먼저 보고,
     게시판이 고정된 크롤러(기관의 '공모 소식' 게시판 등)는 `force_board(고정값, 제목)` 으로 대관만 빼낸다
   - `supabase/migrations/0015_rental.sql` 의 되분류 조건이 `is_rental()` 과 같아야 한다 — **한쪽을 고치면 다른 쪽도 고친다**
+  - **대관은 분야가 아니라 공간 종류(`space_kind`)로 나눈다** — 전시 공간(미술 탭) · 공연·연습 공간(음악·무용·국악·연극 탭) · 복합 공간(모든 탭).
+    판정은 `common.py` 의 `classify_space_kind()`, 화면 노출은 `src/lib/postings.ts matchesField`. `0016_space_kind.sql` 의 정규식과 낱말이 같아야 한다
 - `scripts/crawler` — 파이썬 크롤러 (바로쌤 이식)
   - `sources.py` **수집 대상 사이트 대장(단일 기준, 81곳)** — 여기만 고친다
   - `export_sources.py` 대장 → `docs/sources.md`(사람용 표) + `supabase/seed/crawl_sources.sql`(DB 시드) 생성
@@ -41,7 +43,7 @@
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
-- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료), `0015_rental.sql` 대관 게시판(org_postings.board 제약에 rental 추가·알림 기본값·이미 모은 공고 되분류)
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료), `0015_rental.sql` 대관 게시판(org_postings.board 제약에 rental 추가·알림 기본값·이미 모은 공고 되분류), `0016_space_kind.sql` 대관 공간 종류(space_kind 칸·이미 모은 대관 공고 되분류. **크롤러가 이 칸에 쓰므로 새 크롤러 코드보다 먼저 실행**)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `scripts/crawler/common.py` 의 `dry_run_report()` — `--dry-run` 출력. 게시판·분야별 집계를 먼저 찍고 대관 공고는 제목까지 보여준다.
   실제 적재와 같은 `normalize_codes()` 를 쓰므로, dry-run 에서 본 분류가 곧 DB 에 들어갈 분류다

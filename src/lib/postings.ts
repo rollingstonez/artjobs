@@ -7,7 +7,7 @@ import { rankNearness, type UserLocation } from "@/lib/location";
 import { HAS_SUPABASE } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import type { PostingSource } from "@/types/account";
-import { FIELDS, genreCodesForField, type BoardCode, type FieldCode, type Posting } from "@/types/job";
+import { FIELDS, genreCodesForField, spaceKindFields, type BoardCode, type FieldCode, type Posting } from "@/types/job";
 
 export const DATA_SOURCE: "sample" | "supabase" = HAS_SUPABASE ? "supabase" : "sample";
 
@@ -84,6 +84,7 @@ function fromRow(r: Row, source: PostingSource): Posting {
     field: s(r.field) as Posting["field"],
     genre: s(r.genre) as Posting["genre"],
     role: s(r.role) as Posting["role"],
+    spaceKind: s(r.space_kind) as Posting["spaceKind"],
     categoryRaw: s(r.category_raw),
     employmentType: s(r.employment_type) as Posting["employmentType"],
     employmentRaw: s(r.employment_raw),
@@ -131,9 +132,11 @@ function isField(v: string | undefined): v is FieldCode {
   return FIELDS.some((f) => f.code === v);
 }
 
-/** 분야 필터. 분야가 같거나, 그 분야 탭에 교차 노출하기로 한 장르면 통과. */
+/** 분야 필터. 분야가 같거나, 그 분야 탭에 교차 노출하기로 한 장르면 통과.
+ * 대관은 공간 종류로 정한다 — 공연장은 음악·무용·국악·연극 탭에, 전시실은 미술 탭에, 복합 공간은 모든 탭에. */
 function matchesField(p: Posting, field: string | undefined): boolean {
   if (!field) return true;
+  if (p.board === "rental") return (spaceKindFields(p.spaceKind) as readonly string[]).includes(field);
   if (p.field === field) return true;
   if (isField(field) && p.genre) {
     return (genreCodesForField(field) as string[]).includes(p.genre);

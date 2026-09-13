@@ -11,6 +11,7 @@ import {
   fieldLabel,
   genreLabel,
   roleLabel,
+  spaceKindLabel,
   type Posting,
   boardPath,
 } from "@/types/job";
@@ -94,10 +95,13 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
   const isOrgPosting = Boolean(p.orgUserId);
   const isExpired = deadline.kind === "expired";
   const backHref = boardPath(p.board);
-  const field = fieldLabel(p.field);
-  const genre = genreLabel(p.genre);
-  const role = roleLabel(p.role);
-  const classification = [field, genre, role].filter(Boolean).join(" · ") || null;
+  const isRental = p.board === "rental";
+  const field = isRental ? null : fieldLabel(p.field);
+  const genre = isRental ? null : genreLabel(p.genre);
+  const role = isRental ? null : roleLabel(p.role);
+  // 대관은 분야·장르·직무 대신 공간 종류 하나로 설명한다.
+  const space = isRental ? (spaceKindLabel(p.spaceKind) ?? "복합 공간") : null;
+  const classification = [space, field, genre, role].filter(Boolean).join(" · ") || null;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16 md:px-6">
@@ -114,6 +118,7 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
               {p.region}
             </span>
           )}
+          {space && <Chip>{space}</Chip>}
           {field && <Chip>{genre ? `${field} · ${genre}` : field}</Chip>}
           {role && <Chip>{role}</Chip>}
           {employmentLabel(p.employmentType) && <Chip>{employmentLabel(p.employmentType)}</Chip>}
@@ -142,7 +147,7 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
         </div>
 
         <dl className="mt-6 divide-y divide-stone-100 border-y border-stone-100">
-          <Row label="분야·직무" value={classification} />
+          <Row label={isRental ? "공간 종류" : "분야·직무"} value={classification} />
           <Row label="원문 분야" value={p.categoryRaw} />
           <Row label="고용형태" value={p.employmentRaw ?? employmentLabel(p.employmentType)} />
           <Row label="모집인원" value={p.recruitCount} />
