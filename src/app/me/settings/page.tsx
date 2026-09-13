@@ -1,4 +1,5 @@
 import DeleteAccount from "./DeleteAccount";
+import PasswordForm from "./PasswordForm";
 import SettingsForm from "./SettingsForm";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -6,8 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 export default async function SettingsPage() {
   const me = await requireUser("/me/settings");
   const supabase = (await createClient())!;
-  const { data } = await supabase.from("user_settings").select("*").eq("user_id", me.id).maybeSingle();
+  const [{ data }, { data: authData }] = await Promise.all([
+    supabase.from("user_settings").select("*").eq("user_id", me.id).maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
   const s = data ?? { message_notification: true, new_posting_notification: true, application_notification: true, email_notification: true };
+  const hasPassword = Boolean(authData.user?.identities?.some((i) => i.provider === "email"));
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold">설정</h2>
@@ -16,6 +21,7 @@ export default async function SettingsPage() {
       <p className="text-xs text-stone-500">
         이메일 알림은 준비 중입니다. 지금은 사이트 안 알림(종 아이콘)으로만 갑니다.
       </p>
+      <PasswordForm hasPassword={hasPassword} />
       <DeleteAccount isAdmin={me.profile.is_admin} />
     </div>
   );

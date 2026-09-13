@@ -1,5 +1,6 @@
-// 소셜 로그인 콜백. 제공자에서 돌아온 code 를 세션으로 바꾸고,
-// 가입 화면에서 고른 역할(role)이 있으면 첫 로그인 직후 그 역할로 맞춘다 (choose_signup_role, 0005).
+// 소셜 로그인 · 가입 확인 메일 · 비밀번호 재설정 메일이 돌아오는 곳.
+// 돌아온 code 를 세션으로 바꾸고, 가입 화면에서 고른 역할(role)이 있으면 첫 로그인 직후 그 역할로 맞춘다 (choose_signup_role, 0005).
+// next 로 비밀번호 재설정 화면(/reset-password) 등 원래 가려던 곳을 받는다.
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ATTRIBUTION_COOKIE, parseAttributionCookie, parseUserAgent } from "@/lib/traffic";
@@ -14,6 +15,16 @@ export async function GET(request: NextRequest) {
   const role = searchParams.get("role");
   const next = safeNext(searchParams.get("next"));
 
+  // 링크가 만료됐거나 사용자가 제공자 화면에서 취소했을 때 Supabase 가 error 로 돌려보낸다.
+  const errorCode = searchParams.get("error_code") ?? searchParams.get("error");
+  const errorDesc = (searchParams.get("error_description") ?? "").toLowerCase();
+  if (errorCode) {
+    if (errorCode === "otp_expired" || errorDesc.includes("expired") || errorDesc.includes("invalid")) {
+      return NextResponse.redirect(`${origin}/login?error=${next === "/reset-password" ? "reset_expired" : "link_expired"}`);
+    }
+    return NextResponse.redirect(`${origin}/login?error=oauth`);
+  }
+
   const supabase = await createClient();
   if (!supabase || !code) {
     return NextResponse.redirect(`${origin}/login?error=oauth`);
@@ -21,7 +32,13 @@ export async function GET(request: NextRequest) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    return NextResponse.redirect(`${origin}/login?error=oauth`);
+    // PKCE 검증값(쿠키)이 없는 다른 브라우저에서 메일 링크를 열면 여기로 온다. docs/AUTH_EMAIL.md 의 템플릿 설정으로 해결.
+    return NextResponse.redirect(`${origin}/login?error=${next === "/reset-password" ? "reset_expired" : "link_expired"}`);
+  }
+
+  // 비밀번호 재설정 링크는 새 계정 판정 없이 바로 재설정 화면으로.
+  if (next === "/reset-password") {
+    return NextResponse.redirect(`${origin}/reset-password`);
   }
 
   if (role === "artist" || role === "organization") {
