@@ -53,12 +53,14 @@ import time
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urljoin, urlparse
 
+import requests
 from bs4 import BeautifulSoup
 
 from common import (
-    PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_date, parse_period_text, run_crawler, today_str,
+    PAGE_SLEEP, EMAIL_RE, PHONE_RE, USER_AGENT,
+    classify_all, parse_date, parse_period_text, run_crawler, today_str,
 )
+from http_retry import _retry
 
 SOURCE_CODE = "gojobs"
 SOURCE_NAME = "나라일터(인사혁신처)"
@@ -71,6 +73,41 @@ DETAIL_URL_TMPL = None     # 목록 <a> 가 javascript 라 주소를 못 읽을 
 MAX_PAGES = 60             # 한 페이지 10건 → 600건. 하루 100건 남짓이니 매일 돌리기에 충분히 넉넉하다.
 RECENT_DAYS = 21           # 게시일이 이보다 오래된 쪽이 나오면 순회 종료
 PARSER_READY = False       # 위 '확인 순서'를 한 번 돌린 뒤 True 로 바꾼다
+
+# ── 접속 ──────────────────────────────────────────────────────
+# 나라일터는 .go.kr 인데 GitHub 러너(해외 IP)에서 TCP 연결이 20초 안에 안 붙는 일이 잦다
+# (README 에 적힌 국립현대미술관과 같은 증상). 2026-09-13 실측:
+#   공용 fetch(제한시간 20초)  → ConnectTimeout (재시도 3회 모두, 두 번 돌려 두 번 다)
+#   fetch-sample(제한시간 30초) → 같은 시각 3초 만에 HTTP 200 (185KB)
+# 경계선에 걸려 있다. 그래서 이 소스만 연결 제한시간을 늘리고 재시도를 더 준다.
+# 그래도 안 되면 curl_cffi(크롬 흉내)로 한 번 더 시도한다 — requirements.txt 에 이미 있고,
+# 파이썬 requests 의 TLS 지문을 막는 공공기관 사이트를 위한 대비책이다.
+CONNECT_TIMEOUT = 30
+READ_TIMEOUT = 60
+FETCH_TRIES = 4
+FETCH_WAIT = 8
+
+
+def _fetch(url, *, params=None, sleep=0):
+    """UA 를 밝힌 GET. requests → (실패하면) curl_cffi 순서로 시도한다."""
+    if sleep:
+        time.sleep(sleep)
+    headers = {"User-Agent": USER_AGENT}
+    try:
+        r = _retry(requests.get, url, _tries=FETCH_TRIES, _wait=FETCH_WAIT,
+                   headers=headers, params=params, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT))
+        r.raise_for_status()
+        r.encoding = r.apparent_encoding or "utf-8"
+        return r.text
+    except Exception as e:
+        print(f"[네트워크] requests 실패({type(e).__name__}) → curl_cffi(크롬 흉내)로 다시 시도", flush=True)
+    from curl_cffi import requests as curl_requests
+    r = curl_requests.get(url, params=params, headers=headers,
+                          impersonate="chrome", timeout=CONNECT_TIMEOUT + READ_TIMEOUT)
+    r.raise_for_status()
+    print("[네트워크] curl_cffi 로 받았다.", flush=True)
+    return r.text
+
 
 # 목록 머리글 이름 → 우리가 쓸 칸 이름. 표기가 조금 달라도 걸리도록 부분일치로 찾는다.
 _COLUMNS = {
@@ -328,7 +365,7 @@ def collect_rows():
 
     for page in range(1, MAX_PAGES + 1):
         params = dict(LIST_PARAMS, **{PAGE_PARAM: str(page)})
-        html = fetch_html(LIST_URL, params=params, sleep=PAGE_SLEEP if page > 1 else 0)
+        html = _fetch(LIST_URL, params=params, sleep=PAGE_SLEEP if page > 1 else 0)
         items = parse_list(html)
         if not items:
             print(f"[1] {page}페이지: 목록 표를 못 읽음 → 종료 (1페이지였다면 --probe 로 구조 확인)")
@@ -386,7 +423,7 @@ def fetch_detail(key):
     url = _DETAIL_BY_KEY.get(key) or (DETAIL_URL_TMPL.format(key=key) if DETAIL_URL_TMPL else None)
     if not url:
         return {}
-    html = fetch_html(url)
+    html = _fetch(url)
     soup = BeautifulSoup(html, "html.parser")
     for t in soup.find_all(["script", "style", "header", "footer", "nav"]):
         t.decompose()
@@ -412,7 +449,7 @@ def fetch_detail(key):
 
 def probe():
     """실제 HTML 을 눈으로 확인하는 단계 — 표 머리글·첫 행·링크·페이지 파라미터 후보를 찍는다."""
-    html = fetch_html(LIST_URL, params=LIST_PARAMS)
+    html = _fetch(LIST_URL, params=LIST_PARAMS)
     soup = BeautifulSoup(html, "html.parser")
     print(f"[probe] {LIST_URL} {LIST_PARAMS} · {len(html):,}바이트 · 표 {len(soup.find_all('table'))}개")
     for n, table in enumerate(soup.find_all("table"), 1):
