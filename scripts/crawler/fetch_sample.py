@@ -7,6 +7,7 @@ GitHub Actions(fetch-sample) 에서 돈다. 작업 환경(클로드 코드)은 �
     post_data 를 주면(예: "cbIdx=964&pageIndex=1") 폼 POST 로 요청한다 — AJAX 목록 사이트용
     mode: html(기본) — 본문 정리 출력 / scripts — 인라인 스크립트·외부 스크립트 주소 출력(AJAX 목록 사이트용)
           raw — 원문 그대로(줄 단위) / json — AJAX JSON 응답을 들여쓰기해 출력(목록 5건, 긴 문자열은 자름)
+          range — post_data 에 "시작:끝" 줄 번호를 주면 그 구간 원문만 찍는다(카드 한 장의 마크업 확인용)
 """
 from __future__ import annotations
 
@@ -29,6 +30,20 @@ def one(url: str, rest: list[str]) -> None:
     max_lines = int(rest[0]) if len(rest) > 0 and rest[0] else 3000
     mode = rest[1] if len(rest) > 1 and rest[1] else "html"
     post_data = rest[2] if len(rest) > 2 else ""
+    if mode == "range":
+        # post_data = "1455:1545" → 그 줄 구간만 원문 그대로. 목록 카드 하나의 선택자를 볼 때 쓴다.
+        r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        r.encoding = r.apparent_encoding or "utf-8"
+        lines = r.text.splitlines()
+        try:
+            a, b = (int(x) for x in (post_data or "1:200").split(":"))
+        except ValueError:
+            a, b = 1, 200
+        a, b = max(1, a), min(len(lines), b)
+        print(f"=== GET {url}\n=== HTTP {r.status_code} · {len(lines)} lines · range {a}:{b}")
+        for i in range(a - 1, b):
+            print(f"{i + 1:6d}: {lines[i][:400]}")
+        return
     if mode == "grep":
         import re
         r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)

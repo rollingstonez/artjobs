@@ -14,12 +14,12 @@ on:
         default: "3000"
         type: string
       mode:
-        description: "html(본문) / scripts(스크립트) / raw(원문) / text(텍스트) / grep(정규식) / json(AJAX JSON)"
+        description: "html(본문) / scripts(스크립트) / raw(원문) / text(텍스트) / grep(정규식) / range(줄 구간) / json(AJAX JSON)"
         required: false
         default: "html"
         type: string
       post_data:
-        description: "있으면 폼 POST (예: cbIdx=964&pageIndex=1)"
+        description: "폼 POST 값(예: cbIdx=964&pageIndex=1) · grep 이면 정규식 · range 면 \"시작:끝\" 줄 번호"
         required: false
         default: ""
         type: string
