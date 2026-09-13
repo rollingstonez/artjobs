@@ -77,6 +77,10 @@ jobs:
       # 나라일터는 공직 전체 공고가 올라오는 큰 창구라 예술 낱말로 걸러서 가져온다.
       # 파서를 실측으로 확정하기 전까지 crawl_gojobs.py 의 PARSER_READY=False → 실제 적재는 스스로 막는다.
       # dry_run=true 로 돌리면 [probe] 절에 표 머리글·상세 링크·페이지 파라미터 후보가 찍힌다.
+      # continue-on-error: 나라일터는 GitHub 러너의 나가는 IP 에 따라 접속이 반반이라
+      # (2026-09-13 실측: 러너 세 대 성공·세 대 전부 ConnectTimeout) 안 되는 날이 있다.
+      # 그날 하루 수집을 통째로 빨간불로 만들지 않도록 이 단계만 실패를 넘긴다.
       - name: 나라일터 (gojobs)
         if: always() && (inputs.source == '' || inputs.source == 'gojobs')
+        continue-on-error: true
         run: python scripts/crawler/crawl_gojobs.py $DRY

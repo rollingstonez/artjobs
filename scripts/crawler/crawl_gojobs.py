@@ -75,17 +75,23 @@ RECENT_DAYS = 21           # 게시일이 이보다 오래된 쪽이 나오면 �
 PARSER_READY = False       # 위 '확인 순서'를 한 번 돌린 뒤 True 로 바꾼다
 
 # ── 접속 ──────────────────────────────────────────────────────
-# 나라일터는 .go.kr 인데 GitHub 러너(해외 IP)에서 TCP 연결이 20초 안에 안 붙는 일이 잦다
-# (README 에 적힌 국립현대미술관과 같은 증상). 2026-09-13 실측:
-#   공용 fetch(제한시간 20초)  → ConnectTimeout (재시도 3회 모두, 두 번 돌려 두 번 다)
-#   fetch-sample(제한시간 30초) → 같은 시각 3초 만에 HTTP 200 (185KB)
-# 경계선에 걸려 있다. 그래서 이 소스만 연결 제한시간을 늘리고 재시도를 더 준다.
-# 그래도 안 되면 curl_cffi(크롬 흉내)로 한 번 더 시도한다 — requirements.txt 에 이미 있고,
-# 파이썬 requests 의 TLS 지문을 막는 공공기관 사이트를 위한 대비책이다.
-CONNECT_TIMEOUT = 30
-READ_TIMEOUT = 60
-FETCH_TRIES = 4
-FETCH_WAIT = 8
+# ⚠️ 나라일터는 GitHub 러너에서 접속이 반반이다. 2026-09-13 일곱 번 실측:
+#   러너 326·328·329 → 3~6초 만에 HTTP 200 (185KB)
+#   러너 325·330·331 → 무엇을 해도 ConnectTimeout (requests 4회 + curl_cffi 90초까지 전부)
+# 러너가 바뀌면 되고 안 바뀌면 계속 안 된다 → 시간이 아니라 **나가는 IP** 로 갈린다.
+# .go.kr 이 해외 IP 대역 일부를 막아 둔 것으로 보인다(README 의 국립현대미술관과 같은 증상).
+#
+# 그래서 한 실행 안에서 오래 매달리지 않는다 — 같은 IP 로 다시 걸어봐야 결과가 같다.
+# 짧게 두 번만 시도하고(약 1분), 그래도 안 되면 그 회차는 포기한다.
+# crawl.yml 에서 이 단계는 continue-on-error 라 다른 소스 수집은 그대로 끝난다.
+# 매일 돌리면 러너가 바뀌므로 되는 날 들어온다. 안정적으로 받으려면 공공데이터포털
+# '인사혁신처_공공취업정보 조회'(data.go.kr/data/15000485) 활용신청이 답이다 — 주소가
+# apis.data.go.kr 로 달라 이 IP 문제를 비껴간다.
+CONNECT_TIMEOUT = 25
+READ_TIMEOUT = 45
+FETCH_TRIES = 2
+FETCH_WAIT = 5
+CURL_TIMEOUT = 25
 
 
 def _fetch(url, *, params=None, sleep=0):
@@ -103,7 +109,7 @@ def _fetch(url, *, params=None, sleep=0):
         print(f"[네트워크] requests 실패({type(e).__name__}) → curl_cffi(크롬 흉내)로 다시 시도", flush=True)
     from curl_cffi import requests as curl_requests
     r = curl_requests.get(url, params=params, headers=headers,
-                          impersonate="chrome", timeout=CONNECT_TIMEOUT + READ_TIMEOUT)
+                          impersonate="chrome", timeout=CURL_TIMEOUT)
     r.raise_for_status()
     print("[네트워크] curl_cffi 로 받았다.", flush=True)
     return r.text
