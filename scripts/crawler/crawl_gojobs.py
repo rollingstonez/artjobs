@@ -207,28 +207,44 @@ def _clean(s):
     return " ".join((s or "").split())
 
 
-def _region_of(*texts):
-    """기관명·제목에서 시·도를 읽는다. 근거가 없으면 None — 지어내지 않는다."""
-    text = " ".join(t for t in texts if t)
-    for token, sido in _SIDO_TOKENS:
-        if token in text:
-            return sido
+def _region_of(organization, title=""):
+    """시·도를 읽는다. 근거가 없으면 None — 틀리느니 빈칸이 낫다.
+
+    시·도 이름은 기관명 → (없으면) 제목 순서로 찾고,
+    시·군 이름은 **기관명에서만** 찾는다. 제목에는 '장애인제한'(→'인제') 처럼
+    시·군 이름을 품은 낱말이 섞여 들어와 엉뚱한 지역이 붙는다(2026-09-13 실측)."""
+    org = organization or ""
+    for source in (org, title or ""):
+        for token, sido in _SIDO_TOKENS:
+            if token in source:
+                return sido
     for sido, cities in _CITY_SIDO.items():
-        if any(c in text for c in cities):
+        if any(c in org for c in cities):
             return sido
     return None
 
 
+# 기관명에서만 보는 낱말 — '그 기관이 예술기관인가'. 제목용 낱말을 기관명에 그대로 쓰면
+# '이태원참사진상규명…위원회' 의 '참사진상' → '사진' 처럼 엉뚱하게 걸린다(2026-09-13 실측).
+_ART_ORG_WORDS = (
+    "미술관", "박물관", "갤러리", "아트센터", "예술의전당", "문화예술회관", "예술회관", "문예회관",
+    "문화회관", "문화의전당", "공연장", "국악원", "문화재단", "문화예술재단", "문화관광재단",
+    "예술단", "교향악단", "국악단", "무용단", "합창단", "극단", "오페라단", "문화원",
+    "문화예술", "예술대학", "예술고등학교", "문화재청", "국가유산청",
+)
+
+
 def _is_art(title, organization):
-    text = f"{title} {organization or ''}"
-    if any(w in text for w in _SKIP_WORDS):
+    org = organization or ""
+    if any(w in title or w in org for w in _SKIP_WORDS):
         return False
-    if not any(w in text for w in _ART_WORDS):
+    hit_title = [w for w in _ART_WORDS if w in title]
+    hit_org = [w for w in _ART_ORG_WORDS if w in org]
+    if not hit_title and not hit_org:
         return False
     # '전시' 만 걸렸는데 비상대비 업무면 제외한다(展示 가 아니라 戰時).
-    if any(w in text for w in _WAR_WORDS):
-        others = [w for w in _ART_WORDS if w != "전시" and w in text]
-        if not others:
+    if any(w in title for w in _WAR_WORDS) and not hit_org:
+        if not [w for w in hit_title if w != "전시"]:
             return False
     return True
 
