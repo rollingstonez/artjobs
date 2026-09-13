@@ -36,13 +36,13 @@
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
 - `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
-- `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
+- `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에, `source=sfac` 처럼 코드를 적으면 그 소스만). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
   - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 — **게시판 두 개**를 함께 읽는다: 채용공고(cbIdx=964)와 공모 소식(cbIdx=992, 카테고리 '공고'만 → 오디션·공모 게시판으로). AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외. '신청·참여' 메뉴의 지원사업·입주작가 공모는 상세가 scas.kr 로 넘어가는데 그쪽 robots.txt 자리에 차단 안내가 떠서 허용 확인 전까지 수집하지 않는다
   - `crawl_kcdf.py` 한국공예·디자인문화진흥원 채용(표 목록, 접수 기간·마감 배지로 모집중만) · `crawl_sema.py` 서울시립미술관 채용시험(목록 45일 안, 본문이 첨부라 마감일 없음)
   - `crawl_mmca.py` 국립현대미술관 채용(AJAX JSON 에 본문 포함 → 접수 기간은 `common.parse_period_text` 로 판독, 합격자·면접 공고 제외)
   - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처
   - `crawl_artmore.py` 아트모아(예술경영지원센터 예술 일자리 플랫폼) — 미술 분야 필터 목록에서 진행중 채용만. 목록에 제목·회사·근무지·고용형태·마감일이 다 있어 상세는 열지 않음
-  - `crawl_seoul_culture.py` 서울문화포털(서울시 문화기관 채용 모음) — 제목 앞 [기관명] 으로 회사, 상세에서 등록일·첨부(접수기간은 첨부 안이라 마감일 없음, sema 방식)
+  - `crawl_seoul_culture.py` 서울문화포털(서울시 문화기관 모음) — **게시판 두 개**: 채용공고(B0000002)와 공모소식(B0000014 → 오디션·공모 게시판). 제목 앞 [기관명] 으로 회사, 상세에서 등록일·첨부. 접수기간은 대개 첨부(hwpx) 안이라 본문에 '접수기간' 이 적힌 글만 마감일을 채운다
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
 - `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음

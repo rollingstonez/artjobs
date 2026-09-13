@@ -1,6 +1,7 @@
 # 아트잡스 공고 크롤러 — 바로쌤 crawl.yml 구조 이식
 # - 평일 21:11 KST 자동 실행(GitHub cron 은 UTC: "11 12 * * 1-5") + 수동 실행(workflow_dispatch).
 # - 수동 실행에서 dry_run=true 를 고르면 DB 에 넣지 않고 수집 결과만 로그에 찍는다(파서 확인용).
+# - source 에 코드 하나(예: sfac)를 적으면 그 소스만 돈다. 파서를 고친 뒤 그 소스만 빠르게 확인할 때 쓴다.
 # - 비밀값: GitHub Secrets → 실행 시점에 .env.local 로 만들어 크롤러가 로컬과 동일하게 읽는다.
 # - 각 소스 단계 if: always() → 앞 소스가 실패해도 다음 소스는 계속 실행.
 # - 소스는 운영자 화면(/admin/sources)에서 켠 것만 실제 수집한다(crawl_sources.is_active).
@@ -16,6 +17,11 @@ on:
         default: "false"
         type: choice
         options: ["false", "true"]
+      source:
+        description: "한 곳만 돌릴 때 코드 입력(예: sfac). 비우면 전체"
+        required: false
+        default: ""
+        type: string
 jobs:
   crawl:
     runs-on: ubuntu-latest
@@ -42,29 +48,29 @@ jobs:
           } > .env.local
       # ── 소스별 단계. 새 소스는 같은 모양으로 한 줄씩 추가 ──
       - name: 서울문화재단 (sfac)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'sfac')
         run: python scripts/crawler/crawl_sfac.py $DRY
       - name: 한국공예·디자인문화진흥원 (kcdf)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'kcdf')
         run: python scripts/crawler/crawl_kcdf.py $DRY
       - name: 서울시립미술관 (sema)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'sema')
         run: python scripts/crawler/crawl_sema.py $DRY
       # 국립현대미술관(mmca)은 일일 수집에서 제외 — www.mmca.go.kr(.go.kr)이 GitHub 러너
       # (해외 IP)에서 접속이 자주 끊겨(ConnectTimeout) 수집이 불안정하다. 국현 채용 물량도
       # 적어 무시. 필요하면 안정적인 공적 경로(문체부 mcst_job·잡알리오 alio_api)로 대체한다.
       #   run: python scripts/crawler/crawl_mmca.py $DRY
       - name: 아트누리 (artnuri)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'artnuri')
         run: python scripts/crawler/crawl_artnuri.py $DRY
       # 모모365 는 민간 플랫폼(민간·협의대기) → is_active=false 라 서면 협의로 켜기 전까지는
       # 스스로 건너뛴다(수집 0건). 협의 완료 후 /admin/sources 에서 켜면 실제 수집한다.
       - name: 모모365 (momo365)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'momo365')
         run: python scripts/crawler/crawl_momo365.py $DRY
       - name: 아트모아 (artmore)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'artmore')
         run: python scripts/crawler/crawl_artmore.py $DRY
       - name: 서울문화포털 (seoul_culture)
-        if: always()
+        if: always() && (inputs.source == '' || inputs.source == 'seoul_culture')
         run: python scripts/crawler/crawl_seoul_culture.py $DRY

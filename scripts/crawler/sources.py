@@ -92,10 +92,12 @@ SITES = [
          base_url="https://kfaa.or.kr", list_path="/bbs/?so_table=art_news01",
          tier=1, kind="공모", categories=["all"], region="전국·온라인", fetch="html", verified=True, priority=3,
          note="공모·전시 소식 게시판. 채용 비중은 낮음."),
-    dict(code="seoul_culture", name="서울문화포털 채용공고",
+    dict(code="seoul_culture", name="서울문화포털 채용·공모",
          base_url="https://culture.seoul.go.kr", list_path="/culture/bbs/B0000002/list.do?menuNo=200052",
-         tier=1, kind="채용", categories=["all"], region="서울", fetch="html", verified=True, priority=2,
-         note="서울시 문화기관(시립미술관·박물관·문화재단 등) 채용 모음."),
+         tier=1, kind="채용+공모", categories=["all"], region="서울", fetch="html", verified=True, priority=2,
+         note="서울시 문화기관(시립미술관·박물관·문화재단 등) 모음. 게시판 두 개를 함께 읽는다 — "
+              "채용공고(B0000002, menuNo=200052) + 공모소식(B0000014, menuNo=200118, 오디션·공모 게시판으로). "
+              "접수 기간은 대개 첨부(hwpx) 안이라 본문에 '접수기간' 이 적힌 글만 마감일을 채운다."),
 
     # ───────────────────────── 2. 중앙 공공기관 ─────────────────────────
     dict(code="arko", name="한국문화예술위원회(ARKO) 채용",
