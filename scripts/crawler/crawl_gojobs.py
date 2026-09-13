@@ -473,30 +473,102 @@ def collect_rows():
     return rows
 
 
+# 상세 페이지 구조(2026-09-13 실측):
+#   div#contents  ─ 본문 영역(머리말·전역 메뉴는 이 바깥이라 여기만 읽으면 화면 장식이 안 섞인다)
+#     table#apmViewTbl ─ <th>라벨</th><td>값</td> 짝
+#        공고명 · 기관명 · 조회 · 등록일 · 접수시작일 · 접수마감일 · 관련링크
+#        채용직급 · 근무지역 · 장애인 채용/우대 · 첨부파일
+#     그 뒤가 공고 본문
+# 표를 떼어내고 남은 글이 본문이다. 본문은 대개 공고명을 한 번 더 적고 시작하므로,
+# 그 지점 앞(빵부스러기 '모집공고 > 일반채용 > 모집공고', 다운로드 버튼)은 잘라 낸다.
+_BODY_TAIL_RE = re.compile(r"\s*(목록|이전\s*글.*|다음\s*글.*)\s*$")
+_EMPTY_VALUES = ("", "-", "해당없음", "해당 없음")
+
+
+def _parse_detail(html):
+    """상세 HTML → (라벨:값 dict, 첨부파일명 목록, 관련링크 목록, 본문)."""
+    soup = BeautifulSoup(html, "html.parser")
+    root = soup.select_one("#contents") or soup
+    for t in root.find_all(["script", "style", "caption", "nav", "header", "footer"]):
+        t.decompose()
+
+    info, files, links = {}, [], []
+    table = root.select_one("table#apmViewTbl") or root.find("table")
+    if table:
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            i = 0
+            while i + 1 < len(cells):
+                if cells[i].name != "th":
+                    i += 1
+                    continue
+                label = _clean(cells[i].get_text(" "))
+                cell = cells[i + 1]
+                info[label] = _clean(cell.get_text(" "))
+                if "첨부" in label:
+                    files = [f for f in (_clean(a.get_text(" ")) for a in cell.find_all("a")) if f and "." in f]
+                if "관련링크" in label:
+                    links = [a["href"] for a in cell.find_all("a", href=True)
+                             if a["href"].startswith("http")]
+                i += 2
+        table.decompose()
+
+    body = _clean(root.get_text(" "))
+    head = (info.get("공고명") or "")[:20]
+    if head:
+        at = body.find(head)
+        if at > 0:
+            body = body[at:]
+    return info, files, links, _BODY_TAIL_RE.sub("", body)
+
+
+def _value(info, label):
+    v = info.get(label)
+    return None if not v or v.strip() in _EMPTY_VALUES else v.strip()
+
+
 def fetch_detail(key):
-    """상세 전용 필드(본문·연락처·첨부). 목록에서 이미 받은 마감일은 건드리지 않는다."""
+    """상세 전용 필드. 화면 장식은 빼고 표의 값을 제 칸에 넣는다."""
     url = _DETAIL_BY_KEY.get(key) or _detail_url_of(key)
     if not url:
         return {}
-    html = _fetch(url)
-    soup = BeautifulSoup(html, "html.parser")
-    for t in soup.find_all(["script", "style", "header", "footer", "nav"]):
-        t.decompose()
-    text = _clean(soup.get_text(" "))
+    info, files, links, body = _parse_detail(_fetch(url))
     fields = {}
-    if text:
-        fields["description"] = text[:4000]
-    # 목록 마감일이 비어 있을 때만 본문에서 접수 기간을 읽는다(라벨이 있을 때만 — 엉뚱한 날짜 방지).
+    if body:
+        fields["description"] = body[:4000]
+
+    area = _value(info, "근무지역")
+    if area:
+        fields["address"] = area[:300]
+        # 근무지역은 기관명 추론보다 정확하다 — '문화체육관광부 국립국악원' 처럼
+        # 기관명만으로는 알 수 없던 공고의 지역이 여기서 채워진다.
+        sido = _region_of(area)
+        if sido:
+            fields["region"] = sido
+
+    grade = _value(info, "채용직급")
+    if grade:
+        fields["recruit_count"] = grade[:300]
+    if files:
+        fields["required_docs"] = ("첨부: " + " / ".join(files))[:2000]
+    if links:
+        fields["apply_method"] = ("원문 신청 링크: " + links[0])[:500]
+
+    # 접수시작일은 목록에 없다(목록은 게시일뿐) → 여기서 채우면 접수 기간이 정확해진다.
+    start = parse_date(_value(info, "접수시작일") or "")
+    if start:
+        fields["apply_start"] = start
     if key not in _DEADLINE_KNOWN:
-        start, end = parse_period_text(text, labeled_only=True)
+        end = parse_date(_value(info, "접수마감일") or "")
+        if not end:
+            _, end = parse_period_text(body, labeled_only=True)
         if end:
             fields["apply_end"] = end
-            if start:
-                fields["apply_start"] = start
-    em = EMAIL_RE.search(text)
+
+    em = EMAIL_RE.search(body)
     if em:
         fields["apply_email"] = em.group(0)
-    ph = PHONE_RE.search(text)
+    ph = PHONE_RE.search(body)
     if ph:
         fields["apply_contact"] = ph.group(0)
     return fields
@@ -551,10 +623,16 @@ def probe():
     if first1 and first1.get("key"):
         url = _detail_url_of(first1["key"])
         try:
-            body = _fetch(url, sleep=PAGE_SLEEP)
-            hit = first1["title"][:18] in body
+            html_d = _fetch(url, sleep=PAGE_SLEEP)
+            hit = first1["title"][:18] in html_d
             print(f"[probe] 상세 주소 {'✅ 맞다' if hit else '❌ 제목이 없다 — 조립법이 바뀌었다'}: {url}")
-            print(f"[probe]   {len(body):,}바이트 · 제목 '{first1['title'][:30]}'")
+            print(f"[probe]   {len(html_d):,}바이트 · 제목 '{first1['title'][:30]}'")
+            info, files, links, body = _parse_detail(html_d)
+            print(f"[probe] 표에서 읽은 칸: {info}")
+            print(f"[probe] 첨부파일: {files}")
+            print(f"[probe] 관련링크: {links}")
+            print(f"[probe] 본문 앞 300자: {body[:300]}")
+            print(f"[probe] DB 에 넣을 값: {json.dumps(fetch_detail(first1['key']), ensure_ascii=False)[:900]}")
         except Exception as e:
             print(f"[probe] 상세 주소 확인 실패 {type(e).__name__}: {e}")
 
@@ -577,5 +655,9 @@ if __name__ == "__main__":
         raise SystemExit(0)
     if not PARSER_READY:
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False) — 먼저 --dry-run 으로 확인하세요")
+    # detail_empty_field="address": 상세를 아직 못 읽은 행을 고르는 기준.
+    # 기본값(apply_email)은 나라일터 본문에 메일 주소가 없는 공고가 많아 늘 비어 있고,
+    # 반대로 address(근무지역)는 상세 표에서만 오는 값이라 '상세를 읽었는가' 의 표시가 된다.
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME,
-                collect_rows=collect_rows, fetch_detail=fetch_detail)
+                collect_rows=collect_rows, fetch_detail=fetch_detail,
+                detail_empty_field="address")
