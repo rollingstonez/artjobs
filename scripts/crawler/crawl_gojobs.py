@@ -34,7 +34,15 @@ robots.txt 판정 (docs/robots_result.json, 2026-09-10 실측):
   1) Actions → daily-crawl → Run workflow → source: gojobs, dry_run: true
      로그 맨 위 [probe] 절에 표 머리글·첫 행·링크 주소·페이지 파라미터 후보가 찍힌다.
   2) 로그에서 확인한 값이 아래 상수와 다르면 PAGE_PARAM / DETAIL_URL_TMPL 만 고친다.
-  3) 수집 결과가 맞으면 PARSER_READY = True 로 바꾸고, 운영자 화면 /admin/sources 에서 gojobs 를 켠다.
+  3) 수집 결과가 맞으면 PARSER_READY = True 로 바꾼다.
+  4) src/lib/admin/labels.ts 의 PARSER_READY_SOURCES 에 "gojobs" 를 넣는다.
+     ⚠️ 이걸 빠뜨리면 운영자 화면(/admin/sources)에서 스위치가 켜져 있어도 '파서 없음' 으로 뜬다
+     (그 뱃지는 이 목록만 보고 판단한다). crawl.yml 은 파일만 있으면 돌아가므로 수집 자체는 되지만,
+     화면 설명과 실제가 어긋나므로 함께 고친다.
+  5) supabase/seed/crawl_sources.sql 을 Supabase SQL Editor 에서 한 번 실행한다
+     (code 가 이미 있으면 name·base_url·list_path·note 만 갱신하고 is_active·robots_status 는 안 건드린다).
+     화면에 뜨는 설명글이 DB 의 note 라, 실행해야 바뀐 수집 범위 설명이 반영된다.
+  6) /admin/sources 에서 gojobs 가 '파서 있음' 으로 바뀐 것을 확인하고 켠다.
 
 실행: python scripts/crawler/crawl_gojobs.py [--probe | --dry-run]
 """

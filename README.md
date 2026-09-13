@@ -48,7 +48,9 @@
     목록에 접수마감일이 있어 상세 없이도 모집중만 고를 수 있고, 지역 칸이 없어 기관명에서 시·도를 읽는다.
     표의 CSS 클래스·상세 링크·페이지 파라미터를 아직 실측하지 못해 `PARSER_READY=False` 다 —
     Actions → daily-crawl → `source=gojobs`, `dry_run=true` 로 한 번 돌리면 로그 `[probe]` 절에
-    표 머리글·상세 링크·페이지 파라미터 후보가 찍힌다. 맞으면 `PARSER_READY=True` 로 바꾸고 운영자 화면에서 켠다
+    표 머리글·상세 링크·페이지 파라미터 후보가 찍힌다. 맞으면 `PARSER_READY=True` 로 바꾸고,
+    **`src/lib/admin/labels.ts` 의 `PARSER_READY_SOURCES` 에 `"gojobs"` 를 넣은 뒤**(안 넣으면 운영자 화면에서
+    계속 '파서 없음' 으로 뜬다), `supabase/seed/crawl_sources.sql` 을 한 번 실행해 설명글을 갱신하고 화면에서 켠다
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
 - `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음
