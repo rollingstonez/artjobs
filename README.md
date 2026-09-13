@@ -43,14 +43,18 @@
   - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처
   - `crawl_artmore.py` 아트모아(예술경영지원센터 예술 일자리 플랫폼) — 미술 분야 필터 목록에서 진행중 채용만. 목록에 제목·회사·근무지·고용형태·마감일이 다 있어 상세는 열지 않음
   - `crawl_seoul_culture.py` 서울문화포털(서울시 문화기관 모음) — **게시판 두 개**: 채용공고(B0000002)와 공모소식(B0000014 → 오디션·공모 게시판). 제목 앞 [기관명] 으로 회사, 상세에서 등록일·첨부. 접수기간은 대개 첨부(hwpx) 안이라 본문에 '접수기간' 이 적힌 글만 마감일을 채운다
-  - `crawl_gojobs.py` 나라일터(인사혁신처) — 중앙부처·지자체·시도교육청 공직 채용이 모두 모이는 창구.
+  - `crawl_gojobs.py` 나라일터(인사혁신처) — 중앙부처·지자체·시도교육청 공직 채용이 모두 모이는 창구(약 1,400개 기관).
     공직 전체가 하루 100건 넘게 올라오므로 **제목·기관명의 예술 낱말로 걸러서** 가져온다('전시'는 戰時 공고와 구분).
     목록에 접수마감일이 있어 상세 없이도 모집중만 고를 수 있고, 지역 칸이 없어 기관명에서 시·도를 읽는다.
-    표의 CSS 클래스·상세 링크·페이지 파라미터를 아직 실측하지 못해 `PARSER_READY=False` 다 —
-    Actions → daily-crawl → `source=gojobs`, `dry_run=true` 로 한 번 돌리면 로그 `[probe]` 절에
-    표 머리글·상세 링크·페이지 파라미터 후보가 찍힌다. 맞으면 `PARSER_READY=True` 로 바꾸고,
-    **`src/lib/admin/labels.ts` 의 `PARSER_READY_SOURCES` 에 `"gojobs"` 를 넣은 뒤**(안 넣으면 운영자 화면에서
-    계속 '파서 없음' 으로 뜬다), `supabase/seed/crawl_sources.sql` 을 한 번 실행해 설명글을 갱신하고 화면에서 켠다
+    표는 CSS 클래스가 아니라 머리글 이름으로 찾고, 상세는 목록의 `fn_apmView('020','303444')` 두 인자로
+    `apmView.do?menuNo=401&searchInsttsecode=020&empmnsn=303444` 를 만든다(2026-09-13 `--probe` 실측).
+    **⚠️ 접속이 반반이다** — GitHub 러너의 나가는 IP 에 따라 붙기도 하고 ConnectTimeout 이기도 하다
+    (같은 날 러너 세 대는 3~6초에 200, 세 대는 무엇을 해도 실패). 같은 실행 안에서 재시도해도 IP 가 그대로라
+    소용이 없어 두 번만 시도하고 넘어가며, `crawl.yml` 의 이 단계는 `continue-on-error` 라 다른 소스 수집은 그대로 끝난다.
+    매일 돌리면 러너가 바뀌므로 되는 날 들어온다. 안정적으로 받으려면 공공데이터포털
+    '인사혁신처_공공취업정보 조회'(data.go.kr/data/15000485) 활용신청이 답이다(주소가 `apis.data.go.kr` 로 달라 IP 문제를 비껴간다).
+    구조를 다시 확인하려면 Actions → daily-crawl → `source=gojobs`, `dry_run=true` — 로그 `[probe]` 절에
+    표 머리글·페이지 넘김·상세 주소가 아직 맞는지 찍힌다
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
 - `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음

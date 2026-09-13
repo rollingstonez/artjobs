@@ -13,36 +13,29 @@ robots.txt 판정 (docs/robots_result.json, 2026-09-10 실측):
   목록 페이지도 HTTP 200 (185,023바이트 · 링크 96개) 으로 응답했다.
   → supabase/seed/robots_status.sql 에서 gojobs = 'clean'. 운영자 화면에서 켤 수 있는 상태.
 
-사이트 구조:
-  - 목록 표의 칸: 번호 | 공고명 | 기관명 | 공고게시일 | 접수마감일 | 조회
-    마감일이 목록에 있으므로 **상세를 열지 않아도 모집중 여부를 가릴 수 있다**(sema·seoul_culture
+실측으로 확인한 것 (2026-09-13, --probe 를 GitHub Actions 에서 돌려 확인)
+  · 목록 표 머리글: 번호 | 공고명 | 기관명 | 공고게시일 | 접수마감일 | 조회
+    표는 CSS 클래스가 아니라 **머리글 이름**으로 찾는다 — 화면이 손봐도 덜 깨진다.
+    마감일이 목록에 있어 **상세를 열지 않아도 모집중 여부를 가릴 수 있다**(sema·seoul_culture
     처럼 첨부(hwp) 안을 못 읽어 마감일을 모르는 문제가 여기서는 없다).
-  - 기본 정렬이 '최근 게시일 순' 이라 게시일이 기준일보다 오래된 쪽이 나오면 순회를 멈춘다.
-  - 목록에 지역 칸이 없다 → 기관명에서 시·도를 읽어 낸다(_region_of).
+    지역 칸은 없다 → 기관명에서 시·도를 읽어 낸다(_region_of).
+    기본 정렬이 '최근 게시일 순' 이라 게시일이 기준일보다 오래된 쪽이 나오면 순회를 멈춘다.
+  · 페이지 넘김: GET ?pageIndex=2 로 2페이지가 나온다(폼은 POST 지만 GET 도 받는다).
+  · 상세 링크: 목록 <a> 가 href="javascript:fn_apmView('020', '303444')" 다.
+    두 인자가 상세 주소의 searchInsttsecode·empmnsn 이고,
+    apmView.do?menuNo=401&searchInsttsecode=020&empmnsn=303444 를 열면
+    139,565바이트 안에 목록의 그 제목이 그대로 들어 있다.
+  · robots.txt 에는 User-agent Googlebot 항목만 있고 Disallow 는 /search/search.do 하나뿐이다
+    — 우리 경로를 막는 규칙이 없다.
+  · 안전장치는 남겨 둔다: 페이지 파라미터가 안 먹으면(2페이지 첫 글이 1페이지와 같으면)
+    중복을 쌓지 않고 경고를 찍고 멈추고, 상세 주소를 못 만든 행은 넣지 않는다.
 
-⚠️ 아직 실측하지 못한 것 (이 저장소 규칙: 선택자 추측 금지)
-  표의 CSS 클래스 · 상세 링크 주소 · 페이지 파라미터 이름을 실제 HTML 로 확인하지 못했다.
-  그래서 추측에 기대지 않도록 이렇게 짰다:
-    · 표는 클래스가 아니라 **머리글 이름**('공고명'·'기관명'·'접수마감일')으로 칸을 찾는다.
-    · 상세 링크는 만들어내지 않고 목록의 <a href> 에서 그대로 읽는다.
-    · 페이지 파라미터가 안 먹으면(2페이지 첫 글이 1페이지와 같으면) 조용히 중복을 쌓지 않고
-      경고를 찍고 멈춘다.
-  PARSER_READY 는 False 다. 아래 '확인 순서'를 한 번 돌리고 True 로 바꾼다.
-  (PARSER_READY 가 False 여도 --probe·--dry-run 은 돈다. DB 적재만 막는다.)
+⚠️ 접속이 반반이다 — 아래 '접속' 절 참고. 파서 문제가 아니라 나가는 IP 문제다.
 
-확인 순서 (GitHub Actions 로 클릭 실행, 로컬 설치 불필요)
-  1) Actions → daily-crawl → Run workflow → source: gojobs, dry_run: true
-     로그 맨 위 [probe] 절에 표 머리글·첫 행·링크 주소·페이지 파라미터 후보가 찍힌다.
-  2) 로그에서 확인한 값이 아래 상수와 다르면 PAGE_PARAM / DETAIL_URL_TMPL 만 고친다.
-  3) 수집 결과가 맞으면 PARSER_READY = True 로 바꾼다.
-  4) src/lib/admin/labels.ts 의 PARSER_READY_SOURCES 에 "gojobs" 를 넣는다.
-     ⚠️ 이걸 빠뜨리면 운영자 화면(/admin/sources)에서 스위치가 켜져 있어도 '파서 없음' 으로 뜬다
-     (그 뱃지는 이 목록만 보고 판단한다). crawl.yml 은 파일만 있으면 돌아가므로 수집 자체는 되지만,
-     화면 설명과 실제가 어긋나므로 함께 고친다.
-  5) supabase/seed/crawl_sources.sql 을 Supabase SQL Editor 에서 한 번 실행한다
-     (code 가 이미 있으면 name·base_url·list_path·note 만 갱신하고 is_active·robots_status 는 안 건드린다).
-     화면에 뜨는 설명글이 DB 의 note 라, 실행해야 바뀐 수집 범위 설명이 반영된다.
-  6) /admin/sources 에서 gojobs 가 '파서 있음' 으로 바뀐 것을 확인하고 켠다.
+다시 확인하고 싶을 때 (GitHub Actions 로 클릭 실행, 로컬 설치 불필요)
+  Actions → daily-crawl → Run workflow → source: gojobs, dry_run: true
+  로그 [probe] 절에 표 머리글·첫 행·페이지 넘김·상세 주소가 아직 맞는지 찍힌다.
+  사이트가 바뀌어 ❌ 가 뜨면 그때 이 파일의 상수를 고친다.
 
 실행: python scripts/crawler/crawl_gojobs.py [--probe | --dry-run]
 """
@@ -68,11 +61,10 @@ BASE = "https://www.gojobs.go.kr"
 LIST_URL = f"{BASE}/apmList.do"
 LIST_PARAMS = {"menuNo": "401", "mngrMenuYn": "N", "selMenuNo": "400"}
 
-PAGE_PARAM = "pageIndex"   # ⚠️ 실측 전 추정값(eGovFrame 기본). --probe 로 확인하고 다르면 고친다.
-DETAIL_URL_TMPL = None     # 목록 <a> 가 javascript 라 주소를 못 읽을 때만 쓸 대비책. 예: BASE + "/apmView.do?empmnsn={key}"
+PAGE_PARAM = "pageIndex"   # 2026-09-13 probe 실측: GET ?pageIndex=2 로 2페이지가 나온다
 MAX_PAGES = 60             # 한 페이지 10건 → 600건. 하루 100건 남짓이니 매일 돌리기에 충분히 넉넉하다.
 RECENT_DAYS = 21           # 게시일이 이보다 오래된 쪽이 나오면 순회 종료
-PARSER_READY = False       # 위 '확인 순서'를 한 번 돌린 뒤 True 로 바꾼다
+PARSER_READY = True        # 2026-09-13 probe 로 표 구조·페이지 넘김·상세 주소를 모두 실측 확인
 
 # ── 접속 ──────────────────────────────────────────────────────
 # ⚠️ 나라일터는 GitHub 러너에서 접속이 반반이다. 2026-09-13 일곱 번 실측:
@@ -184,17 +176,21 @@ _CITY_SIDO = {
     "제주": ("서귀포",),
 }
 
-# 목록 <a> 는 href="javascript:fn_apmView('020', '303444')" 꼴이다(2026-09-13 probe 실측).
-# 그 두 인자를 상세 주소의 어느 칸에 넣는지는 probe 가 후보를 실제로 열어 보고 고른다 —
-# 응답에 그 공고 제목이 들어 있는 후보만 맞는 것으로 친다(추측 금지).
+# 목록 <a> 는 href="javascript:fn_apmView('020', '303444')" 꼴이고, 그 두 인자가 상세 주소의
+# searchInsttsecode·empmnsn 이다 — 2026-09-13 probe 가 후보를 실제로 열어 확인했다
+# (apmView.do?menuNo=401&searchInsttsecode=020&empmnsn=303444 → 139,565바이트, 목록의 제목 있음).
+# source_key 는 두 인자를 이어 붙인다 — 키만 있으면 상세 주소를 다시 만들 수 있어야
+# 나중에 상세를 채우는 백필도 동작한다.
 _APMVIEW_RE = re.compile(r"fn_apmView\s*\(\s*'([^']*)'\s*,\s*'([^']*)'\s*\)")
-_DETAIL_CANDIDATES = (
-    ("/apmView.do", lambda a, b: {"menuNo": "401", "searchInsttsecode": a, "empmnsn": b}),
-    ("/apmView.do", lambda a, b: {"menuNo": "401", "empmnsn": b}),
-    ("/apmView.do", lambda a, b: {"menuNo": "401", "flag": a, "empmnsn": b}),
-    ("/apmView.do", lambda a, b: {"menuNo": "401", "searchEmpmnsecode": a, "empmnsn": b}),
-    ("/apmDetail.do", lambda a, b: {"menuNo": "401", "empmnsn": b}),
-)
+DETAIL_URL = BASE + "/apmView.do?menuNo=401&searchInsttsecode={instt}&empmnsn={sn}"
+
+
+def _detail_url_of(key):
+    """source_key('020-303444') → 상세 주소. 형식이 다르면 None."""
+    if not key or "-" not in str(key):
+        return None
+    instt, sn = str(key).split("-", 1)
+    return DETAIL_URL.format(instt=instt, sn=sn)
 
 # 상세 주소는 목록에서 읽어 둔다(kcdf 와 같은 방식) — 상세 단계에서 source_key 만 받기 때문.
 _DETAIL_BY_KEY = {}
@@ -304,9 +300,12 @@ def _link_of(cell):
     if href and not href.lower().startswith(("javascript", "#")):
         url = urljoin(LIST_URL, href)
         return _key_from_href(url) or _key_from_onclick(onclick), url
+    m = _APMVIEW_RE.search(href) or _APMVIEW_RE.search(onclick)
+    if m:
+        key = f"{m.group(1)}-{m.group(2)}"
+        return key, _detail_url_of(key)
     key = _key_from_onclick(onclick)
-    url = DETAIL_URL_TMPL.format(key=key) if (DETAIL_URL_TMPL and key) else None
-    return key, url
+    return key, _detail_url_of(key)
 
 
 def _header_map(table):
@@ -392,8 +391,8 @@ def parse_list(html):
             "deadline": parse_date(cell_text("deadline")),
         })
     if no_url:
-        print(f"[1] ⚠️ 상세 주소를 못 읽은 행 {no_url}건 — 목록 <a> 가 javascript 로 보인다. "
-              f"--probe 로 확인하고 DETAIL_URL_TMPL 을 채우세요(출처 링크 없는 공고는 넣지 않는다).")
+        print(f"[1] ⚠️ 상세 주소를 못 만든 행 {no_url}건 — 목록 <a> 형식이 바뀐 듯하다. "
+              f"--probe 로 확인하세요(출처 링크 없는 공고는 넣지 않는다).")
     return items
 
 
@@ -408,7 +407,7 @@ def collect_rows():
         html = _fetch(LIST_URL, params=params, sleep=PAGE_SLEEP if page > 1 else 0)
         items = parse_list(html)
         if not items:
-            print(f"[1] {page}페이지: 목록 표를 못 읽음 → 종료 (1페이지였다면 --probe 로 구조 확인)")
+            print(f"[1] {page}페이지: 쓸 수 있는 행 없음 → 종료 (1페이지였다면 --probe 로 구조 확인)")
             break
 
         # 페이지 파라미터가 안 먹으면 같은 첫 글이 계속 나온다 → 중복을 쌓지 말고 멈춘다.
@@ -460,7 +459,7 @@ def collect_rows():
 
 def fetch_detail(key):
     """상세 전용 필드(본문·연락처·첨부). 목록에서 이미 받은 마감일은 건드리지 않는다."""
-    url = _DETAIL_BY_KEY.get(key) or (DETAIL_URL_TMPL.format(key=key) if DETAIL_URL_TMPL else None)
+    url = _DETAIL_BY_KEY.get(key) or _detail_url_of(key)
     if not url:
         return {}
     html = _fetch(url)
@@ -532,23 +531,16 @@ def probe():
     else:
         print("[probe] 페이지 넘김 확인 실패 — 목록을 못 읽었다")
 
-    # 2) 상세 주소 — 후보를 실제로 열어 보고 제목이 들어 있는 것을 고른다.
-    if first1 and first1.get("args"):
-        a, b = first1["args"]
-        print(f"[probe] 상세 후보 검사 — fn_apmView({a!r}, {b!r}) · 제목 '{first1['title'][:30]}'")
-        for path, make in _DETAIL_CANDIDATES:
-            params = make(a, b)
-            url = BASE + path
-            try:
-                body = _fetch(url, params=params, sleep=PAGE_SLEEP)
-                hit = first1["title"][:18] in body
-                print(f"[probe]   {'✅' if hit else '❌'} {path} {params} · {len(body):,}바이트 · 제목 {'있음' if hit else '없음'}")
-                if hit:
-                    print(f"[probe]   → DETAIL_URL_TMPL 로 쓸 것: {url}?" +
-                          "&".join(f"{k}={'{key}' if k in ('empmnsn',) else v}" for k, v in params.items()))
-                    break
-            except Exception as e:
-                print(f"[probe]   ❌ {path} {params} · 실패 {type(e).__name__}: {e}")
+    # 2) 상세 주소가 아직 맞는지 — 실제로 열어 목록의 제목이 들어 있는지 본다.
+    if first1 and first1.get("key"):
+        url = _detail_url_of(first1["key"])
+        try:
+            body = _fetch(url, sleep=PAGE_SLEEP)
+            hit = first1["title"][:18] in body
+            print(f"[probe] 상세 주소 {'✅ 맞다' if hit else '❌ 제목이 없다 — 조립법이 바뀌었다'}: {url}")
+            print(f"[probe]   {len(body):,}바이트 · 제목 '{first1['title'][:30]}'")
+        except Exception as e:
+            print(f"[probe] 상세 주소 확인 실패 {type(e).__name__}: {e}")
 
 
 if __name__ == "__main__":

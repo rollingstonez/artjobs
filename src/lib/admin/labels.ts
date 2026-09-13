@@ -146,4 +146,4 @@ export const ROBOTS_LABEL: Record<string, { label: string; tone: string }> = {
 };
 
 /** 매일 도는 파서가 완성된 소스 코드 — scripts/crawler/crawl_<code>.py 가 있는 것. docs/collection-status.md 와 맞춘다. */
-export const PARSER_READY_SOURCES = ["artmore", "seoul_culture", "sfac", "kcdf", "sema", "mmca", "artnuri", "momo365"];
+export const PARSER_READY_SOURCES = ["artmore", "seoul_culture", "sfac", "kcdf", "sema", "mmca", "artnuri", "momo365", "gojobs"];
