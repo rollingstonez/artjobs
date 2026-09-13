@@ -58,8 +58,12 @@ SITES = [
          note="문체부 소속기관·산하 공공기관 채용 모음(국립현대미술관·아시아문화전당 등 포함). 본부(pTab=01)는 제외."),
     dict(code="gojobs", name="나라일터(인사혁신처) 일반채용 모집공고",
          base_url="https://www.gojobs.go.kr", list_path="/apmList.do?menuNo=401",
-         tier=1, kind="채용", categories=["curation"], region="전국·온라인", fetch="html", verified=True, priority=2,
-         note="국가·지방 학예연구사(직) 임기제·경력채용이 여기에 뜬다. '학예' 검색어로 필터. 공공데이터포털 '인사혁신처_공공취업정보 조회' API(data.go.kr/data/15000485)로 대체 가능."),
+         tier=1, kind="채용", categories=["all", "curation", "art_management"], region="전국·온라인", fetch="html", verified=True, priority=1,
+         note="중앙부처·지자체·시도교육청 채용이 모두 모이는 공직 채용 창구(약 1,400개 기관). 학예연구사(직) 임기제뿐 아니라 "
+              "시립예술단 단원, 공연장·박물관 기간제·공무직 공고가 함께 뜬다. 공직 전체가 하루 100건 넘게 올라오므로 "
+              "crawl_gojobs.py 가 제목·기관명의 예술 낱말로 걸러서 가져온다('전시'는 戰時 공고와 구분). "
+              "목록에 접수마감일이 있어 상세를 열지 않아도 모집중 여부를 가릴 수 있다. 지역 칸이 없어 기관명에서 시·도를 읽는다. "
+              "공공데이터포털 '인사혁신처_공공취업정보 조회' API(data.go.kr/data/15000485)로 대체 가능."),
     dict(code="arthub", name="아트허브 아트잡·공모",
          base_url="https://www.arthub.co.kr", list_path="/m/board/job_list.html",
          tier=1, kind="채용+공모", categories=["all"], region="전국·온라인", fetch="html", verified=True, priority=2,
