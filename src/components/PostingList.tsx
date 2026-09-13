@@ -23,6 +23,7 @@ export function pickFilters(sp: SearchParams): Omit<PostingFilters, "board"> {
     field: pick("field"),
     genre: pick("genre"),
     role: pick("role"),
+    space: pick("space"),
     employmentType: pick("employmentType"),
     region: pick("region"),
     q: pick("q"),

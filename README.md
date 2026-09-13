@@ -30,7 +30,8 @@
     게시판이 고정된 크롤러(기관의 '공모 소식' 게시판 등)는 `force_board(고정값, 제목)` 으로 대관만 빼낸다
   - `supabase/migrations/0015_rental.sql` 의 되분류 조건이 `is_rental()` 과 같아야 한다 — **한쪽을 고치면 다른 쪽도 고친다**
   - **대관은 분야가 아니라 공간 종류(`space_kind`)로 나눈다** — 전시 공간(미술 탭) · 공연·연습 공간(음악·무용·국악·연극 탭) · 복합 공간(모든 탭).
-    판정은 `common.py` 의 `classify_space_kind()`, 화면 노출은 `src/lib/postings.ts matchesField`. `0016_space_kind.sql` 의 정규식과 낱말이 같아야 한다
+    판정은 `common.py` 의 `classify_space_kind()`, 화면 노출은 `src/lib/postings.ts matchesField`. `0016_space_kind.sql` 의 정규식과 낱말이 같아야 한다.
+    대관 목록의 탭도 분야가 아니라 공간 종류(`?space=`)다 — 분야 탭이면 음악·무용·국악·연극에 같은 목록이 네 번 반복된다
 - `scripts/crawler` — 파이썬 크롤러 (바로쌤 이식)
   - `sources.py` **수집 대상 사이트 대장(단일 기준, 81곳)** — 여기만 고친다
   - `export_sources.py` 대장 → `docs/sources.md`(사람용 표) + `supabase/seed/crawl_sources.sql`(DB 시드) 생성

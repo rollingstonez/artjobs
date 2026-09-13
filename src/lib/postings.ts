@@ -16,6 +16,8 @@ export interface PostingFilters {
   field?: string;
   genre?: string;
   role?: string;
+  /** 대관 전용. 공간 종류(exhibition · performance · multi)로 거른다. */
+  space?: string;
   employmentType?: string;
   region?: string;
   q?: string;
@@ -161,6 +163,7 @@ export async function getPostings(filters: PostingFilters = {}): Promise<Posting
     .filter((p) => matchesField(p, filters.field))
     .filter((p) => !filters.genre || p.genre === filters.genre)
     .filter((p) => !filters.role || p.role === filters.role)
+    .filter((p) => !filters.space || (p.spaceKind ?? "multi") === filters.space)
     .filter((p) => !filters.employmentType || p.employmentType === filters.employmentType)
     .filter((p) => !filters.region || p.region === filters.region)
     .filter(
