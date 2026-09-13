@@ -202,10 +202,13 @@ SITES = [
          note="경로 실측."),
 
     # ───────────────────────── 3. 광역 문화재단(17) ─────────────────────────
-    dict(code="sfac", name="서울문화재단 채용공고",
+    dict(code="sfac", name="서울문화재단 채용·공모",
          base_url="https://www.sfac.or.kr", list_path="/opensquare/notice/recruit_list.do",
          tier=3, kind="채용+공모", categories=["all"], region="서울", fetch="html", verified=True, priority=1,
-         note="입주작가 공모는 /participation/participation/artspace_movein.do (금천예술공장·서울예술창작센터 등). 직원 공채는 recruit.sfac.or.kr."),
+         note="게시판 두 개를 함께 읽는다 — 채용공고(cbIdx=964, /opensquare/notice/recruit_list.do) + 공모 소식(cbIdx=992, /business/artsupport/notice_gather.do, 카테고리 '공고'만). "
+              "'신청·참여' 메뉴의 지원사업 공모(/participation/participation/artspace_project.do)와 입주작가 공모(/participation/participation/artspace_movein.do)는 "
+              "카드에 접수 기간이 없고 상세가 scas.kr(서울예술인지원센터)로 넘어가는데, scas.kr 은 robots.txt 자리에 차단 안내가 떠서 허용 확인 전까지 요청하지 않는다 "
+              "(두 화면 공모는 대부분 공모 소식 게시판에도 올라온다). 직원 공채는 recruit.sfac.or.kr."),
     dict(code="ggcf", name="경기문화재단",
          base_url="https://www.ggcf.kr", list_path=None,
          tier=3, kind="채용+공모", categories=["all"], region="경기", fetch="html", verified=False, priority=2,
