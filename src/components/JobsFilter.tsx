@@ -9,6 +9,7 @@ import {
   ROLES,
   fieldLabel,
   genreCodesForField,
+  isHiringBoard,
   type BoardCode,
   type FieldCode,
 } from "@/types/job";
@@ -18,7 +19,7 @@ const selectClass =
 
 const FILTER_KEYS = ["field", "genre", "role", "employmentType", "region", "q"];
 
-// 오디션·공모는 채용이 아니라 "모집·공모"라서 직무·고용형태(정규직·계약직 등) 필터가 맞지 않는다.
+// 오디션·공모와 대관은 채용이 아니라 "모집·공모"라서 직무·고용형태(정규직·계약직 등) 필터가 맞지 않는다.
 // 채용공고(job)에서만 두 필터를 보여준다.
 export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
   const router = useRouter();
@@ -93,7 +94,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
           ))}
         </select>
 
-        {board === "job" && (
+        {isHiringBoard(board) && (
           <>
             <select
               aria-label="직무"

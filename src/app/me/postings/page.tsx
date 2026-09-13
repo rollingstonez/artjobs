@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { APPLICATION_STAGES } from "@/types/account";
-import { boardLabel, fieldLabel } from "@/types/job";
+import { boardLabel, fieldLabel, postingHref } from "@/types/job";
 
 type OrgPostingRow = {
   id: string; title: string; board: string; field: string | null; status: string; apply_end: string | null; created_at: string; view_count: number;
@@ -45,7 +45,7 @@ export default async function MyPostingsPage() {
         ) : (
           <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white">
             {rows.map((p) => {
-              const href = `/${p.board === "audition" ? "auditions" : "jobs"}/org:${p.id}`;
+              const href = postingHref(p, { prefix: "org:" });
               const mine = applications.filter((a) => a.posting_id === p.id);
               const stages = APPLICATION_STAGES.map((s) => ({ ...s, n: mine.filter((a) => a.status === s.code).length })).filter((s) => s.n > 0);
               return (

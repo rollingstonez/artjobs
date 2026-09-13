@@ -41,7 +41,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE, USER_AGENT,
-    classify_all, parse_date, today_str, run_crawler, parse_period_text, normalize_period_text,
+    classify_all, force_board, parse_date, today_str, run_crawler, parse_period_text, normalize_period_text,
 )
 from http_retry import _retry
 
@@ -207,9 +207,13 @@ def collect_board(bd, today, cutoff):
             "source_url": detail_url(bd, it["key"]),
         }
         # 공모 게시판 글은 제목에 '공모'가 없어도 채용이 아니다 — 오디션·공모 게시판으로 보낸다.
+        # 다만 그 안에 섞인 전시실·연습실 대관 공고는 대관 게시판이 제자리다(force_board).
         if bd["board"]:
-            row["board"] = bd["board"]
-            row["employment_type"] = row.get("employment_type") or "open_call"
+            row["board"] = force_board(bd["board"], it["title"])
+            if row["board"] == "rental":
+                row["employment_type"] = None            # 대관은 고용이 아니다
+            else:
+                row["employment_type"] = row.get("employment_type") or "open_call"
         for k in ("description", "apply_email", "apply_contact"):
             if detail.get(k):
                 row[k] = detail[k]

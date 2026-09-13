@@ -7,7 +7,7 @@ import { REGION_CENTERS } from "@/lib/location";
 import { getPosting, splitPostingId } from "@/lib/postings";
 import { createClient } from "@/lib/supabase/server";
 import { contactError } from "@/lib/validation/contact";
-import { BOARDS, EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
+import { BOARDS, EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES, postingHref } from "@/types/job";
 import type { ActionResult } from "./auth";
 
 const str = (fd: FormData, k: string) => {
@@ -167,7 +167,7 @@ export async function createOrgPosting(_p: ActionResult | null, fd: FormData): P
   revalidatePath("/jobs");
   revalidatePath("/auditions");
   revalidatePath("/me/postings");
-  redirect(`/${patch.board === "audition" ? "auditions" : "jobs"}/org:${data.id}`);
+  redirect(postingHref({ board: patch.board, id: data.id }, { prefix: "org:" }));
 }
 
 export async function updateOrgPosting(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {

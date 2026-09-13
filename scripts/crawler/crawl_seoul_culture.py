@@ -29,7 +29,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_date, parse_period_text, run_crawler,
+    classify_all, fetch_html, force_board, parse_date, parse_period_text, run_crawler,
 )
 
 SOURCE_CODE = "seoul_culture"
@@ -44,7 +44,7 @@ BOARDS = (
      "keep": ("채용", "모집", "공개경쟁", "공개채용", "임기제", "단원", "강사")},
     {"code": "gather", "label": "공모소식", "bbs": "B0000014", "menu": "200118", "prefix": "c",
      "board": "audition", "category": "서울 문화기관 공모",
-     "keep": ("공모", "모집", "접수", "신청", "참가", "참여", "지원사업", "선정")},
+     "keep": ("공모", "모집", "접수", "신청", "참가", "참여", "지원사업", "선정", "대관")},
 )
 MAX_PAGES = 2
 RECENT_DAYS = 120       # 목록에 날짜가 있는 게시판(공모소식)에서 이보다 오래된 글은 가져오지 않는다
@@ -133,9 +133,13 @@ def collect_board(bd, cutoff):
                 "source_url": detail_url(bd, it["key"]),
             }
             # 공모소식 글은 제목에 '공모'가 없어도 채용이 아니다 — 오디션·공모 게시판으로 보낸다.
+            # 다만 그 안에 섞인 전시실·연습실 대관 공고는 대관 게시판이 제자리다(force_board).
             if bd["board"]:
-                row["board"] = bd["board"]
-                row["employment_type"] = row.get("employment_type") or "open_call"
+                row["board"] = force_board(bd["board"], it["title"])
+                if row["board"] == "rental":
+                    row["employment_type"] = None        # 대관은 고용이 아니다
+                else:
+                    row["employment_type"] = row.get("employment_type") or "open_call"
             rows.append(row)
         if len(recent) < len(fresh):
             print(f"[1] {bd['label']} {page}페이지: {RECENT_DAYS}일 이전 글이 나옴 → 순회 종료")

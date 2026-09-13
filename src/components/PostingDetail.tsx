@@ -12,6 +12,7 @@ import {
   genreLabel,
   roleLabel,
   type Posting,
+  boardPath,
 } from "@/types/job";
 
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
@@ -92,7 +93,7 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
   const deadline = getDeadline(p.applyEnd);
   const isOrgPosting = Boolean(p.orgUserId);
   const isExpired = deadline.kind === "expired";
-  const backHref = p.board === "audition" ? "/auditions" : "/jobs";
+  const backHref = boardPath(p.board);
   const field = fieldLabel(p.field);
   const genre = genreLabel(p.genre);
   const role = roleLabel(p.role);

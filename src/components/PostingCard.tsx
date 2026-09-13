@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { employmentLabel, fieldLabel, genreLabel, roleLabel, type Posting } from "@/types/job";
+import { employmentLabel, fieldLabel, genreLabel, postingHref, roleLabel, type Posting } from "@/types/job";
 import { getDeadline, periodText } from "@/lib/format";
 import { nearnessLabel, type UserLocation } from "@/lib/location";
 import SaveButton from "@/components/SaveButton";
@@ -40,7 +40,7 @@ export default function PostingCard({
   const field = fieldLabel(posting.field);
   const genre = genreLabel(posting.genre);
   const role = roleLabel(posting.role);
-  const href = `${posting.board === "audition" ? "/auditions" : "/jobs"}/${posting.id}`;
+  const href = postingHref(posting);
 
   return (
     <Link

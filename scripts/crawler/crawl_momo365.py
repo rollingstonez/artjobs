@@ -31,7 +31,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP,
-    classify_all, fetch_html, parse_date, today_str, run_crawler,
+    classify_all, fetch_html, is_rental, parse_date, today_str, run_crawler,
 )
 
 SOURCE_CODE = "momo365"
@@ -52,7 +52,7 @@ _ORG_RE = re.compile(r"^\[([^\]]{1,30})\]\s*")   # 상세 제목 "[밀양문화�
 _SKIP_WORDS = (
     "수강생", "교육생", "체험단", "서포터즈", "자원봉사", "봉사자", "참가자 모집", "참여자 모집",
     "동호회", "강좌", "아카데미", "플리마켓", "마켓 참가", "부스", "셀러", "판매자", "먹거리",
-    "용역", "물품", "구매", "입찰", "대관", "공실", "운영대행", "위탁운영", "관리용역",
+    "용역", "물품", "구매", "입찰", "공실", "운영대행", "위탁운영", "관리용역",   # 대관은 버리지 않는다(대관 게시판으로)
     "설문", "후원", "기부", "보조금 정산", "간담회", "설명회", "포럼", "세미나", "심포지엄",
     "합격자", "선정 결과", "결과 발표", "정정", "취소", "재공고 안내",
 )
@@ -60,7 +60,7 @@ _SKIP_WORDS = (
 _KEEP_WORDS = (
     "작가", "예술인", "예술가", "아티스트", "입주", "레지던시", "공모", "모집", "선발",
     "참여 작가", "참여작가", "청년작가", "신진", "창작", "전시", "개인전", "단체전",
-    "콩쿠르", "콩쿨", "경연", "오디션", "단원", "연주자", "무용수", "공연",
+    "콩쿠르", "콩쿨", "경연", "오디션", "단원", "연주자", "무용수", "공연", "대관",
 )
 
 
@@ -118,9 +118,13 @@ def row_from_item(it):
     cls = classify_all(it["title"])
     if not _is_target(it["title"], cls.get("field")):
         return None
-    cls["board"] = "audition"                    # 공모사업·공모전 → 오디션·공모 게시판
-    if not cls.get("employment_type"):
-        cls["employment_type"] = "open_call"
+    if is_rental(it["title"]):
+        cls["board"] = "rental"                  # 전시실·연습실 대관 공모 → 대관 게시판
+        cls["employment_type"] = None            # 대관은 고용이 아니다
+    else:
+        cls["board"] = "audition"                # 공모사업·공모전 → 오디션·공모 게시판
+        if not cls.get("employment_type"):
+            cls["employment_type"] = "open_call"
     return {
         "title": it["title"],
         "organization": it["org"],

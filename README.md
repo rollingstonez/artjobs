@@ -7,7 +7,7 @@
 ## 구조
 
 - `docs/SITEMAP.md` — 서비스 범위(아트잡스 vs 모던아트잡), 분야·장르·직무 코드표, 사이트맵, 단계 계획
-- `src/app` — 화면 (홈 `/`, 채용공고 `/jobs`, 오디션·공모 `/auditions`, 상세 `/jobs/[id]` `/auditions/[id]`, 소개 `/about`)
+- `src/app` — 화면 (홈 `/`, 채용공고 `/jobs`, 오디션·공모 `/auditions`, 대관 `/rentals`, 상세 `/jobs/[id]` `/auditions/[id]` `/rentals/[id]`, 소개 `/about`)
   - 회원: 가입 `/signup` · 로그인 `/login` · 마이페이지 `/me/*` · 인재정보 `/talents` · 메신저 `/messages` · 알림 `/notifications` · 공고 등록 `/post`
   - Supabase 환경변수가 없으면 회원 페이지는 `/account-unavailable` 안내로 대체된다 (`src/proxy.ts`)
 - `src/lib/actions/*.ts` — 서버 액션 (가입·로그인, 프로필, 저장·지원·공고 등록, 알림 조건, 메시지, 심사 `hiring.ts`)
@@ -21,7 +21,13 @@
 - `src/components/NearMeBar.tsx` — 내 동네 설정 바(시·도 선택 / 현재 위치로 / 해제)
 - `src/lib/postings.ts` — 공고 조회 계층. 지금은 `src/data/sample-postings.ts` 샘플을 읽는다.
   Supabase 연결 시 이 파일만 바꾸면 화면은 그대로.
-- `src/types/job.ts` — 공고 표준 필드와 코드표: 분야(field)·장르(genre)·직무(role)·게시판(board)·고용형태 (크롤러 `common.py` 와 동일해야 함)
+- `src/types/job.ts` — 공고 표준 필드와 코드표: 분야(field)·장르(genre)·직무(role)·게시판(board)·고용형태 (크롤러 `common.py` 와 동일해야 함).
+  게시판 경로는 `boardPath(board)`·`postingHref(posting)` 로만 만든다 — 게시판이 늘어도 부르는 쪽을 고치지 않는다
+- **대관 게시판 `/rentals`** — 갤러리 전시실·연습실·공연장의 **대관 공모·대관 지원사업**(기간을 정해 신청받고 심사해서 선정).
+  상시 유료 대여(요금표·빈 날짜)는 공고가 아니라 재고 정보라 다루지 않는다. 설계 배경과 판정 기준은 `docs/SITEMAP.md` "2-3. 게시판" 참조
+  - 판정은 `scripts/crawler/common.py` 의 `is_rental()` 한 곳에서 한다. `classify_board()` 가 '공모'보다 먼저 보고,
+    게시판이 고정된 크롤러(기관의 '공모 소식' 게시판 등)는 `force_board(고정값, 제목)` 으로 대관만 빼낸다
+  - `supabase/migrations/0015_rental.sql` 의 되분류 조건이 `is_rental()` 과 같아야 한다 — **한쪽을 고치면 다른 쪽도 고친다**
 - `scripts/crawler` — 파이썬 크롤러 (바로쌤 이식)
   - `sources.py` **수집 대상 사이트 대장(단일 기준, 81곳)** — 여기만 고친다
   - `export_sources.py` 대장 → `docs/sources.md`(사람용 표) + `supabase/seed/crawl_sources.sql`(DB 시드) 생성
@@ -34,13 +40,14 @@
 - `docs/sources.md` — 사이트 대장을 표로 정리한 문서(자동 생성)
 - `docs/collection-status.md` / `.html` — **지금 수집할 수 있는 곳·아닌 곳 판정표**(자동 생성). 공공데이터 요청·협의 목록 포함
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
-- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료)
+- `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료), `0015_rental.sql` 대관 게시판(org_postings.board 제약에 rental 추가·알림 기본값·이미 모은 공고 되분류)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
 - `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에, `source=sfac` 처럼 코드를 적으면 그 소스만). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
   - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 — **게시판 두 개**를 함께 읽는다: 채용공고(cbIdx=964)와 공모 소식(cbIdx=992, 카테고리 '공고'만 → 오디션·공모 게시판으로). AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외. '신청·참여' 메뉴의 지원사업·입주작가 공모는 상세가 scas.kr 로 넘어가는데 그쪽 robots.txt 자리에 차단 안내가 떠서 허용 확인 전까지 수집하지 않는다
   - `crawl_kcdf.py` 한국공예·디자인문화진흥원 채용(표 목록, 접수 기간·마감 배지로 모집중만) · `crawl_sema.py` 서울시립미술관 채용시험(목록 45일 안, 본문이 첨부라 마감일 없음)
   - `crawl_mmca.py` 국립현대미술관 채용(AJAX JSON 에 본문 포함 → 접수 기간은 `common.parse_period_text` 로 판독, 합격자·면접 공고 제외)
-  - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처
+  - `crawl_artnuri.py` 아트누리(문화재단 120곳 지원사업·공모 통합) — '진행중' 공고만, 예술인이 응모하는 것만 골라 **오디션·공모 게시판**으로. 상세에서 신청기간·지역·원문 신청 링크·문의처.
+    **대관 공고는 버리지 않고 대관 게시판으로 보낸다**(예전에는 `_SKIP_WORDS` 의 '대관' 에 걸려 통째로 버려졌다)
   - `crawl_artmore.py` 아트모아(예술경영지원센터 예술 일자리 플랫폼) — 미술 분야 필터 목록에서 진행중 채용만. 목록에 제목·회사·근무지·고용형태·마감일이 다 있어 상세는 열지 않음
   - `crawl_seoul_culture.py` 서울문화포털(서울시 문화기관 모음) — **게시판 두 개**: 채용공고(B0000002)와 공모소식(B0000014 → 오디션·공모 게시판). 제목 앞 [기관명] 으로 회사, 상세에서 등록일·첨부. 접수기간은 대개 첨부(hwpx) 안이라 본문에 '접수기간' 이 적힌 글만 마감일을 채운다
   - `crawl_gojobs.py` 나라일터(인사혁신처) — 중앙부처·지자체·시도교육청 공직 채용이 모두 모이는 창구(약 1,400개 기관).
@@ -55,6 +62,10 @@
     '인사혁신처_공공취업정보 조회'(data.go.kr/data/15000485) 활용신청이 답이다(주소가 `apis.data.go.kr` 로 달라 IP 문제를 비껴간다).
     구조를 다시 확인하려면 Actions → daily-crawl → `source=gojobs`, `dry_run=true` — 로그 `[probe]` 절에
     표 머리글·페이지 넘김·상세 주소가 아직 맞는지 찍힌다
+  - **대관 수집** — 새 사이트를 붙이지 않아도 아트누리·모모365·서울문화재단·서울문화포털·KCDF 에서 대관 공고가 들어온다.
+    먼저 Actions → daily-crawl 을 `dry_run=true` 로 돌려 **주당 몇 건 잡히는지** 로그의 `게시판:` 집계로 확인한다.
+    아직 못 잡는 것: 모모365 는 분야(field)가 안 잡히는 글을 버려서 "연습실 대관" 처럼 장르 낱말이 없는 제목은 들어오지 않는다.
+    물량을 본 뒤 문화재단·문예회관의 '대관안내' 게시판을 `sources.py` 에 더한다(이미 robots 판정이 끝난 도메인이라 목록 경로 한 줄이면 된다)
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다
 - `.github/workflows/fetch-sample.yml` — **사이트 구조 확인용**. 주소(여러 개 가능)·모드(html/scripts/raw/text/grep/json)·POST 데이터를 넣고 Run workflow → 로그에 정리된 HTML/스크립트/텍스트가 찍힌다. 파서 만들 때 선택자를 눈으로 확인하는 도구(`scripts/crawler/fetch_sample.py`)
 - `.github/workflows/robots-check.yml` — 대장 전체 robots 판정을 GitHub에서 클릭으로 실행, CSV 로 받음

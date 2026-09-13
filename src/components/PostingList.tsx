@@ -1,4 +1,4 @@
-// 채용공고·오디션 게시판이 함께 쓰는 목록 화면. 게시판 종류(board)만 다르다.
+// 채용공고·오디션·대관 게시판이 함께 쓰는 목록 화면. 게시판 종류(board)만 다르다.
 import { Suspense } from "react";
 import JobsFilter from "@/components/JobsFilter";
 import NearMeBar from "@/components/NearMeBar";
@@ -7,7 +7,7 @@ import { getSavedIds } from "@/lib/bookmarks";
 import { getUserLocation } from "@/lib/location-server";
 import { isLivingPosting } from "@/lib/living";
 import { DATA_SOURCE, getPostings, type PostingFilters } from "@/lib/postings";
-import { boardLabel, type BoardCode } from "@/types/job";
+import { boardLabel, isHiringBoard, type BoardCode } from "@/types/job";
 
 // 마감 공고를 지우지 않고 이 기간(일) 안쪽까지 목록 뒤에 남겨 둔다. 너무 오래된 건 감춘다.
 const CLOSED_WINDOW_DAYS = 60;
@@ -40,8 +40,8 @@ export default async function PostingList({
 }) {
   const [location, { savedIds, loggedIn }] = await Promise.all([getUserLocation(), getSavedIds()]);
   const filters = pickFilters(searchParams);
-  // 오디션·공모는 직무·고용형태 필터를 쓰지 않는다(채용 개념이라 맞지 않음).
-  if (board !== "job") {
+  // 오디션·공모와 대관은 직무·고용형태 필터를 쓰지 않는다(채용 개념이라 맞지 않음).
+  if (!isHiringBoard(board)) {
     filters.role = undefined;
     filters.employmentType = undefined;
   }

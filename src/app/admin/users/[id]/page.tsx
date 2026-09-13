@@ -11,7 +11,7 @@ import {
   APPLICATION_STATUS, REPORT_STATUS, artistCompleteness, orgCompleteness, orgTypeLabel, stageTone,
   type AdminLog, type AlertCondition, type Application, type ArtistProfile, type OrgProfile, type PortfolioItem, type Profile, type SeekingPost, type UserReport,
 } from "@/types/account";
-import { boardLabel, employmentLabel, fieldLabel, genreLabel, roleLabel } from "@/types/job";
+import { boardLabel, employmentLabel, fieldLabel, genreLabel, postingHref, roleLabel } from "@/types/job";
 
 type AuthInfo = { email: string | null; providers: string[]; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null };
 type Note = { id: string; admin_user_id: string; body: string; created_at: string };
@@ -296,7 +296,7 @@ export default async function AdminUserDetail({ params, searchParams }: PageProp
               {postings.map((p) => (
                 <li key={p.id} className="flex items-center gap-2 py-1.5">
                   <Badge tone={p.deleted_at ? "red" : p.status === "open" ? "green" : "stone"}>{p.deleted_at ? "내림" : { open: "모집중", closed: "마감", draft: "임시" }[p.status] ?? p.status}</Badge>
-                  <Link href={`/${p.board === "audition" ? "auditions" : "jobs"}/org:${p.id}`} className="min-w-0 flex-1 truncate hover:underline">{p.title}</Link>
+                  <Link href={postingHref(p, { prefix: "org:" })} className="min-w-0 flex-1 truncate hover:underline">{p.title}</Link>
                   <span className="shrink-0 text-xs text-stone-400">{boardLabel(p.board)} · {p.apply_end ? `~${fmtDate(p.apply_end)}` : "상시"} · 조회 {p.view_count}</span>
                 </li>
               ))}

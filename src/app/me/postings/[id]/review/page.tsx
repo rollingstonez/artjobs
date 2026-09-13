@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { loadWorkbench } from "@/lib/hiring";
 import { APPLICATION_STAGES } from "@/types/account";
-import { boardLabel } from "@/types/job";
+import { boardLabel, postingHref } from "@/types/job";
 
 export const metadata: Metadata = { title: "심사 작업대 | 아트잡스" };
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export default async function ReviewPage({ params }: PageProps<"/me/postings/[id
             {" · "}{posting.organization} · {boardLabel(posting.board)} · {posting.apply_end ? `~${fmtDate(posting.apply_end)}` : "상시"} · 나는 <b>{ROLE_LABEL[access.role]}</b>
           </p>
           <h2 className="text-lg font-bold">
-            <Link href={`/${posting.board === "audition" ? "auditions" : "jobs"}/org:${posting.id}`} className="hover:underline">{posting.title}</Link>
+            <Link href={postingHref(posting, { prefix: "org:" })} className="hover:underline">{posting.title}</Link>
             <span className="ml-2 text-stone-400">지원자 {applicants.length}</span>
           </h2>
           <p className="mt-1 flex flex-wrap gap-1 text-[11px]">

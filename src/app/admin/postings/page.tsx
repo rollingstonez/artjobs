@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { fmtDate, timeAgo } from "@/lib/format";
 import { todayStr } from "@/lib/living";
 import { createClient } from "@/lib/supabase/server";
-import { BOARDS, boardLabel, employmentLabel, fieldLabel } from "@/types/job";
+import { BOARDS, boardLabel, employmentLabel, fieldLabel, postingHref } from "@/types/job";
 
 type Row = {
   id: string; org_user_id: string; title: string; organization: string; board: string; field: string | null; employment_type: string | null; region: string | null;
@@ -90,7 +90,7 @@ export default async function AdminPostingsPage({ searchParams }: PageProps<"/ad
             return (
               <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0 flex-1">
-                  <Link href={`/${p.board === "audition" ? "auditions" : "jobs"}/org:${p.id}`} className="block truncate font-semibold hover:underline">{p.title}</Link>
+                  <Link href={postingHref(p, { prefix: "org:" })} className="block truncate font-semibold hover:underline">{p.title}</Link>
                   <p className="text-xs text-stone-500">
                     <Link href={`/admin/users/${p.org_user_id}`} className="font-semibold text-stone-700 hover:underline">{p.organization}</Link>
                     {p.org_verified && <span className="ml-1 text-emerald-700">✓</span>}

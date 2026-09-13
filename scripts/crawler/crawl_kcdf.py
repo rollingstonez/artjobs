@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_period, today_str, run_crawler,
+    classify_all, fetch_html, force_board, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "kcdf"
@@ -83,7 +83,10 @@ def parse_list(html, board_cfg):
             continue
         cls = classify_all("공예", title)
         if board_cfg["force_board"]:
-            cls["board"] = board_cfg["force_board"]
+            # 사업공고 게시판 글은 공모지만, 그 안의 대관 공고는 대관 게시판으로 보낸다.
+            cls["board"] = force_board(board_cfg["force_board"], title)
+            if cls["board"] == "rental":
+                cls["employment_type"] = None
         detail = DETAIL_TMPL.format(board=board_cfg["board"], menu=board_cfg["menu"], key=key)
         _DETAIL_BY_KEY[key] = detail
         rows.append({

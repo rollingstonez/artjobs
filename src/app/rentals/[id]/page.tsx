@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import JobPostingJsonLd from "@/components/JobPostingJsonLd";
 import PostingDetail from "@/components/PostingDetail";
-import { isLivingPosting } from "@/lib/living";
 import { getPosting } from "@/lib/postings";
 import { getViewerState } from "@/lib/viewer";
 import { postingHref } from "@/types/job";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: PageProps<"/jobs/[id]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/rentals/[id]">): Promise<Metadata> {
   const { id } = await params;
   const p = await getPosting(id);
   if (!p) return { title: "공고를 찾을 수 없습니다 | 아트잡스" };
@@ -19,18 +17,13 @@ export async function generateMetadata({ params }: PageProps<"/jobs/[id]">): Pro
   };
 }
 
-export default async function JobDetailPage({ params }: PageProps<"/jobs/[id]">) {
+export default async function RentalDetailPage({ params }: PageProps<"/rentals/[id]">) {
   const { id } = await params;
   const p = await getPosting(id);
   if (!p) notFound();
-  // 다른 게시판 공고면 그 게시판 경로로 넘긴다(오디션·공모, 대관).
-  if (p.board !== "job") redirect(postingHref(p));
+  if (p.board !== "rental") redirect(postingHref(p));
   const viewer = await getViewerState(p.id);
-  // 구글 일자리 노출용 구조화 데이터 — 모집중인 공고에만 넣는다.
-  return (
-    <>
-      <JobPostingJsonLd posting={p} living={isLivingPosting(p.applyEnd, p.createdAt)} />
-      <PostingDetail p={p} viewer={viewer} />
-    </>
-  );
+  // 대관은 일자리가 아니므로 구글 일자리(JobPosting) 구조화 데이터를 넣지 않는다.
+  // 채용이 아닌 글에 JobPosting 을 붙이면 구글 일자리 정책 위반이다.
+  return <PostingDetail p={p} viewer={viewer} />;
 }

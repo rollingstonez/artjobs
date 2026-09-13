@@ -36,9 +36,10 @@ const PRINCIPLES = [
 
 export default async function HomePage() {
   const location = await getUserLocation();
-  const [jobs, auditions, counts, closedCount, { savedIds, loggedIn }, popups] = await Promise.all([
+  const [jobs, auditions, rentals, counts, closedCount, { savedIds, loggedIn }, popups] = await Promise.all([
     getPostings({ board: "job", near: location }),
     getPostings({ board: "audition", near: location }),
+    getPostings({ board: "rental", near: location }),
     countByField("job"),
     countArchived(),
     getSavedIds(),
@@ -46,7 +47,7 @@ export default async function HomePage() {
   ]);
 
   // 현황판(실시간 수집 현황) 데이터 — 지금 모집 중인 실제 공고로 계산한다.
-  const all = [...jobs, ...auditions];
+  const all = [...jobs, ...auditions, ...rentals];
   const orgCount = new Set(all.map((p) => p.organization).filter(Boolean)).size;
   const lastCollected = all.reduce<string | null>(
     (max, p) => (p.createdAt && (!max || p.createdAt > max) ? p.createdAt : max),
@@ -77,7 +78,7 @@ export default async function HomePage() {
             일자리를 내 집 근처부터.
           </h1>
           <p className="mt-4 max-w-xl text-base text-stone-600 md:text-lg">
-            미술관·공연장·예술단·재단·학교가 공개한 채용공고와 오디션·공모를 매일 모아
+            미술관·공연장·예술단·재단·학교가 공개한 채용공고와 오디션·공모, 대관 공고를 매일 모아
             분야·장르·직무별로, 그리고 내가 사는 곳에서 가까운 순서로 보여드립니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
@@ -93,6 +94,12 @@ export default async function HomePage() {
             >
               오디션·공모 보기
             </Link>
+            <Link
+              href="/rentals"
+              className="rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 hover:border-stone-500"
+            >
+              대관 보기
+            </Link>
           </div>
           <div className="mt-6 max-w-2xl">
             <NearMeBar location={location} />
@@ -102,6 +109,7 @@ export default async function HomePage() {
         <CollectionDashboard
           jobCount={jobs.length}
           auditionCount={auditions.length}
+          rentalCount={rentals.length}
           closedCount={closedCount}
           orgCount={orgCount}
           lastCollected={lastCollected}
@@ -168,6 +176,26 @@ export default async function HomePage() {
         </div>
         {auditions.length === 0 && (
           <p className="mt-6 text-sm text-stone-500">아직 모집중인 오디션·공모가 없습니다.</p>
+        )}
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-lg font-bold">{location ? `${location.region} 근처 대관` : "대관"}</h2>
+          <Link href="/rentals" className="text-sm text-stone-500 hover:text-stone-900">
+            전체 보기 →
+          </Link>
+        </div>
+        <p className="mt-1 text-sm text-stone-500">
+          갤러리 전시실·연습실·공연장을 기간을 정해 신청받는 대관 공모와 대관 지원사업입니다.
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {rentals.slice(0, 4).map((p) => (
+            <PostingCard key={p.id} posting={p} near={location} savedIds={savedIds} loggedIn={loggedIn} />
+          ))}
+        </div>
+        {rentals.length === 0 && (
+          <p className="mt-6 text-sm text-stone-500">아직 모집중인 대관 공고가 없습니다.</p>
         )}
       </section>
 

@@ -45,7 +45,7 @@ GENRE_CODES = {
     "theater_play", "theater_musical", "theater_opera", "theater_children", "theater_changgeuk",
 }
 ROLE_CODES = {"performer", "creator", "education", "planning", "stage_tech", "assistant"}
-BOARD_CODES = {"job", "audition", "event"}
+BOARD_CODES = {"job", "audition", "rental", "event"}
 EMPLOYMENT_CODES = {"full_time", "contract", "freelance", "intern", "open_call"}
 
 # 키워드 → 장르. 반드시 "긴 키워드 먼저" — 먼저 걸린 쪽이 이긴다. 장르가 잡히면 분야는 자동.
@@ -107,6 +107,35 @@ _ROLE_KEYWORDS = [
     ("단원", "performer"), ("오디션", "performer"), ("입주작가", "performer"), ("배우", "performer"), ("연주자", "performer"), ("무용수", "performer"),
 ]
 
+# ── 대관(rental) 판정 ──
+# 갤러리 전시실·연습실·공연장을 기간을 정해 신청받고 심사해서 내주는 대관 공모·대관 지원사업.
+# "대관" 이라는 낱말이 들어가도 대관 공고가 아닌 것이 많아(대관 담당 직원 채용, 대관료 인상 안내,
+# 휴관 공지) 반드시 _RENTAL_NOT_WORDS 로 걸러 낸다. 레지던시·입주작가는 지금까지처럼 오디션·공모에 둔다.
+# ⚠️ 이 두 목록은 supabase/migrations/0015_rental.sql 의 되분류 조건과 같아야 한다. 한쪽을 고치면 다른 쪽도.
+_RENTAL_WORDS = (
+    "대관",
+    "전시공간 지원", "전시장 지원", "전시실 지원",
+    "연습실 지원", "연습공간 지원",
+    "공간 대여",
+)
+_RENTAL_NOT_WORDS = (
+    # 대관을 맡을 사람을 뽑는 채용공고
+    "채용", "담당자", "직원", "기간제", "임기제", "위촉", "인턴", "아르바이트",
+    # 신청받는 공고가 아니라 이용 안내·공지
+    "대관료 인상", "대관료 조정", "이용료 인상", "요금 인상", "휴관", "운영 중단", "중단 안내",
+    # 레지던시·입주는 오디션·공모 게시판이 제자리다
+    "레지던시", "입주작가",
+)
+
+
+def is_rental(*texts):
+    """대관 공고인가. 대관 낱말이 있고, 대관이 아닌 신호가 하나도 없어야 한다."""
+    text = " ".join(t for t in texts if t)
+    if not any(w in text for w in _RENTAL_WORDS):
+        return False
+    return not any(w in text for w in _RENTAL_NOT_WORDS)
+
+
 # 키워드 → 게시판. 안 걸리면 채용공고(job).
 _BOARD_KEYWORDS = [
     ("오디션", "audition"), ("단원 모집", "audition"), ("단원모집", "audition"), ("단원 공개모집", "audition"),
@@ -146,7 +175,21 @@ def classify_role(*texts):
 
 
 def classify_board(*texts):
+    # 대관을 먼저 본다 — "대관 공모" 는 '공모' 보다 '대관' 이 더 정확한 자리다.
+    if is_rental(*texts):
+        return "rental"
     return _first_match(_BOARD_KEYWORDS, *texts) or "job"
+
+
+def force_board(board, *texts):
+    """게시판이 고정된 크롤러(기관의 '공모 소식' 게시판 등)에서도 대관 공고는 대관 게시판으로 보낸다.
+
+    그 게시판에 올라온 글은 제목에 '공모'가 없어도 채용이 아니라 공모라서 board 를 고정해 왔는데,
+    그 안에 섞인 대관 공고까지 오디션·공모로 끌려가던 것을 여기서 되돌린다.
+    """
+    if is_rental(*texts):
+        return "rental"
+    return board
 
 
 def classify_employment(*texts):
@@ -156,12 +199,14 @@ def classify_employment(*texts):
 def classify_all(*texts):
     """한 번에 field·genre·role·board·employment_type 을 dict 로. 개별 크롤러에서 row.update(...) 로 쓴다."""
     genre = classify_genre(*texts)
+    board = classify_board(*texts)
     return {
         "genre": genre,
         "field": classify_field(*texts, genre=genre),
         "role": classify_role(*texts),
-        "board": classify_board(*texts),
-        "employment_type": classify_employment(*texts),
+        "board": board,
+        # 대관은 고용이 아니다 — "대관 공모"의 '공모'가 open_call 로 잡히던 것을 비운다.
+        "employment_type": None if board == "rental" else classify_employment(*texts),
     }
 
 
