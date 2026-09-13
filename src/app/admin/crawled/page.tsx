@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { fmtDate, timeAgo } from "@/lib/format";
 import { isLivingPosting } from "@/lib/living";
 import { createClient } from "@/lib/supabase/server";
-import { BOARDS, boardLabel, employmentLabel, fieldLabel } from "@/types/job";
+import { BOARDS, boardLabel, employmentLabel, fieldLabel, postingHref } from "@/types/job";
 
 type Row = {
   id: string; source_code: string; source_name: string; source_url: string; title: string; organization: string | null; board: string; field: string | null;
@@ -113,7 +113,7 @@ export default async function AdminCrawledPage({ searchParams }: PageProps<"/adm
               <li key={p.id} className={`px-4 py-3 text-sm ${hidden ? "bg-amber-50/40" : ""}`}>
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <Link href={`/${p.board === "audition" ? "auditions" : "jobs"}/crawled:${p.id}`} className="block truncate font-semibold hover:underline">{p.title}</Link>
+                    <Link href={postingHref(p, { prefix: "crawled:" })} className="block truncate font-semibold hover:underline">{p.title}</Link>
                     <p className="text-xs text-stone-500">
                       <Link href={href({ source: p.source_code, offset: "" })} className="font-semibold text-stone-700 hover:underline">{p.source_name}</Link>
                       {p.organization && <> · {p.organization}</>} · {boardLabel(p.board)} · {fieldLabel(p.field) ?? "분야 미정"} · {employmentLabel(p.employment_type) ?? "고용형태 미정"} · {p.region ?? "지역 미정"} · {p.apply_end ? `~${fmtDate(p.apply_end)}` : "마감일 없음"} · 수집 {timeAgo(p.created_at)}{p.last_seen_at && <> · 확인 {timeAgo(p.last_seen_at)}</>}

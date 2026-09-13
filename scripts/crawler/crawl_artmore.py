@@ -32,7 +32,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, FIELD_CODES,
-    classify_all, fetch_html, parse_date, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, parse_date, today_str, run_crawler,
 )
 
 SOURCE_CODE = "artmore"
@@ -160,10 +160,7 @@ if __name__ == "__main__":
     if not PARSER_READY:
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False)")
     if "--dry-run" in sys.argv:
-        rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+        dry_run_report(collect_rows(), source_name=SOURCE_NAME)
         raise SystemExit(0)
     # 목록에 정보가 충분 → 상세 단계 없음
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows, fetch_detail=None)

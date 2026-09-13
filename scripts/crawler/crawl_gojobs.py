@@ -51,7 +51,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE, USER_AGENT,
-    classify_all, parse_date, parse_period_text, run_crawler, today_str,
+    classify_all, dry_run_report, parse_date, parse_period_text, run_crawler, today_str,
 )
 from http_retry import _retry
 
@@ -662,12 +662,10 @@ if __name__ == "__main__":
             print(f"[주의] {SOURCE_CODE} PARSER_READY=False — 확인용 실행이므로 계속한다(DB 적재는 막혀 있다).")
         probe()
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
         if rows:
             time.sleep(PAGE_SLEEP)
             print("[dry-run] 상세 1건 표본:", json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:600])
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+        dry_run_report(rows, source_name=SOURCE_NAME)
         raise SystemExit(0)
     if not PARSER_READY:
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False) — 먼저 --dry-run 으로 확인하세요")

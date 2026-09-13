@@ -85,13 +85,22 @@ export const ROLES = [
 export type RoleCode = (typeof ROLES)[number]["code"];
 
 // ── 게시판 종류 ──
+// 대관(rental)은 "공간을 빌려 쓸 사람을 뽑는 공고"다. 갤러리 전시실·연습실·공연장을 기관이 기간을 정해
+// 신청받고 심사해서 내주는 대관 공모·대관 지원사업이 여기로 온다(상시 유료 대여 안내는 대상이 아니다).
+// 마감일이 있고 기관이 올리고 예술인이 신청한다는 점에서 채용공고·오디션과 구조가 같아 같은 테이블을 쓴다.
 export const BOARDS = [
   { code: "job", label: "채용공고", path: "/jobs" },
   { code: "audition", label: "오디션·공모", path: "/auditions" },
+  { code: "rental", label: "대관", path: "/rentals" },
   // { code: "event", label: "공연·전시", path: "/events" },   // 3단계에서 연다
 ] as const;
 
 export type BoardCode = (typeof BOARDS)[number]["code"];
+
+/** 채용 개념(직무·고용형태)이 맞는 게시판인가. 오디션·공모와 대관은 아니다. */
+export function isHiringBoard(code: string | null | undefined): boolean {
+  return code === "job";
+}
 
 // ── 고용형태 ──
 export const EMPLOYMENT_TYPES = [
@@ -178,6 +187,20 @@ export function roleLabel(code: string | null): string | null {
 
 export function boardLabel(code: string | null): string | null {
   return BOARDS.find((b) => b.code === code)?.label ?? null;
+}
+
+/** 게시판 코드 → 목록 경로. 모르는 코드는 채용공고로 떨어뜨린다(예전 데이터 보호). */
+export function boardPath(code: string | null | undefined): string {
+  return BOARDS.find((b) => b.code === code)?.path ?? "/jobs";
+}
+
+/** 공고 하나의 상세 경로. 게시판이 늘어도 부르는 쪽은 그대로다. */
+export function postingHref(
+  posting: { board: string | null; id: string },
+  opts: { encode?: boolean; prefix?: string } = {},
+): string {
+  const raw = `${opts.prefix ?? ""}${posting.id}`;
+  return `${boardPath(posting.board)}/${opts.encode ? encodeURIComponent(raw) : raw}`;
 }
 
 export function employmentLabel(code: string | null): string | null {

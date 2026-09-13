@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_date, parse_period, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, is_rental, parse_date, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "artnuri"
@@ -45,8 +45,8 @@ _SKIP_WORDS = (
     "서포터즈", "셀러", "판매자", "입점", "수강생", "교육생", "참여자 모집", "참가자 공개모집", "커뮤니티", "관람객", "관객", "시민 참여",
     "시민공연자", "시민 공모", "동호회", "대학생", "자원봉사", "체험단", "강좌", "아카데미", "청중평가", "기자단", "참가 갤러리",
     "설문", "후원", "기부", "구독", "관람 신청", "입장권", "티켓", "이벤트 참여", "인스타그램", "AI 영상", "플리마켓",
-    # 대관·시설·장비
-    "대관", "공실", "장비 지원", "수요처", "공간 지원",
+    # 시설·장비 (대관은 버리지 않는다 — 대관 게시판으로 간다. common.is_rental 참조)
+    "공실", "장비 지원", "수요처", "공간 지원",
     # 복지·행정·금융
     "실태조사", "검진", "의료비", "심리상담", "보증", "대출", "바우처", "이용권", "대여자", "정산", "행정 지원", "행정지원", "발급",
     "참가비 지원", "크라우드펀딩", "공급기업", "유통 사업", "유통활성화", "네트워크 사업", "안전 기술",
@@ -56,7 +56,7 @@ _SKIP_WORDS = (
     "합격자", "결과 발표", "선정 결과", "취소",
 )
 _KEEP_WORDS = ("모집", "공모", "채용", "오디션", "지원사업", "공고", "신청", "레지던시", "입주", "작가", "예술인", "예술가",
-               "아티스트", "단원", "참여", "선발", "콩쿠르", "콩쿨", "경연", "쇼케이스")
+               "아티스트", "단원", "참여", "선발", "콩쿠르", "콩쿨", "경연", "쇼케이스", "대관")
 # 아트누리 장르 태그 → 분야 코드
 _TAG_FIELD = {"시각예술": "art", "음악": "music", "무용": "dance", "연극": "theater", "뮤지컬": "theater", "전통예술": "gugak"}
 _META = {}                # docid → (주관기관, seNo) — 상세 주소를 만들 때 쓴다
@@ -122,9 +122,13 @@ def row_from_item(it, today):
         cls["field"] = field
         if cls.get("genre") and not cls["genre"].startswith(field + "_"):
             cls["genre"] = None
-    cls["board"] = "job" if any(w in it["title"] for w in ("채용", "강사", "모집 공고(직원", "인력")) else "audition"
-    if cls["board"] == "audition" and not cls.get("employment_type"):
-        cls["employment_type"] = "open_call"
+    if is_rental(it["title"]):
+        cls["board"] = "rental"                  # 전시실·연습실 대관 공모 → 대관 게시판
+        cls["employment_type"] = None            # 대관은 고용이 아니다
+    else:
+        cls["board"] = "job" if any(w in it["title"] for w in ("채용", "강사", "모집 공고(직원", "인력")) else "audition"
+        if cls["board"] == "audition" and not cls.get("employment_type"):
+            cls["employment_type"] = "open_call"
     _META[it["docid"]] = (it["org"], it["se_no"])
     row = {
         "title": it["title"],
@@ -234,12 +238,11 @@ if __name__ == "__main__":
     if "--dry-run" in sys.argv:
         import time
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함) — 상세 1건 표본:")
         if rows:
             time.sleep(PAGE_SLEEP)
-            print(json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+            print("[dry-run] 상세 1건 표본:",
+                  json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
+        dry_run_report(rows, source_name=SOURCE_NAME)
         raise SystemExit(0)
     # 상세는 description 이 비어 있는 것부터 채운다(신규는 전량, 나머지는 한 번에 60건).
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows,

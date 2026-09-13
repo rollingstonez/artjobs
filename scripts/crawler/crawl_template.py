@@ -8,15 +8,16 @@
   3. 구직자 개인정보가 담긴 게시판(인력풀·이력서)은 절대 대상이 아니다.
   4. 목록 선택자는 실제 HTML을 저장해(diag) 눈으로 확인한 뒤 적는다 — 추측 금지.
 
-실행: 저장소 최상위에서  python scripts/crawler/crawl_template.py
+실행: 저장소 최상위에서  python scripts/crawler/crawl_template.py [--dry-run]
 """
 import re
+import sys
 
 from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_period, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "template"          # crawl_sources.code
@@ -101,6 +102,11 @@ def fetch_detail(key):
 if __name__ == "__main__":
     if not PARSER_READY:
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False)")
+    # --dry-run: DB 를 건드리지 않고 수집 결과만 본다. 게시판·분야별 집계가 먼저 찍힌다.
+    # 파서를 새로 붙였으면 반드시 이걸로 먼저 확인한다(Actions → daily-crawl → dry_run=true).
+    if "--dry-run" in sys.argv:
+        dry_run_report(collect_rows(), source_name=SOURCE_NAME)
+        raise SystemExit(0)
     run_crawler(
         source_code=SOURCE_CODE,
         source_name=SOURCE_NAME,

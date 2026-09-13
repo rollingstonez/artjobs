@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_date, parse_period_text, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, parse_date, parse_period_text, today_str, run_crawler,
 )
 
 SOURCE_CODE = "mmca"
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False)")
     if "--dry-run" in sys.argv:
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
+        dry_run_report(rows, source_name=SOURCE_NAME, show_rows=False)   # 본문은 아래에서 줄여 찍는다
         for r in rows:
             r = dict(r)
             r["description"] = (r.get("description") or "")[:120 if r.get("apply_end") else 700]

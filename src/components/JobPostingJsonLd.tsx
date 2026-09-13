@@ -4,7 +4,7 @@
 //   · 값이 없는 칸은 아예 넣지 않는다. 지어내지 않는다.
 //   · 수집 공고는 원문 기관이 올린 정보이므로 hiringOrganization 을 그 기관 이름으로 적는다.
 import { SITE_URL } from "@/lib/site";
-import { employmentLabel, fieldLabel, type Posting } from "@/types/job";
+import { employmentLabel, fieldLabel, postingHref, type Posting } from "@/types/job";
 
 const EMPLOYMENT_MAP: Record<string, string> = {
   full_time: "FULL_TIME",
@@ -32,7 +32,7 @@ function description(p: Posting): string {
 export default function JobPostingJsonLd({ posting, living }: { posting: Posting; living: boolean }) {
   if (!living) return null; // 마감된 공고에는 표시를 넣지 않는다
   const p = posting;
-  const path = `${p.board === "audition" ? "auditions" : "jobs"}/${encodeURIComponent(p.id)}`;
+  const path = postingHref(p, { encode: true }).slice(1);   // 앞의 "/" 를 뺀 상대 경로
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "JobPosting",

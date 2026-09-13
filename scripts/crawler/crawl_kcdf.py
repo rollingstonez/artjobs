@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, parse_period, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, force_board, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "kcdf"
@@ -83,7 +83,10 @@ def parse_list(html, board_cfg):
             continue
         cls = classify_all("공예", title)
         if board_cfg["force_board"]:
-            cls["board"] = board_cfg["force_board"]
+            # 사업공고 게시판 글은 공모지만, 그 안의 대관 공고는 대관 게시판으로 보낸다.
+            cls["board"] = force_board(board_cfg["force_board"], title)
+            if cls["board"] == "rental":
+                cls["employment_type"] = None
         detail = DETAIL_TMPL.format(board=board_cfg["board"], menu=board_cfg["menu"], key=key)
         _DETAIL_BY_KEY[key] = detail
         rows.append({
@@ -144,9 +147,6 @@ if __name__ == "__main__":
     if not PARSER_READY:
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False)")
     if "--dry-run" in sys.argv:
-        rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+        dry_run_report(collect_rows(), source_name=SOURCE_NAME)
         raise SystemExit(0)
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows, fetch_detail=fetch_detail)

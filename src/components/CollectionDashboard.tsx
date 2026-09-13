@@ -7,10 +7,18 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDeadline } from "@/lib/format";
+import { boardPath, type BoardCode } from "@/types/job";
+
+// 전광판 한 줄 앞에 붙는 게시판 뱃지. 게시판이 늘면 여기만 고친다.
+const BOARD_BADGE: Record<BoardCode, { short: string; tone: string }> = {
+  job: { short: "채용", tone: "bg-emerald-500/20 text-emerald-300" },
+  audition: { short: "공모", tone: "bg-sky-500/20 text-sky-300" },
+  rental: { short: "대관", tone: "bg-amber-500/20 text-amber-300" },
+};
 
 export interface DashboardItem {
   id: string;
-  board: "job" | "audition";
+  board: BoardCode;
   region: string | null;
   organization: string | null;
   title: string;
@@ -20,6 +28,7 @@ export interface DashboardItem {
 interface Props {
   jobCount: number;
   auditionCount: number;
+  rentalCount: number;
   closedCount: number; // 마감(모집 종료)돼 아카이브로 쌓인 누적 공고 수
   orgCount: number;
   lastCollected: string | null; // 가장 최근에 수집된 공고 날짜(YYYY-MM-DD)
@@ -32,6 +41,7 @@ const fmtClock = (d: Date) =>
 export default function CollectionDashboard({
   jobCount,
   auditionCount,
+  rentalCount,
   closedCount,
   orgCount,
   lastCollected,
@@ -49,7 +59,7 @@ export default function CollectionDashboard({
     };
   }, []);
 
-  const total = jobCount + auditionCount;
+  const total = jobCount + auditionCount + rentalCount;
 
   return (
     <div className="min-w-0 rounded-3xl bg-stone-900 p-5 text-white shadow-xl md:p-6">
@@ -82,27 +92,24 @@ export default function CollectionDashboard({
       </div>
 
       {/* 게시판별 건수 */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Link
-          href="/jobs"
-          className="rounded-xl bg-white/5 px-3.5 py-3 transition hover:bg-white/10"
-        >
-          <span className="block text-[11px] font-medium text-stone-400">채용공고</span>
-          <span className="mt-0.5 block text-2xl font-bold tabular-nums">
-            {jobCount.toLocaleString("ko-KR")}
-            <span className="ml-1 text-sm font-normal text-stone-400">건</span>
-          </span>
-        </Link>
-        <Link
-          href="/auditions"
-          className="rounded-xl bg-white/5 px-3.5 py-3 transition hover:bg-white/10"
-        >
-          <span className="block text-[11px] font-medium text-stone-400">오디션·공모</span>
-          <span className="mt-0.5 block text-2xl font-bold tabular-nums">
-            {auditionCount.toLocaleString("ko-KR")}
-            <span className="ml-1 text-sm font-normal text-stone-400">건</span>
-          </span>
-        </Link>
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          { board: "job" as const, label: "채용공고", count: jobCount },
+          { board: "audition" as const, label: "오디션·공모", count: auditionCount },
+          { board: "rental" as const, label: "대관", count: rentalCount },
+        ].map((t) => (
+          <Link
+            key={t.board}
+            href={boardPath(t.board)}
+            className="min-w-0 rounded-xl bg-white/5 px-2.5 py-3 transition hover:bg-white/10"
+          >
+            <span className="block truncate text-[11px] font-medium text-stone-400">{t.label}</span>
+            <span className="mt-0.5 block text-2xl font-bold tabular-nums">
+              {t.count.toLocaleString("ko-KR")}
+              <span className="ml-1 text-sm font-normal text-stone-400">건</span>
+            </span>
+          </Link>
+        ))}
       </div>
 
       {/* 공항 전광판처럼 공고가 아래에서 위로 끝없이 흘러 올라가는 세로 전광판.
@@ -116,19 +123,16 @@ export default function CollectionDashboard({
           >
             {[...items, ...items].map((it, i) => {
               const d = getDeadline(it.applyEnd);
+              const badge = BOARD_BADGE[it.board] ?? BOARD_BADGE.job;
               return (
                 <li key={`${it.id}-${i}`} aria-hidden={i >= items.length ? true : undefined}>
                   <Link
-                    href={`/${it.board === "job" ? "jobs" : "auditions"}/${encodeURIComponent(it.id)}`}
+                    href={`${boardPath(it.board)}/${encodeURIComponent(it.id)}`}
                     className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2.5 transition hover:bg-white/10"
                     tabIndex={i >= items.length ? -1 : undefined}
                   >
-                    <span
-                      className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
-                        it.board === "job" ? "bg-emerald-500/20 text-emerald-300" : "bg-sky-500/20 text-sky-300"
-                      }`}
-                    >
-                      {it.board === "job" ? "채용" : "공모"}
+                    <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${badge.tone}`}>
+                      {badge.short}
                     </span>
                     <span className="shrink-0 rounded-md bg-stone-700 px-1.5 py-0.5 text-[11px] font-semibold text-stone-100">
                       {it.region ?? "전국"}

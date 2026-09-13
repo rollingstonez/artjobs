@@ -1,6 +1,6 @@
 // 샘플 공고 — Supabase 연결 전까지 화면을 확인하기 위한 가짜 데이터.
 // 기관명·내용은 전부 가상이다. 실제 수집이 시작되면 lib/postings.ts 의 데이터 소스만 바꾼다.
-// 다섯 분야(미술·음악·무용·국악·연극)와 두 게시판(채용공고·오디션)을 고루 담았다.
+// 다섯 분야(미술·음악·무용·국악·연극)와 세 게시판(채용공고·오디션·대관)을 고루 담았다.
 import type { Posting } from "@/types/job";
 
 function daysFromNow(n: number): string {
@@ -440,6 +440,77 @@ export const SAMPLE_POSTINGS: Posting[] = [
     daysLeft: 4,
   }),
   // ── 지난 공고(마감) — 지우지 않고 아카이브로 남긴다. 목록 뒤·현황판 "마감 N건"에 쓰인다. ──
+  // ── 대관 ──
+  make({
+    id: "sample-401",
+    title: "2027년 제1·2전시실 대관 공모 (상반기)",
+    organization: "가상시립미술관",
+    board: "rental",
+    field: "art",
+    genre: null,
+    role: null,
+    categoryRaw: "전시실 대관",
+    employmentType: null,
+    employmentRaw: null,
+    region: "서울",
+    address: "서울특별시 중구",
+    salary: "대관료 전액 면제 (도록 제작비 별도 지원)",
+    recruitCount: "6팀",
+    applyMethod: "온라인 접수",
+    applyContact: "02-000-0000",
+    requiredDocs: "전시계획서, 포트폴리오, 작가 이력",
+    description:
+      "회화·조각·설치·미디어 등 시각예술 전 분야. 2주 단위로 배정하며 심사를 거쳐 선정합니다. 상업 목적 전시는 제외.",
+    daysAgo: 3,
+    daysLeft: 24,
+  }),
+  make({
+    id: "sample-402",
+    title: "가상아트홀 2027 정기대관 신청 접수",
+    organization: "가상문화재단",
+    board: "rental",
+    field: "theater",
+    genre: null,
+    role: null,
+    categoryRaw: "공연장 대관",
+    employmentType: null,
+    employmentRaw: null,
+    region: "경기",
+    address: "경기도 수원시",
+    salary: "대관료 50% 감면 (비영리 공연단체)",
+    recruitCount: "연간 20회차",
+    applyMethod: "방문·우편 접수",
+    applyContact: "031-000-0000",
+    requiredDocs: "대관신청서, 공연계획서, 단체 소개서",
+    description:
+      "500석 규모 중극장. 연극·무용·음악 공연 단체 대상. 심사위원회 심의를 거쳐 일정을 배정합니다.",
+    daysAgo: 8,
+    daysLeft: 12,
+  }),
+  make({
+    id: "sample-403",
+    title: "청년예술가 연습실 지원 사업 참여자 모집",
+    organization: "가상예술창작센터",
+    board: "rental",
+    field: "dance",
+    genre: null,
+    role: null,
+    categoryRaw: "연습실 대관",
+    employmentType: null,
+    employmentRaw: null,
+    region: "부산",
+    address: "부산광역시 해운대구",
+    salary: "무상 (월 40시간까지)",
+    recruitCount: "15팀",
+    applyMethod: "온라인 접수",
+    applyContact: "051-000-0000",
+    requiredDocs: "신청서, 활동계획서",
+    description:
+      "만 39세 이하 무용·연극·음악 분야 청년예술가 및 단체. 6개월 단위로 배정하며 연장 신청이 가능합니다.",
+    daysAgo: 1,
+    daysLeft: 18,
+  }),
+
   make({
     id: "sample-901",
     title: "2026 상반기 학예연구사(회화 담당) 채용",

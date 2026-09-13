@@ -5,6 +5,7 @@ import PostingDetail from "@/components/PostingDetail";
 import { isLivingPosting } from "@/lib/living";
 import { getPosting } from "@/lib/postings";
 import { getViewerState } from "@/lib/viewer";
+import { postingHref } from "@/types/job";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function AuditionDetailPage({ params }: PageProps<"/auditio
   const { id } = await params;
   const p = await getPosting(id);
   if (!p) notFound();
-  if (p.board !== "audition") redirect(`/jobs/${p.id}`);
+  if (p.board !== "audition") redirect(postingHref(p));
   const viewer = await getViewerState(p.id);
   // 구글 일자리 노출용 구조화 데이터 — 모집중인 공고에만 넣는다.
   return (
