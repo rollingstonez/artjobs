@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    classify_all, fetch_html, is_rental, parse_date, parse_period, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, is_rental, parse_date, parse_period, today_str, run_crawler,
 )
 
 SOURCE_CODE = "artnuri"
@@ -238,12 +238,11 @@ if __name__ == "__main__":
     if "--dry-run" in sys.argv:
         import time
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함) — 상세 1건 표본:")
         if rows:
             time.sleep(PAGE_SLEEP)
-            print(json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+            print("[dry-run] 상세 1건 표본:",
+                  json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
+        dry_run_report(rows, source_name=SOURCE_NAME)
         raise SystemExit(0)
     # 상세는 description 이 비어 있는 것부터 채운다(신규는 전량, 나머지는 한 번에 60건).
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows,

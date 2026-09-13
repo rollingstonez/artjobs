@@ -41,7 +41,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE, USER_AGENT,
-    classify_all, force_board, parse_date, today_str, run_crawler, parse_period_text, normalize_period_text,
+    classify_all, dry_run_report, force_board, parse_date, today_str, run_crawler, parse_period_text, normalize_period_text,
 )
 from http_retry import _retry
 
@@ -236,7 +236,7 @@ if __name__ == "__main__":
         raise SystemExit(f"[중단] {SOURCE_CODE} 파서 미완성(PARSER_READY=False)")
     if "--dry-run" in sys.argv:
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함)")
+        dry_run_report(rows, source_name=SOURCE_NAME, show_rows=False)   # 본문은 아래에서 줄여 찍는다
         for r in rows:
             slim = {k: v for k, v in r.items() if k != "description"}
             slim["description_head"] = (r.get("description") or "")[:160]

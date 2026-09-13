@@ -381,6 +381,62 @@ def fetch_html(url, *, params=None, sleep=0, session=None):
 
 
 # ── 공통 실행 흐름 ──
+# 게시판 코드 → 사람이 읽을 이름. 로그 집계에 쓴다(src/types/job.ts BOARDS 와 같은 말).
+BOARD_LABELS = {"job": "채용공고", "audition": "오디션·공모", "rental": "대관", "event": "공연·전시"}
+FIELD_LABELS = {"art": "미술", "music": "음악", "dance": "무용", "gugak": "국악", "theater": "연극"}
+
+
+def normalize_codes(x):
+    """코드표 밖의 값은 null 로. 억지 분류보다 미분류가 낫다.
+
+    run_crawler(실제 적재)와 dry_run_report(확인용 출력)가 똑같이 부른다 —
+    dry-run 에서 본 분류가 실제로 DB 에 들어가는 분류와 달라지면 확인하는 의미가 없다.
+    """
+    for col, codes in (("field", FIELD_CODES), ("genre", GENRE_CODES), ("role", ROLE_CODES),
+                       ("employment_type", EMPLOYMENT_CODES)):
+        if x.get(col) not in codes:
+            x[col] = None
+    if x.get("board") not in BOARD_CODES:
+        x["board"] = "job"
+    if x.get("genre") and not x.get("field"):
+        x["field"] = x["genre"].split("_", 1)[0]
+    return x
+
+
+def dry_run_report(rows, *, source_name="", show_rows=True):
+    """--dry-run 출력. 게시판·분야별로 몇 건인지 먼저 보여 준다.
+
+    예전에는 총 건수와 JSON 줄만 찍어서, "대관이 몇 건 잡히나" 같은 물음에
+    답하려면 Actions 로그 수백 줄을 눈으로 훑어야 했다. 집계를 먼저 찍는다.
+    """
+    for x in rows:
+        normalize_codes(x)
+    boards, fields = {}, {}
+    for x in rows:
+        b = x.get("board") or "job"
+        boards[b] = boards.get(b, 0) + 1
+        f = FIELD_LABELS.get(x.get("field"), "미분류")
+        fields[f] = fields.get(f, 0) + 1
+
+    head = f"[dry-run] {source_name} " if source_name else "[dry-run] "
+    print(f"\n{head}{len(rows)}건 (DB 적재 안 함)")
+    print("  게시판: " + (", ".join(
+        f"{BOARD_LABELS.get(b, b)} {n}건" for b, n in sorted(boards.items(), key=lambda kv: -kv[1])) or "없음"))
+    print("  분야  : " + (", ".join(
+        f"{f} {n}건" for f, n in sorted(fields.items(), key=lambda kv: -kv[1])) or "없음"))
+
+    # 대관은 이제 막 연 게시판이라 어떤 글이 들어오는지 제목까지 보여 준다(오분류 확인용).
+    rentals = [x for x in rows if x.get("board") == "rental"]
+    if rentals:
+        print(f"  대관으로 분류된 {len(rentals)}건:")
+        for x in rentals:
+            print(f"    · {x.get('organization') or '기관미상'} | {x.get('title', '')[:70]}")
+
+    if show_rows:
+        for x in rows:
+            print(json.dumps(x, ensure_ascii=False))
+
+
 def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
                 detail_empty_field="apply_email", max_detail=50):
     """
@@ -417,15 +473,7 @@ def run_crawler(*, source_code, source_name, collect_rows, fetch_detail=None,
             "status": "open",
             "last_seen_at": stamp,
         })
-        # 코드표 밖의 값은 null 로. 억지 분류보다 미분류가 낫다.
-        for col, codes in (("field", FIELD_CODES), ("genre", GENRE_CODES), ("role", ROLE_CODES),
-                           ("employment_type", EMPLOYMENT_CODES)):
-            if x.get(col) not in codes:
-                x[col] = None
-        if x.get("board") not in BOARD_CODES:
-            x["board"] = "job"
-        if x.get("genre") and not x.get("field"):
-            x["field"] = x["genre"].split("_", 1)[0]
+        normalize_codes(x)
         all_rows.append(x)
     print(f"[1] 수집 완료: {len(all_rows)}건")
 

@@ -42,6 +42,8 @@
 - `docs/robots_result.json` — 마지막 robots 판정 원본. 워크플로 결과로 갈아끼운다
 - `supabase/migrations/` — DB 스키마. Supabase 프로젝트 `artjobs`(barohaus 조직, 서울 리전)에 0001~0009 적용 완료. 새 마이그레이션은 SQL Editor에서 순서대로 실행한다. `0001_init.sql` 기본 테이블, `0002_taxonomy.sql` 분류 확장, `0003_location.sql` 근무지 좌표 칸, `0004_accounts.sql` 회원·프로필·공고 등록·지원·알림·메신저 (RLS 포함), `0005_social_login.sql` 소셜 로그인(카카오·구글·애플) 가입 트리거·역할 선택 함수, `0006_hiring.sql` 심사 작업대(포트폴리오 여러 개·구성원·심사위원·심사 기록·선발 단계·스냅샷·보관 기간), `0007_admin.sql` 운영자(관리자 판정 함수·RLS·정지 계정 차단·플래그 보호 트리거), `0008_verified_badge_logs.sql` 인증 기관 뱃지(org_postings.org_verified 동기화)·운영자 활동 로그(admin_logs), `0009_seeking.sql` 구직 게시판(seeking_posts: 예술가가 올리는 공개 구직 글, 3개 제한·60일 만료), `0015_rental.sql` 대관 게시판(org_postings.board 제약에 rental 추가·알림 기본값·이미 모은 공고 되분류)
 - `supabase/seed/crawl_sources.sql` — `crawl_sources` 초기 데이터(전부 is_active=false, 자동 생성)
+- `scripts/crawler/common.py` 의 `dry_run_report()` — `--dry-run` 출력. 게시판·분야별 집계를 먼저 찍고 대관 공고는 제목까지 보여준다.
+  실제 적재와 같은 `normalize_codes()` 를 쓰므로, dry-run 에서 본 분류가 곧 DB 에 들어갈 분류다
 - `.github/workflows/crawl.yml` — 크롤 자동 실행. **평일 21:11 KST** 스케줄 + 수동 실행(`dry_run=true` 면 DB 없이 수집 결과만 로그에, `source=sfac` 처럼 코드를 적으면 그 소스만). 소스별 단계 한 줄씩. 운영자 화면에서 켠 소스만 실제 적재
   - 첫 수집기 `scripts/crawler/crawl_sfac.py` 서울문화재단 — **게시판 두 개**를 함께 읽는다: 채용공고(cbIdx=964)와 공모 소식(cbIdx=992, 카테고리 '공고'만 → 오디션·공모 게시판으로). AJAX 목록·상세 POST, 공고 제목만 선별, 최근 90일 글의 상세에서 접수 기간 판독 → 마감 제외. '신청·참여' 메뉴의 지원사업·입주작가 공모는 상세가 scas.kr 로 넘어가는데 그쪽 robots.txt 자리에 차단 안내가 떠서 허용 확인 전까지 수집하지 않는다
   - `crawl_kcdf.py` 한국공예·디자인문화진흥원 채용(표 목록, 접수 기간·마감 배지로 모집중만) · `crawl_sema.py` 서울시립미술관 채용시험(목록 45일 안, 본문이 첨부라 마감일 없음)
@@ -63,7 +65,18 @@
     구조를 다시 확인하려면 Actions → daily-crawl → `source=gojobs`, `dry_run=true` — 로그 `[probe]` 절에
     표 머리글·페이지 넘김·상세 주소가 아직 맞는지 찍힌다
   - **대관 수집** — 새 사이트를 붙이지 않아도 아트누리·모모365·서울문화재단·서울문화포털·KCDF 에서 대관 공고가 들어온다.
-    먼저 Actions → daily-crawl 을 `dry_run=true` 로 돌려 **주당 몇 건 잡히는지** 로그의 `게시판:` 집계로 확인한다.
+    먼저 Actions → daily-crawl 을 `dry_run=true` 로 돌려 **몇 건 잡히는지** 확인한다. 소스마다 로그 첫머리에 이렇게 찍힌다:
+
+    ```
+    [dry-run] 아트누리 143건 (DB 적재 안 함)
+      게시판: 오디션·공모 128건, 대관 9건, 채용공고 6건
+      분야  : 미술 61건, 음악 24건, 미분류 22건, …
+      대관으로 분류된 9건:
+        · OO문화재단 | 2027년 OO갤러리 전시 대관 공모
+    ```
+
+    대관 줄의 제목을 훑어 엉뚱한 글이 섞였으면 `common.py` 의 `_RENTAL_NOT_WORDS` 에 낱말을 더한다
+    (그때 `0015_rental.sql` 의 되분류 조건도 같이 고친다).
     아직 못 잡는 것: 모모365 는 분야(field)가 안 잡히는 글을 버려서 "연습실 대관" 처럼 장르 낱말이 없는 제목은 들어오지 않는다.
     물량을 본 뒤 문화재단·문예회관의 '대관안내' 게시판을 `sources.py` 에 더한다(이미 robots 판정이 끝난 도메인이라 목록 경로 한 줄이면 된다)
   - 필요한 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions). 없으면 실제 적재 단계가 "[중단] .env.local…" 로 멈춘다

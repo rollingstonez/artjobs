@@ -31,7 +31,7 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP,
-    classify_all, fetch_html, is_rental, parse_date, today_str, run_crawler,
+    classify_all, dry_run_report, fetch_html, is_rental, parse_date, today_str, run_crawler,
 )
 
 SOURCE_CODE = "momo365"
@@ -195,12 +195,11 @@ if __name__ == "__main__":
     if "--dry-run" in sys.argv:
         import time
         rows = collect_rows()
-        print(f"\n[dry-run] {len(rows)}건 (DB 적재 안 함) — 상세 1건 표본:")
         if rows:
             time.sleep(PAGE_SLEEP)
-            print(json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
-        for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+            print("[dry-run] 상세 1건 표본:",
+                  json.dumps(fetch_detail(rows[0]["source_key"]), ensure_ascii=False)[:800])
+        dry_run_report(rows, source_name=SOURCE_NAME)
         raise SystemExit(0)
     run_crawler(source_code=SOURCE_CODE, source_name=SOURCE_NAME, collect_rows=collect_rows,
                 fetch_detail=fetch_detail, detail_empty_field="description", max_detail=60)
