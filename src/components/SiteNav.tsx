@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
@@ -15,6 +15,35 @@ export interface NavUser {
   name: string;
   role: "artist" | "organization";
   unread: number;
+}
+
+/** 누른 메뉴 아래에 뜨는 진행 표시. Link 안에서만 쓸 수 있다(useLinkStatus).
+ *  화면이 바뀌기 전에 "이 버튼을 눌렀다"를 바로 보여 주는 역할만 한다. */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute inset-x-2 bottom-0.5 h-0.5 rounded-full bg-current transition-opacity duration-150 ${
+        pending ? "animate-pulse opacity-70" : "opacity-0"
+      }`}
+    />
+  );
+}
+
+/** 진행 표시가 붙은 메뉴 링크. 위치 기준을 잡으려고 relative 를 항상 함께 준다. */
+function NavLink({
+  href,
+  className,
+  children,
+  ...rest
+}: React.ComponentProps<typeof Link>) {
+  return (
+    <Link href={href} className={`relative ${className ?? ""}`} {...rest}>
+      {children}
+      <NavPending />
+    </Link>
+  );
 }
 
 export default function SiteNav({ user, accountsEnabled }: { user: NavUser | null; accountsEnabled: boolean }) {
@@ -33,36 +62,36 @@ export default function SiteNav({ user, accountsEnabled }: { user: NavUser | nul
           <div className="flex items-center gap-1 md:hidden">
             {user ? (
               <>
-                <Link href="/notifications" aria-label="알림" className="relative px-2 py-1 text-sm">
+                <NavLink href="/notifications" aria-label="알림" className="px-2 py-1 text-sm">
                   🔔
                   {user.unread > 0 && <span className="absolute -right-0.5 -top-0.5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{user.unread}</span>}
-                </Link>
-                <Link href="/me" className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-semibold">{user.name}</Link>
+                </NavLink>
+                <NavLink href="/me" className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-semibold">{user.name}</NavLink>
               </>
             ) : accountsEnabled ? (
-              <Link href="/login" className="rounded-lg bg-stone-900 px-2.5 py-1.5 text-xs font-semibold text-white">로그인</Link>
+              <NavLink href="/login" className="rounded-lg bg-stone-900 px-2.5 py-1.5 text-xs font-semibold text-white">로그인</NavLink>
             ) : null}
           </div>
 
           <div className="hidden shrink-0 items-center gap-1 md:order-last md:flex">
             {user ? (
               <>
-                <Link href="/notifications" aria-label="알림" className="relative rounded-lg px-2.5 py-2 text-sm text-stone-600 hover:bg-stone-100">
+                <NavLink href="/notifications" aria-label="알림" className="rounded-lg px-2.5 py-2 text-sm text-stone-600 hover:bg-stone-100">
                   🔔
                   {user.unread > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{user.unread}</span>
                   )}
-                </Link>
-                <Link href="/messages" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">메시지</Link>
+                </NavLink>
+                <NavLink href="/messages" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">메시지</NavLink>
                 {user.role === "organization" && (
-                  <Link href="/post" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">공고 올리기</Link>
+                  <NavLink href="/post" className="rounded-lg px-2.5 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">공고 올리기</NavLink>
                 )}
-                <Link href="/me" className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-semibold text-stone-900 hover:bg-stone-200">{user.name}</Link>
+                <NavLink href="/me" className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-semibold text-stone-900 hover:bg-stone-200">{user.name}</NavLink>
               </>
             ) : accountsEnabled ? (
               <>
-                <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">로그인</Link>
-                <Link href="/signup" className="rounded-lg bg-stone-900 px-3 py-2 text-sm font-semibold text-white hover:bg-stone-700">회원가입</Link>
+                <NavLink href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-stone-600 hover:bg-stone-100">로그인</NavLink>
+                <NavLink href="/signup" className="rounded-lg bg-stone-900 px-3 py-2 text-sm font-semibold text-white hover:bg-stone-700">회원가입</NavLink>
               </>
             ) : null}
           </div>
@@ -70,7 +99,7 @@ export default function SiteNav({ user, accountsEnabled }: { user: NavUser | nul
           <ul className="hidden flex-1 items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <Link
+                <NavLink
                   href={item.href}
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
@@ -80,7 +109,7 @@ export default function SiteNav({ user, accountsEnabled }: { user: NavUser | nul
                   }`}
                 >
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>
@@ -89,7 +118,7 @@ export default function SiteNav({ user, accountsEnabled }: { user: NavUser | nul
         <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {NAV_ITEMS.map((item) => (
             <li key={item.href} className="shrink-0">
-              <Link
+              <NavLink
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={`block whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold transition ${
@@ -99,7 +128,7 @@ export default function SiteNav({ user, accountsEnabled }: { user: NavUser | nul
                 }`}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             </li>
           ))}
         </ul>
