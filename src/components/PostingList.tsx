@@ -34,10 +34,13 @@ export default async function PostingList({
   board,
   searchParams,
   intro,
+  showNearMe = true,
 }: {
   board: BoardCode;
   searchParams: SearchParams;
   intro?: string;
+  /** "내 집 근처" 설정 바를 보일지. 대관은 지역 드롭다운으로 충분해 감춘다(정렬은 설정돼 있으면 그대로 따른다). */
+  showNearMe?: boolean;
 }) {
   const [location, { savedIds, loggedIn }] = await Promise.all([getUserLocation(), getSavedIds()]);
   const filters = pickFilters(searchParams);
@@ -73,9 +76,11 @@ export default async function PostingList({
         </p>
       )}
 
-      <div className="mb-4">
-        <NearMeBar location={location} compact />
-      </div>
+      {showNearMe && (
+        <div className="mb-4">
+          <NearMeBar location={location} compact />
+        </div>
+      )}
 
       <Suspense>
         <JobsFilter board={board} />
