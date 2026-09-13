@@ -178,6 +178,18 @@ _CITY_SIDO = {
     "제주": ("서귀포",),
 }
 
+# 목록 <a> 는 href="javascript:fn_apmView('020', '303444')" 꼴이다(2026-09-13 probe 실측).
+# 그 두 인자를 상세 주소의 어느 칸에 넣는지는 probe 가 후보를 실제로 열어 보고 고른다 —
+# 응답에 그 공고 제목이 들어 있는 후보만 맞는 것으로 친다(추측 금지).
+_APMVIEW_RE = re.compile(r"fn_apmView\s*\(\s*'([^']*)'\s*,\s*'([^']*)'\s*\)")
+_DETAIL_CANDIDATES = (
+    ("/apmView.do", lambda a, b: {"menuNo": "401", "searchInsttsecode": a, "empmnsn": b}),
+    ("/apmView.do", lambda a, b: {"menuNo": "401", "empmnsn": b}),
+    ("/apmView.do", lambda a, b: {"menuNo": "401", "flag": a, "empmnsn": b}),
+    ("/apmView.do", lambda a, b: {"menuNo": "401", "searchEmpmnsecode": a, "empmnsn": b}),
+    ("/apmDetail.do", lambda a, b: {"menuNo": "401", "empmnsn": b}),
+)
+
 # 상세 주소는 목록에서 읽어 둔다(kcdf 와 같은 방식) — 상세 단계에서 source_key 만 받기 때문.
 _DETAIL_BY_KEY = {}
 # 목록에서 이미 마감일을 받은 공고번호. 상세가 본문에서 읽은 날짜로 이 값을 덮지 않게 막는다.
@@ -316,6 +328,28 @@ def _pick_table(soup):
         if mapping and table.find_all("tr"):
             return table, mapping
     return None, None
+
+
+def _rows_of(soup):
+    """probe 전용 — 상세 주소를 못 만들어도 행을 돌려준다(파싱 자체가 되는지 보려고)."""
+    table, mapping = _pick_table(soup)
+    if not table:
+        return []
+    body = table.find("tbody") or table
+    out = []
+    for tr in body.find_all("tr"):
+        cells = tr.find_all("td")
+        if not cells or len(cells) <= mapping["title"]:
+            continue
+        cell = cells[mapping["title"]]
+        a = cell.find("a")
+        href = (a.get("href") or "") if a else ""
+        m = _APMVIEW_RE.search(href)
+        key, _ = _link_of(cell)
+        title = _clean(cell.get_text(" "))
+        if title:
+            out.append({"key": key, "title": title, "args": m.groups() if m else None})
+    return out
 
 
 def parse_list(html):
@@ -473,15 +507,42 @@ def probe():
     # 페이지 파라미터 후보: 폼의 hidden 입력과 페이지 링크의 질의문자열 이름들
     names = {i.get("name") for i in soup.find_all("input") if i.get("name")}
     print(f"[probe] 폼 입력 이름: {sorted(n for n in names if n)}")
-    page_params = set()
-    for a in soup.find_all("a", href=True):
-        for k in parse_qs(urlparse(a["href"]).query):
-            if "page" in k.lower() or "index" in k.lower():
-                page_params.add(k)
-        oc = a.get("onclick") or a["href"]
-        for m in re.findall(r"(\w*[Pp]age\w*)\s*[=(]", oc):
-            page_params.add(m)
-    print(f"[probe] 페이지 파라미터 후보: {sorted(page_params)}  (지금 설정: PAGE_PARAM={PAGE_PARAM!r})")
+    for f in soup.find_all("form"):
+        print(f"[probe] form name={f.get('name')!r} method={f.get('method')!r} action={f.get('action')!r}")
+    srcs = [sc.get("src") for sc in soup.find_all("script", src=True)]
+    print(f"[probe] 외부 스크립트: {srcs}")
+
+    # 1) 페이지 넘김이 GET 파라미터로 되는지 — 2페이지 첫 글이 1페이지와 다르면 된 것이다.
+    items = parse_list(html) or _rows_of(soup)
+    first1 = items[0] if items else None
+    html2 = _fetch(LIST_URL, params=dict(LIST_PARAMS, **{PAGE_PARAM: "2"}), sleep=PAGE_SLEEP)
+    items2 = _rows_of(BeautifulSoup(html2, "html.parser"))
+    first2 = items2[0] if items2 else None
+    if first1 and first2:
+        same = first1["key"] == first2["key"]
+        print(f"[probe] 페이지 넘김({PAGE_PARAM}=2): {'❌ 1페이지와 같음 — GET 으로는 안 넘어간다' if same else '✅ 다른 글이 나온다'}")
+        print(f"[probe]   1p: {first1['key']} {first1['title'][:44]}")
+        print(f"[probe]   2p: {first2['key']} {first2['title'][:44]}")
+    else:
+        print("[probe] 페이지 넘김 확인 실패 — 목록을 못 읽었다")
+
+    # 2) 상세 주소 — 후보를 실제로 열어 보고 제목이 들어 있는 것을 고른다.
+    if first1 and first1.get("args"):
+        a, b = first1["args"]
+        print(f"[probe] 상세 후보 검사 — fn_apmView({a!r}, {b!r}) · 제목 '{first1['title'][:30]}'")
+        for path, make in _DETAIL_CANDIDATES:
+            params = make(a, b)
+            url = BASE + path
+            try:
+                body = _fetch(url, params=params, sleep=PAGE_SLEEP)
+                hit = first1["title"][:18] in body
+                print(f"[probe]   {'✅' if hit else '❌'} {path} {params} · {len(body):,}바이트 · 제목 {'있음' if hit else '없음'}")
+                if hit:
+                    print(f"[probe]   → DETAIL_URL_TMPL 로 쓸 것: {url}?" +
+                          "&".join(f"{k}={'{key}' if k in ('empmnsn',) else v}" for k, v in params.items()))
+                    break
+            except Exception as e:
+                print(f"[probe]   ❌ {path} {params} · 실패 {type(e).__name__}: {e}")
 
 
 if __name__ == "__main__":
