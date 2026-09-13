@@ -135,10 +135,14 @@ function isField(v: string | undefined): v is FieldCode {
 }
 
 /** 분야 필터. 분야가 같거나, 그 분야 탭에 교차 노출하기로 한 장르면 통과.
- * 대관은 공간 종류로 정한다 — 공연장은 음악·무용·국악·연극 탭에, 전시실은 미술 탭에, 복합 공간은 모든 탭에. */
+ * 대관은 분야가 찍혀 있으면(예: 기관이 올린 "무용 연습실") 그 분야에만, 비어 있으면(공공 공연장) 공간 종류대로 —
+ * 공연·연습 공간은 음악·무용·국악·연극에, 전시 공간은 미술에, 복합 공간은 모든 분야에. */
 function matchesField(p: Posting, field: string | undefined): boolean {
   if (!field) return true;
-  if (p.board === "rental") return (spaceKindFields(p.spaceKind) as readonly string[]).includes(field);
+  if (p.board === "rental") {
+    if (p.field) return p.field === field;
+    return (spaceKindFields(p.spaceKind) as readonly string[]).includes(field);
+  }
   if (p.field === field) return true;
   if (isField(field) && p.genre) {
     return (genreCodesForField(field) as string[]).includes(p.genre);

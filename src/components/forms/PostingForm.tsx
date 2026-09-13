@@ -56,12 +56,21 @@ export default function PostingForm({ initial, orgAddress, orgRegion }: { initia
                 </label>
               ))}
             </div>
-            <p className="mt-1 text-xs text-stone-500">전시 공간은 미술 탭에, 공연·연습 공간은 음악·무용·국악·연극 탭에, 복합 공간은 모든 탭에 보입니다.</p>
+            <p className="mt-1 text-xs text-stone-500">전시 공간은 미술에, 공연·연습 공간은 음악·무용·국악·연극에, 복합 공간은 모든 분야에 보입니다.</p>
+          </Field>
+        )}
+        {isRental && (
+          <Field label="분야 (선택)">
+            <select name="field" value={field} onChange={(e) => setField(e.target.value)} className={inputClass}>
+              <option value="">특정 분야 전용이 아님 — 공간 종류대로 보임</option>
+              {FIELDS.map((f) => <option key={f.code} value={f.code}>{f.label} 전용</option>)}
+            </select>
+            <p className="mt-1 text-xs text-stone-500">예: 무용 연습실이면 「무용 전용」을 고르세요. 그 분야를 고른 사람에게만 보입니다.</p>
           </Field>
         )}
         <div className={`grid gap-3 sm:grid-cols-3 ${isRental ? "hidden" : ""}`}>
           <Field label="분야">
-            <select name="field" value={field} onChange={(e) => setField(e.target.value)} className={inputClass} required={!isRental}>
+            <select name="field" value={field} onChange={(e) => setField(e.target.value)} className={inputClass} required={!isRental} disabled={isRental}>
               <option value="">선택</option>
               {FIELDS.map((f) => <option key={f.code} value={f.code}>{f.label}</option>)}
             </select>

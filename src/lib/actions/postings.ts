@@ -114,8 +114,9 @@ export async function setApplicationStatus(id: string, status: "viewed" | "short
 function postingPatch(fd: FormData, orgName: string) {
   const board = inSet(str(fd, "board"), BOARDS.map((b) => b.code)) ?? "job";
   const isRental = board === "rental";
-  // 대관은 공간 종류로 분류한다. 분야·장르·직무·고용형태는 "누구를 뽑나"의 축이라 비운다.
-  const field = isRental ? null : inSet(str(fd, "field"), FIELDS.map((f) => f.code));
+  // 대관은 공간 종류로 분류한다. 분야는 선택 사항(무용 연습실처럼 특정 분야 전용일 때만),
+  // 장르·직무·고용형태는 "누구를 뽑나"의 축이라 비운다.
+  const field = inSet(str(fd, "field"), FIELDS.map((f) => f.code));
   const region = inSet(str(fd, "region"), REGIONS);
   const center = region && region in REGION_CENTERS ? REGION_CENTERS[region as keyof typeof REGION_CENTERS] : null;
   const applyMethod = str(fd, "apply_method") === "external" ? "external" : "messenger";

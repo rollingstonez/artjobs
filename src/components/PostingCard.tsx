@@ -48,7 +48,10 @@ export default function PostingCard({
   const field = isRental ? null : fieldLabel(posting.field);
   const genre = isRental ? null : genreLabel(posting.genre);
   const role = isRental ? null : roleLabel(posting.role);
-  const space = isRental ? (spaceKindLabel(posting.spaceKind) ?? "복합 공간") : null;
+  // 대관 칩: "공연·연습 공간", 특정 분야 전용이면 "공연·연습 공간 · 무용"
+  const space = isRental
+    ? [spaceKindLabel(posting.spaceKind) ?? "복합 공간", fieldLabel(posting.field)].filter(Boolean).join(" · ")
+    : null;
   const href = postingHref(posting);
 
   return (

@@ -100,7 +100,9 @@ export default function PostingDetail({ p, viewer }: { p: Posting; viewer: Viewe
   const genre = isRental ? null : genreLabel(p.genre);
   const role = isRental ? null : roleLabel(p.role);
   // 대관은 분야·장르·직무 대신 공간 종류 하나로 설명한다.
-  const space = isRental ? (spaceKindLabel(p.spaceKind) ?? "복합 공간") : null;
+  const space = isRental
+    ? [spaceKindLabel(p.spaceKind) ?? "복합 공간", fieldLabel(p.field)].filter(Boolean).join(" · ")
+    : null;
   const classification = [space, field, genre, role].filter(Boolean).join(" · ") || null;
 
   return (
