@@ -1,7 +1,9 @@
 # 소셜 로그인 설정 (카카오 · 구글 · 애플)
 
-코드는 이미 들어 있다. 각 제공자 콘솔에 앱을 등록하고 Supabase 에 키를 넣은 뒤,
-`.env.local` 의 `NEXT_PUBLIC_AUTH_PROVIDERS` 에 켠 제공자를 적으면 버튼이 나타난다.
+코드는 이미 들어 있다. 가입·로그인 화면에는 카카오·구글·애플 버튼이 항상 보이고,
+Supabase Authentication > Providers 에서 아직 안 켠 제공자는 "준비 중" 으로 표시된다(누르면 안내만 나온다).
+각 제공자 콘솔에 앱을 등록하고 Supabase 에 키를 넣어 Enable 하면, 코드 수정·배포 없이 5분 안에 버튼이 살아난다.
+(앱이 Supabase 의 공개 설정 `/auth/v1/settings` 를 읽어 판단한다. 환경변수 `NEXT_PUBLIC_AUTH_PROVIDERS` 는 이제 없어도 되고, 적으면 그 제공자를 켜진 것으로 취급한다.)
 
 동작 흐름: 버튼 → 제공자 로그인 → Supabase → `/auth/callback` → (첫 가입이면) 가입 화면에서 고른 역할로 맞춤 → 프로필 작성 화면.
 DB 쪽은 `supabase/migrations/0005_social_login.sql` 을 SQL Editor 에서 먼저 실행해 둔다.
@@ -53,14 +55,8 @@ Supabase 대시보드 > Authentication > URL Configuration
 
 ## 4. 앱에서 켜기
 
-`.env.local`
-
-```
-NEXT_PUBLIC_AUTH_PROVIDERS=google,kakao
-```
-
-개발 서버(`npm run dev`)를 껐다 켜면 가입·로그인 화면에 버튼이 보인다.
-배포(Vercel 등)에도 같은 환경변수를 넣는다.
+따로 할 일이 없다. Supabase 에서 Enable → Save 하면 최대 5분 안에 버튼의 "준비 중" 표시가 사라진다.
+(예전 방식인 `NEXT_PUBLIC_AUTH_PROVIDERS=google,kakao` 환경변수는 있어도 되고 없어도 된다.)
 
 ## 확인
 

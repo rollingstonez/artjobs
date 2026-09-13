@@ -3,7 +3,7 @@ import { Badge, Card, ErrorNote, Flash, KV, KVGrid, PageHeader, btn } from "@/co
 import { PARSER_READY_SOURCES } from "@/lib/admin/labels";
 import { safeRpc, sp } from "@/lib/admin/queries";
 import { purgeExpiredApplications, setUserAdmin } from "@/lib/actions/admin";
-import { ENABLED_SOCIAL_PROVIDERS } from "@/lib/auth-providers";
+import { SOCIAL_PROVIDERS, getSocialProviderStatus } from "@/lib/auth-providers";
 import { requireAdmin } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
@@ -27,7 +27,8 @@ export default async function AdminSettingsPage({ searchParams }: PageProps<"/ad
   const admins = (adminsRaw ?? []) as AdminRow[];
   const due = purgeDue.data[0] != null ? Number(purgeDue.data[0]) : null;
   const migrated = !migrationProbe.missing && !contactProbe.error && !noticeProbe.error;
-  const providers = ENABLED_SOCIAL_PROVIDERS;
+  const providerStatus = await getSocialProviderStatus();
+  const providers = SOCIAL_PROVIDERS.filter((p) => providerStatus[p.code]);
 
   return (
     <div className="space-y-4">
@@ -69,7 +70,7 @@ export default async function AdminSettingsPage({ searchParams }: PageProps<"/ad
           <KV label="사이트 주소">{SITE_URL}</KV>
           <KV label="Supabase">{SUPABASE_URL ? <><Badge tone="green">연결됨</Badge> <span className="text-xs text-stone-500">{SUPABASE_URL}</span></> : <Badge tone="red">미연결</Badge>}</KV>
           <KV label="DB 확장(0010)">{migrated ? <Badge tone="green">적용됨</Badge> : <><Badge tone="amber">미적용</Badge> <span className="text-xs text-stone-500">supabase/migrations/0010_admin_center.sql 을 SQL Editor 에서 실행하세요. 문의·공지·대화 모니터·통계가 그 뒤에 켜집니다.</span></>}</KV>
-          <KV label="소셜 로그인">{providers.length ? providers.map((p) => <Badge key={p.code} className="mr-1">{p.shortLabel}</Badge>) : <span className="text-xs text-stone-500">이메일 가입만 (NEXT_PUBLIC_AUTH_PROVIDERS 비어 있음)</span>}</KV>
+          <KV label="소셜 로그인">{providers.length ? providers.map((p) => <Badge key={p.code} className="mr-1">{p.shortLabel}</Badge>) : <span className="text-xs text-stone-500">켜진 제공자 없음 — Supabase → Authentication → Providers 에서 켜면 버튼이 살아납니다 (docs/SOCIAL_LOGIN.md)</span>}</KV>
           <KV label="크롤 파서">{PARSER_READY_SOURCES.map((c) => <Badge key={c} tone="indigo" className="mr-1">{c}</Badge>)} <span className="text-xs text-stone-500">scripts/crawler/crawl_&lt;code&gt;.py · GitHub Actions 에서 매일 실행</span></KV>
           <KV label="이메일 발송"><span className="text-xs text-stone-500">아직 없음 — 문의 답변은 알림(회원) 또는 직접 메일. 알림 메일을 붙이려면 Resend 같은 발송 서비스 연동이 필요합니다.</span></KV>
           <KV label="방문 통계"><span className="text-xs text-stone-500">자체 기록(visit_logs, 0011) — <Link href="/admin/traffic" className="underline underline-offset-2">유입·방문</Link>. IP 저장 없음, 봇 제외, /admin 제외.</span></KV>
