@@ -56,6 +56,10 @@ _REGDT_RE = re.compile(r"등록일\s*(\d{4}-\d{2}-\d{2})")
 _FILE_RE = re.compile(r"([^\]]+?\.(?:hwpx?|pdf|zip|docx?|xlsx?|png|jpg))\s*\[[\d,]+\s*byte\]")
 # 공고만: 합격자 발표·면접 일정·선정 결과 등은 뺀다.
 _SKIP_WORDS = ("합격자", "발표", "면접 일정", "면접일정", "결과", "정정", "취소", "재공고 안내")
+# 공모소식에는 예술인과 상관없는 장사·납품 공모도 섞인다(푸드트럭 영업자, 입점 업체, 참여 서점 등).
+# 아트잡스는 예술인이 지원할 수 있는 것만 모으므로 이런 낱말이 든 글은 거른다.
+_SKIP_BUSINESS = ("푸드트럭", "영업자", "입점", "임대", "위탁", "참가업체", "참여 업체", "업체 모집",
+                  "서점", "출판사", "숙박", "스테이", "매점", "용역", "납품", "구매", "견적", "제안서 접수")
 
 
 def _board_of(source_key):
@@ -76,6 +80,8 @@ def detail_url(bd, key):
 
 def _is_posting_title(title, bd):
     if any(w in title for w in _SKIP_WORDS):
+        return False
+    if bd["board"] and any(w in title for w in _SKIP_BUSINESS):   # 공모소식에서만 장사·납품 공모 제외
         return False
     return any(w in title for w in bd["keep"])
 
