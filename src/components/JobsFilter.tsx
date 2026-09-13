@@ -7,6 +7,7 @@ import {
   GENRES,
   REGIONS,
   ROLES,
+  SPACE_KINDS,
   fieldLabel,
   genreCodesForField,
   isHiringBoard,
@@ -17,7 +18,7 @@ import {
 const selectClass =
   "h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 focus:border-stone-900 focus:outline-none";
 
-const FILTER_KEYS = ["field", "genre", "role", "employmentType", "region", "q"];
+const FILTER_KEYS = ["field", "genre", "role", "space", "employmentType", "region", "q"];
 
 // 오디션·공모와 대관은 채용이 아니라 "모집·공모"라서 직무·고용형태(정규직·계약직 등) 필터가 맞지 않는다.
 // 채용공고(job)에서만 두 필터를 보여준다.
@@ -45,17 +46,25 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
     : GENRES;
   const hasAny = FILTER_KEYS.some((k) => params.get(k));
 
+  // 대관은 분야 탭 대신 공간 종류 탭. 공연장은 음악·무용·국악·연극이 다 쓰는 곳이라 분야로 나누면
+  // 네 탭에 똑같은 목록이 반복된다. 공간 종류(전시 · 공연·연습 · 복합)는 서로 겹치지 않는다.
+  const isRental = board === "rental";
+  const space = params.get("space") ?? "";
+  const tabs: { code: string; label: string }[] = isRental
+    ? [{ code: "", label: "전체" }, ...SPACE_KINDS.map((k) => ({ code: k.code, label: k.label }))]
+    : [{ code: "", label: "전체" }, ...FIELDS];
+
   return (
     <div className="space-y-3">
-      {/* 분야 탭 */}
+      {/* 분야 탭 (대관은 공간 종류 탭) */}
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {[{ code: "", label: "전체" }, ...FIELDS].map((f) => {
-          const active = field === f.code;
+        {tabs.map((f) => {
+          const active = (isRental ? space : field) === f.code;
           return (
             <button
               key={f.code || "all"}
               type="button"
-              onClick={() => set({ field: f.code, genre: "" })}
+              onClick={() => (isRental ? set({ space: f.code, field: "", genre: "" }) : set({ field: f.code, genre: "" }))}
               aria-pressed={active}
               className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                 active
@@ -77,8 +86,25 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
           set({ q: q.trim() });
         }}
       >
-        {/* 대관은 공간을 빌리는 것이라 장르(회화·현악…) 필터가 맞지 않는다. 분야 탭은 공간 종류로 걸러진다. */}
-        {board !== "rental" && (
+        {/* 대관은 탭이 공간 종류라, 분야는 여기서 고른다. 공공 공연장은 분야가 비어 있어 어느 분야를 골라도 나오고,
+            기관이 "무용 연습실"처럼 분야를 찍어 올린 공간은 그 분야를 골랐을 때만 나온다. */}
+        {isRental && (
+          <select
+            aria-label="분야"
+            className={selectClass}
+            value={field}
+            onChange={(e) => set({ field: e.target.value, genre: "" })}
+          >
+            <option value="">분야 전체</option>
+            {FIELDS.map((f) => (
+              <option key={f.code} value={f.code}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        )}
+        {/* 장르(회화·현악…) 필터는 공간을 빌리는 대관에는 맞지 않는다. */}
+        {!isRental && (
         <select
           aria-label="장르"
           className={selectClass}

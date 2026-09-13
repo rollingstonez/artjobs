@@ -471,7 +471,7 @@ export const SAMPLE_POSTINGS: Posting[] = [
     title: "가상아트홀 2027 정기대관 신청 접수",
     organization: "가상문화재단",
     board: "rental",
-    field: "theater",
+    field: null,
     genre: null,
     role: null,
     spaceKind: "performance",
