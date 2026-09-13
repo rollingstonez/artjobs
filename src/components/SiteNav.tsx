@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: "/auditions", label: "오디션·공모" },
   { href: "/rentals", label: "대관" },
   { href: "/seeking", label: "구직" },
-  { href: "/about", label: "소개" },
+  { href: "/about", label: "About" },
 ];
 
 export interface NavUser {
