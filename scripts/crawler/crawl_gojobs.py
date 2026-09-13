@@ -492,28 +492,44 @@ def _parse_detail(html):
     for t in root.find_all(["script", "style", "caption", "nav", "header", "footer"]):
         t.decompose()
 
-    info, files, links = {}, [], []
+    info, files, links, body_cells = {}, [], [], []
     table = root.select_one("table#apmViewTbl") or root.find("table")
     if table:
         for tr in table.find_all("tr"):
             cells = tr.find_all(["th", "td"])
-            i = 0
-            while i + 1 < len(cells):
-                if cells[i].name != "th":
+            used, i = set(), 0
+            while i < len(cells):
+                if cells[i].name == "th" and i + 1 < len(cells):
+                    label = _clean(cells[i].get_text(" "))
+                    cell = cells[i + 1]
+                    info[label] = _clean(cell.get_text(" "))
+                    if "첨부" in label:
+                        files = [f for f in (_clean(a.get_text(" ")) for a in cell.find_all("a"))
+                                 if f and "." in f]
+                    if "관련링크" in label:
+                        links = [a["href"] for a in cell.find_all("a", href=True)
+                                 if a["href"].startswith("http")]
+                    used.add(id(cells[i]))
+                    used.add(id(cell))
+                    i += 2
+                else:
                     i += 1
-                    continue
-                label = _clean(cells[i].get_text(" "))
-                cell = cells[i + 1]
-                info[label] = _clean(cell.get_text(" "))
-                if "첨부" in label:
-                    files = [f for f in (_clean(a.get_text(" ")) for a in cell.find_all("a")) if f and "." in f]
-                if "관련링크" in label:
-                    links = [a["href"] for a in cell.find_all("a", href=True)
-                             if a["href"].startswith("http")]
-                i += 2
+            # 라벨과 짝이 없는 칸 = 공고 본문. 나라일터는 본문을 표 마지막 줄에 통째로 넣는다
+            # (2026-09-13 실측: 이걸 놓쳐 본문이 빵부스러기만 남았다).
+            for c in cells:
+                if c.name == "td" and id(c) not in used:
+                    txt = _clean(c.get_text(" "))
+                    if len(txt) > 40:
+                        body_cells.append(txt)
         table.decompose()
 
-    body = _clean(root.get_text(" "))
+    if body_cells:
+        body = " ".join(body_cells)
+    else:
+        # 표 밖에 본문이 있는 화면 대비. 빵부스러기·버튼만 남은 경우는 비운다(쓰레기보다 빈칸).
+        outside = _clean(root.get_text(" "))
+        body = outside if len(outside) > 80 else ""
+
     head = (info.get("공고명") or "")[:20]
     if head:
         at = body.find(head)
