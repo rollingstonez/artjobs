@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   EMPLOYMENT_TYPES,
@@ -27,24 +28,44 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
   const pathname = usePathname();
   const params = useSearchParams();
 
+  // 필터를 바꾸면 서버가 목록을 다시 만들어 줄 때까지 기다려야 한다. 그동안
+  //   (1) 방금 고른 값을 먼저 화면에 반영하고(optimistic)
+  //   (2) 목록을 흐리게 해 "불러오는 중"임을 알린다.
+  // 이게 없으면 고른 값조차 1~2초 뒤에야 바뀌어서 버튼이 안 먹은 것처럼 보인다.
+  const [pending, startTransition] = useTransition();
+  // 미리 반영해 둔 값과, 그때의 주소를 함께 들고 있는다. 주소가 바뀌었다는 건
+  // 서버가 새 목록을 돌려줬다는 뜻이므로 그때부터는 주소(params)를 정답으로 본다.
+  const paramsKey = params.toString();
+  const [optimistic, setOptimistic] = useState<{ at: string; patch: Record<string, string> } | null>(null);
+  const ahead = optimistic?.at === paramsKey ? optimistic.patch : null;
+
+  const current = (key: string) => ahead?.[key] ?? params.get(key) ?? "";
+
   const set = (patch: Record<string, string>) => {
-    const next = new URLSearchParams(params.toString());
-    for (const [key, value] of Object.entries(patch)) {
+    const merged = { ...(ahead ?? {}), ...patch };
+    const next = new URLSearchParams(paramsKey);
+    for (const [key, value] of Object.entries(merged)) {
       if (value) next.set(key, value);
       else next.delete(key);
     }
+    setOptimistic({ at: paramsKey, patch: merged });
     const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname));
   };
 
-  const field = params.get("field") ?? "";
+  const reset = () => {
+    setOptimistic({ at: paramsKey, patch: Object.fromEntries(FILTER_KEYS.map((k) => [k, ""])) });
+    startTransition(() => router.replace(pathname));
+  };
+
+  const field = current("field");
   // 분야를 고르면 그 분야 장르 + 교차 노출 장르(예: 국악 탭의 한국무용·창극)만 보여준다.
   const genreOptions = field
     ? genreCodesForField(field as FieldCode)
         .map((code) => GENRES.find((g) => g.code === code))
         .filter((g): g is (typeof GENRES)[number] => Boolean(g))
     : GENRES;
-  const hasAny = FILTER_KEYS.some((k) => params.get(k));
+  const hasAny = FILTER_KEYS.some((k) => current(k));
 
   // 대관은 분야 탭 대신 공간 종류 탭. 공연장은 음악·무용·국악·연극이 다 쓰는 곳이라 분야로 나누면
   // 네 탭에 똑같은 목록이 반복된다. 공간 종류(전시 · 공연·연습 · 복합)는 서로 겹치지 않는다.
@@ -55,7 +76,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
     : [{ code: "", label: "전체" }, ...FIELDS];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-busy={pending}>
       {/* 분야 탭 (대관은 공간 종류 탭) */}
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((f) => {
@@ -108,7 +129,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
         <select
           aria-label="장르"
           className={selectClass}
-          value={params.get("genre") ?? ""}
+          value={current("genre")}
           onChange={(e) => set({ genre: e.target.value })}
         >
           {/* 분야를 고르면 "미술 장르 전체"처럼 그 분야로 좁혀졌음을 라벨에도 드러낸다. */}
@@ -128,7 +149,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
             <select
               aria-label="직무"
               className={selectClass}
-              value={params.get("role") ?? ""}
+              value={current("role")}
               onChange={(e) => set({ role: e.target.value })}
             >
               <option value="">직무 전체</option>
@@ -142,7 +163,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
             <select
               aria-label="고용형태"
               className={selectClass}
-              value={params.get("employmentType") ?? ""}
+              value={current("employmentType")}
               onChange={(e) => set({ employmentType: e.target.value })}
             >
               <option value="">고용형태 전체</option>
@@ -158,7 +179,7 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
         <select
           aria-label="지역"
           className={selectClass}
-          value={params.get("region") ?? ""}
+          value={current("region")}
           onChange={(e) => set({ region: e.target.value })}
         >
           <option value="">지역 전체</option>
@@ -188,13 +209,23 @@ export default function JobsFilter({ board = "job" }: { board?: BoardCode }) {
         {hasAny && (
           <button
             type="button"
-            onClick={() => router.replace(pathname)}
+            onClick={reset}
             className="h-10 rounded-lg px-3 text-sm text-stone-500 underline-offset-2 hover:underline"
           >
             초기화
           </button>
         )}
       </form>
+
+      {/* 목록이 다시 그려지는 동안 띄우는 안내. 자리를 차지하지 않도록 높이를 고정한다. */}
+      <p
+        aria-live="polite"
+        className={`h-4 text-xs font-semibold text-stone-500 transition-opacity ${
+          pending ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {pending ? "공고를 불러오는 중…" : ""}
+      </p>
     </div>
   );
 }
