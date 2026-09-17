@@ -45,7 +45,7 @@ GENRE_CODES = {
     "theater_play", "theater_musical", "theater_opera", "theater_children", "theater_changgeuk",
 }
 ROLE_CODES = {"performer", "creator", "education", "planning", "stage_tech", "assistant"}
-BOARD_CODES = {"job", "audition", "rental", "event"}
+BOARD_CODES = {"job", "audition", "rental", "event", "learning"}
 SPACE_KIND_CODES = {"exhibition", "performance", "multi"}   # 대관 전용: 전시 · 공연·연습 · 복합
 EMPLOYMENT_CODES = {"full_time", "contract", "freelance", "intern", "open_call"}
 
@@ -107,6 +107,37 @@ _ROLE_KEYWORDS = [
     ("안무", "creator"), ("연출", "creator"), ("극작", "creator"), ("작곡", "creator"),
     ("단원", "performer"), ("오디션", "performer"), ("입주작가", "performer"), ("배우", "performer"), ("연주자", "performer"), ("무용수", "performer"),
 ]
+
+# ── 배움(learning) 판정 ──
+# 워크숍·강좌·연수·아카데미처럼 "배우는 사람을 모집하는 교육 공고".
+# "강사 모집(job)" 과 구분이 핵심 — 수강생·참가자를 모집하는 문구가 있어야 한다.
+# 전용 소스 크롤러는 force_board("learning", ...) 로 강제하므로
+# 키워드 감지는 혼합 소스(sfac·arko 등)에서 교육 글이 섞일 때만 쓴다.
+_LEARNING_WORDS = (
+    "수강생 모집", "수강생모집", "수강 모집",
+    "참가자 모집 교육", "참가자 모집 강좌", "참가자 모집 워크숍",
+    "수강 신청", "강좌 신청", "강좌 모집",
+    "마스터클래스", "마스터 클래스",
+    "연수과정 모집", "연수 모집", "연수생 모집",
+    "아카데미 수강", "아카데미 모집",
+    "교육과정 수강", "교육과정 모집",
+    "강습 모집", "강습생 모집",
+)
+_LEARNING_NOT_WORDS = (
+    # 강사·교수자를 뽑는 공고는 배움이 아니라 채용이다
+    "강사 모집", "강사모집", "강사 채용", "교사 채용", "교육 담당자",
+    # 채용·기관 공고를 혼동하지 않도록
+    "채용", "기간제", "위촉",
+)
+
+
+def is_learning(*texts):
+    """배움 공고인가. 수강생/참가자 모집 낱말이 있고, 강사 채용 신호가 없어야 한다."""
+    text = " ".join(t for t in texts if t)
+    if not any(w in text for w in _LEARNING_WORDS):
+        return False
+    return not any(w in text for w in _LEARNING_NOT_WORDS)
+
 
 # ── 대관(rental) 판정 ──
 # 갤러리 전시실·연습실·공연장을 기간을 정해 신청받고 심사해서 내주는 대관 공모·대관 지원사업.
@@ -198,9 +229,11 @@ def classify_role(*texts):
 
 
 def classify_board(*texts):
-    # 대관을 먼저 본다 — "대관 공모" 는 '공모' 보다 '대관' 이 더 정확한 자리다.
+    # 대관 → 배움 → 오디션 순으로 확인. 안 걸리면 채용공고(job).
     if is_rental(*texts):
         return "rental"
+    if is_learning(*texts):
+        return "learning"
     return _first_match(_BOARD_KEYWORDS, *texts) or "job"
 
 
@@ -208,10 +241,12 @@ def force_board(board, *texts):
     """게시판이 고정된 크롤러(기관의 '공모 소식' 게시판 등)에서도 대관 공고는 대관 게시판으로 보낸다.
 
     그 게시판에 올라온 글은 제목에 '공모'가 없어도 채용이 아니라 공모라서 board 를 고정해 왔는데,
-    그 안에 섞인 대관 공고까지 오디션·공모로 끌려가던 것을 여기서 되돌린다.
+    그 안에 섞인 대관·배움 공고까지 다른 게시판으로 끌려가던 것을 여기서 되돌린다.
     """
     if is_rental(*texts):
         return "rental"
+    if is_learning(*texts):
+        return "learning"
     return board
 
 
@@ -405,7 +440,7 @@ def fetch_html(url, *, params=None, sleep=0, session=None):
 
 # ── 공통 실행 흐름 ──
 # 게시판 코드 → 사람이 읽을 이름. 로그 집계에 쓴다(src/types/job.ts BOARDS 와 같은 말).
-BOARD_LABELS = {"job": "채용공고", "audition": "오디션·공모", "rental": "대관", "event": "공연·전시"}
+BOARD_LABELS = {"job": "채용공고", "audition": "오디션·공모", "rental": "대관", "event": "공연·전시", "learning": "배움"}
 FIELD_LABELS = {"art": "미술", "music": "음악", "dance": "무용", "gugak": "국악", "theater": "연극"}
 
 
@@ -431,6 +466,10 @@ def normalize_codes(x):
         x["field"] = "art" if x["space_kind"] == "exhibition" else None
         x["genre"] = None
         x["role"] = None
+        x["employment_type"] = None
+    elif x["board"] == "learning":
+        # 배움은 고용이 아니므로 employment_type 을 비운다. field·genre 는 유지(분야 탭 필터에 쓴다).
+        x["space_kind"] = None
         x["employment_type"] = None
     else:
         x["space_kind"] = None
@@ -459,11 +498,16 @@ def dry_run_report(rows, *, source_name="", show_rows=True):
     print("  분야  : " + (", ".join(
         f"{f} {n}건" for f, n in sorted(fields.items(), key=lambda kv: -kv[1])) or "없음"))
 
-    # 대관은 이제 막 연 게시판이라 어떤 글이 들어오는지 제목까지 보여 준다(오분류 확인용).
+    # 대관·배움은 새 게시판이라 어떤 글이 들어오는지 제목까지 보여 준다(오분류 확인용).
     rentals = [x for x in rows if x.get("board") == "rental"]
     if rentals:
         print(f"  대관으로 분류된 {len(rentals)}건:")
         for x in rentals:
+            print(f"    · {x.get('organization') or '기관미상'} | {x.get('title', '')[:70]}")
+    learnings = [x for x in rows if x.get("board") == "learning"]
+    if learnings:
+        print(f"  배움으로 분류된 {len(learnings)}건:")
+        for x in learnings:
             print(f"    · {x.get('organization') or '기관미상'} | {x.get('title', '')[:70]}")
 
     if show_rows:
