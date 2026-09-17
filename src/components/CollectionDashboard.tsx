@@ -14,6 +14,7 @@ const BOARD_BADGE: Record<BoardCode, { short: string; tone: string }> = {
   job: { short: "채용", tone: "bg-emerald-500/20 text-emerald-300" },
   audition: { short: "공모", tone: "bg-sky-500/20 text-sky-300" },
   rental: { short: "대관", tone: "bg-amber-500/20 text-amber-300" },
+  learning: { short: "배움", tone: "bg-violet-500/20 text-violet-300" },
 };
 
 export interface DashboardItem {
