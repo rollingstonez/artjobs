@@ -125,7 +125,29 @@ def fetch_detail(key):
         return {}
 
     soup = BeautifulSoup(html, "html.parser")
-    body = soup.select_one(".view_content, .board_view, .cont_wrap, #content") or soup
+
+    # 1순위: 알려진 본문 선택자 시도
+    body = soup.select_one(
+        ".view_content, .board_view, .cont_wrap, #content, "
+        ".view_cont, .bbs_content, .sub_content, .notice_cont, "
+        ".board_cont, .view_area, .cont_area, #sub_content"
+    )
+
+    if not body:
+        # 2순위: 메타 테이블(담당부서·작성일·파일) 다음 형제 요소
+        meta_table = next(
+            (t for t in soup.find_all("table") if "담당부서" in t.get_text()),
+            None,
+        )
+        if meta_table:
+            body = meta_table.find_next_sibling(["div", "table", "p"])
+
+    if not body:
+        # 3순위: 헤더·내비·푸터를 soup에서 제거 후 전체 추출
+        for noise in soup.select("#header, #gnb, #footer, #nav, .nav_sub, .topmenu, nav, .lnb, #lnb"):
+            noise.decompose()
+        body = soup
+
     text = " ".join(body.get_text(" ", strip=True).split())
 
     fields = {}
