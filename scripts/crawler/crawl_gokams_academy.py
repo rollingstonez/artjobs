@@ -2,14 +2,9 @@
 """
 예술경영지원센터(GOKAMS) 아카데미·연수 크롤러.
 
-수집 대상: 예술경영·큐레이터·공연기획 등 예술분야 전문인력 양성 교육과정·아카데미·연수.
-게시판 위치: gokams.or.kr > 교육·연수(또는 아카데미) 목록 — 실측 후 LIST_URL 확정.
-
-⚠️ 붙이기 전 체크리스트
-  1. robots_check.py 로 '깨끗한 허용' 판정 확인.
-  2. 브라우저에서 LIST_URL 을 열어 HTML 구조를 저장(diag)하고 parse_list 선택자를 맞춘다.
-  3. PARSER_READY = True 로 바꾼 뒤 --dry-run 으로 결과를 확인한다.
-  4. crawl_sources 에 is_active=true 를 켠다.
+수집 대상: 공지사항 게시판에서 is_learning() 로 필터한 수강생·참여자 모집 공고.
+게시판: gokams.or.kr/01_news/notice_list.aspx
+상세:   gokams.or.kr/01_news/notice_view.aspx?Idx=XXXX
 
 실행: 저장소 최상위에서  python scripts/crawler/crawl_gokams_academy.py [--dry-run]
 """
@@ -20,66 +15,86 @@ from bs4 import BeautifulSoup
 
 from common import (
     PAGE_SLEEP, EMAIL_RE, PHONE_RE,
-    dry_run_report, fetch_html, parse_date, parse_period, parse_period_text,
+    dry_run_report, fetch_html, is_learning, parse_date, parse_period_text,
     run_crawler, today_str,
 )
 
 SOURCE_CODE = "gokams_academy"
 SOURCE_NAME = "예술경영지원센터 아카데미·연수"
 REGION = "전국·온라인"
-# ⚠️ 아래 URL 은 추정값. 브라우저에서 실제 목록 페이지를 열어 확인 후 수정.
-LIST_URL = "https://www.gokams.or.kr/01_news/edu_list.aspx"
+LIST_URL = "https://www.gokams.or.kr/01_news/notice_list.aspx"
 DETAIL_BASE = "https://www.gokams.or.kr"
+DETAIL_URL = "https://www.gokams.or.kr/01_news/notice_view.aspx"
 PAGE_PARAM = "page"
 MAX_PAGES = 20
-PARSER_READY = False  # 실측 완료 후 True 로
+PARSER_READY = True
+
+
+# 제목에서 "(~10.2.(금) 16:00)" 또는 "(~9.20(일)까지)" 패턴으로 마감일 추출
+_TITLE_END_RE = re.compile(r"[~～]\s*(\d{1,2})[./](\d{1,2})")
+
+
+def _apply_end_from_title(title: str) -> str | None:
+    """제목 안 '~M.D' 패턴에서 마감일 YYYY-MM-DD 를 추출한다."""
+    m = _TITLE_END_RE.search(title)
+    if not m:
+        return None
+    import datetime
+    today = datetime.date.today()
+    month, day = int(m.group(1)), int(m.group(2))
+    year = today.year
+    try:
+        d = datetime.date(year, month, day)
+        if d < today - datetime.timedelta(days=30):
+            d = datetime.date(year + 1, month, day)
+        return d.isoformat()
+    except ValueError:
+        return None
 
 
 def parse_list(html):
-    """목록 HTML → 모집중 공고 dict 목록.
-
-    ⚠️ 아래 선택자는 gokams_job(채용정보) 게시판을 기준으로 추정한 것.
-       실제 교육·연수 목록 HTML 저장(diag) 후 교체.
-    """
+    """목록 HTML → 배움 공고 dict 목록 (is_learning 필터 적용)."""
     today = today_str()
     soup = BeautifulSoup(html, "html.parser")
     rows = []
 
-    for tr in soup.select("table.board_list tbody tr, table.list_table tbody tr"):
-        link = tr.select_one("a[href]")
+    # GOKAMS 공지사항 테이블 — thead/tbody 구조, 여러 클래스명 시도
+    for tr in soup.select("table tbody tr"):
+        link = tr.select_one("td a[href]")
         if not link:
             continue
         href = link.get("href", "")
-        m = re.search(r"[?&]idx=(\d+)|/(\d+)$", href)
+        # Idx=숫자 (대소문자 무관)
+        m = re.search(r"[Ii]dx=(\d+)", href)
         if not m:
             continue
-        key = m.group(1) or m.group(2)
+        key = m.group(1)
         title = " ".join(link.get_text(" ", strip=True).split())
         if not title:
             continue
 
-        # 날짜 칸에서 접수 기간 추출
-        cells = [td.get_text(" ", strip=True) for td in tr.select("td")]
-        period = next((c for c in cells if "~" in c), "")
-        apply_start, apply_end = parse_period(period)
+        # 공지사항이라 채용·공모도 섞임 — 배움 관련만 통과
+        if not is_learning(title):
+            continue
+
+        apply_end = _apply_end_from_title(title)
         if apply_end and apply_end < today:
             continue
 
-        # 분야는 제목·원문에서 감지. 교육 관련 소스이므로 role 기본값을 education 으로 둔다.
-        detail_url = DETAIL_BASE + href if href.startswith("/") else href
+        detail_url = f"{DETAIL_URL}?Idx={key}"
         rows.append({
             "title": title,
             "organization": SOURCE_NAME,
             "region": REGION,
-            "board": "learning",           # 이 소스는 항상 배움 게시판
-            "field": None,                 # 상세에서 채운다
+            "board": "learning",
+            "field": None,
             "genre": None,
-            "role": "education",           # 교육 프로그램
-            "employment_type": None,       # 배움은 고용 아님
+            "role": "education",
+            "employment_type": None,
             "space_kind": None,
             "category_raw": None,
             "employment_raw": None,
-            "apply_start": apply_start,
+            "apply_start": None,
             "apply_end": apply_end,
             "source_key": key,
             "source_url": detail_url,
@@ -93,7 +108,7 @@ def collect_rows():
         html = fetch_html(LIST_URL, params={PAGE_PARAM: str(page)}, sleep=PAGE_SLEEP if page > 1 else 0)
         rows = [r for r in parse_list(html) if r["source_key"] not in seen]
         if not rows:
-            print(f"[1] {page}페이지: 새 모집중 공고 없음 → 순회 종료")
+            print(f"[1] {page}페이지: 새 배움 공고 없음 → 순회 종료")
             break
         seen.update(r["source_key"] for r in rows)
         all_rows.extend(rows)
@@ -102,33 +117,31 @@ def collect_rows():
 
 
 def fetch_detail(key):
-    """상세에서 교육 기간(workStart/workEnd)·접수 기간·설명·이메일을 보충한다."""
-    # key 가 숫자 ID 면 상세 URL 은 목록 href 에서 직접 뽑아야 한다.
-    # run_crawler 가 source_key 만 넘기므로 여기서는 추정 URL 을 구성한다.
-    # ⚠️ 실제 상세 URL 패턴 확인 후 수정.
-    detail_url = f"{LIST_URL.replace('list', 'view')}?idx={key}"
+    """상세에서 접수 기간·교육 기간·설명·이메일을 보충한다."""
+    detail_url = f"{DETAIL_URL}?Idx={key}"
     try:
         html = fetch_html(detail_url)
     except Exception:
         return {}
 
     soup = BeautifulSoup(html, "html.parser")
-    body = soup.select_one(".view_content, .board_view, .cont_wrap") or soup
+    body = soup.select_one(".view_content, .board_view, .cont_wrap, #content") or soup
     text = " ".join(body.get_text(" ", strip=True).split())
 
     fields = {}
     if text:
         fields["description"] = text[:4000]
 
-    # 접수 기간 보충
     apply_start, apply_end = parse_period_text(text)
     if apply_start:
         fields["apply_start"] = apply_start
     if apply_end:
         fields["apply_end"] = apply_end
 
-    # 교육 기간(work_start/work_end) — "교육 기간: YYYY.MM.DD ~ YYYY.MM.DD" 패턴
-    m_work = re.search(r"교육\s*기간\s*[:：]?\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})\s*~\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})", text)
+    m_work = re.search(
+        r"(?:교육|수강|연수|프로그램)\s*기간\s*[:：]?\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})\s*[~–]\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})",
+        text,
+    )
     if m_work:
         fields["work_start"] = parse_date(m_work.group(1))
         fields["work_end"] = parse_date(m_work.group(2))
