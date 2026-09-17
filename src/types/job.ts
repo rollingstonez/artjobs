@@ -92,6 +92,7 @@ export const BOARDS = [
   { code: "job", label: "채용공고", path: "/jobs" },
   { code: "audition", label: "오디션·공모", path: "/auditions" },
   { code: "rental", label: "대관", path: "/rentals" },
+  { code: "learning", label: "배움", path: "/learning" },
   // { code: "event", label: "공연·전시", path: "/events" },   // 3단계에서 연다
 ] as const;
 

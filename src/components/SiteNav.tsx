@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/jobs", label: "채용공고" },
   { href: "/auditions", label: "오디션·공모" },
   { href: "/rentals", label: "대관" },
+  { href: "/learning", label: "배움" },
   { href: "/seeking", label: "구직" },
   { href: "/about", label: "About" },
 ];
