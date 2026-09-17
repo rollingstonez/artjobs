@@ -346,7 +346,26 @@ SITES = [
          tier=4, kind="채용", categories=["art_management"], region="서울", fetch="html", verified=False, priority=3,
          note="아트페어 스태프 채용. 경로 실측."),
 
-    # ───────────────────────── 5. 공모전 포털·공공 채용 API ─────────────────────────
+    # ───────────────────────── 5. 배움 전용 소스 ─────────────────────────
+    # 워크숍·강좌·연수·아카데미처럼 "배우는 사람(수강생·참가자)을 모집하는 교육 공고".
+    # 이 소스들의 크롤러는 board='learning' 을 강제한다(classify_board 로 감지하지 않음).
+    dict(code="gokams_academy", name="예술경영지원센터 아카데미·연수",
+         base_url="https://www.gokams.or.kr", list_path="/01_news/edu_list.aspx",
+         tier=2, kind="배움", categories=["art_education", "art_management"], region="전국·온라인", fetch="html", verified=False, priority=1,
+         note="예술경영·큐레이터·공연기획 등 예술분야 전문인력 양성 교육과정·아카데미·연수 프로그램. "
+              "목록 경로 /01_news/edu_list.aspx 는 추정 — 실측 후 수정. gokams_job(채용정보) 과 다른 섹션."),
+    dict(code="arte_edu", name="한국문화예술교육진흥원 교육연수",
+         base_url="https://arte.or.kr", list_path="/training/notice/",
+         tier=2, kind="배움", categories=["art_education"], region="전국·온라인", fetch="html", verified=False, priority=1,
+         note="학교예술강사·문화예술교육사 대상 직무연수·보수교육·특화연수. "
+              "aschool.arte.or.kr(학교예술강사 지원사업) 도 확인. arte(채용공고) 소스와 다른 섹션."),
+    dict(code="sfac_workshop", name="서울문화재단 예술가 워크숍·교육",
+         base_url="https://www.sfac.or.kr", list_path="/opensquare/notice/edu_list.do",
+         tier=3, kind="배움", categories=["all"], region="서울", fetch="html", verified=False, priority=2,
+         note="예술가·기획자 대상 워크숍·세미나·아카데미. sfac(채용·공모) 소스의 공모 소식 게시판에도 "
+              "교육 공고가 올라오지만, 전용 교육 목록이 별도 있으면 여기서 수집. 경로 실측 필요."),
+
+    # ───────────────────────── 6. 공모전 포털·공공 채용 API ─────────────────────────
     dict(code="alio_api", name="잡알리오 공공기관 채용정보(공공데이터 API)",
          base_url="https://job.alio.go.kr", list_path=None,
          tier=5, kind="채용", categories=["curation", "art_management", "art_education"], region="전국·온라인", fetch="api", verified=True, priority=2,
