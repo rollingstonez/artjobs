@@ -13,6 +13,8 @@
 //   · 한 사람에게 하루 1통, 직전 메일과 MIN_GAP_DAYS 이상 간격.
 //   · 이미 한 일(프로필 완성·알림 저장·인증 등)에 대한 안내는 보내지 않고 skipped 로 남긴다.
 //   · 날짜가 지난 단계가 여럿 밀려 있으면(처음 켰을 때의 기존 회원) 가장 최근 단계 하나만 보내고 나머지는 skipped.
+//     단 기관 인증 안내(o1_verify)는 밀려 있어도 먼저 본다.
+//   · 가입 확인(이메일 인증)을 안 한 주소에는 아무 메일도 보내지 않는다.
 //   · 가입 환영 메일을 놓친 최근 가입자(키 설정 전 가입 등)에게는 환영 메일을 대신 보낸다.
 //   · 기록표 email_sends (user_id, kind) 1회. 발송이 실패하면 행을 만들지 않아 다음 날 다시 시도한다.
 //   · --dry-run 이면 보내지도 기록하지도 않고 "누구에게 무엇을" 만 찍는다(받는 주소는 가린다).
@@ -79,7 +81,8 @@ async function allAuthUsers() {
   for (let page = 1; ; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) throw error;
-    for (const u of data.users) if (u.email) out.set(u.id, u.email);
+    // 가입 확인을 안 한 주소(오타일 수 있음)에는 보내지 않는다. 소셜 가입은 확인된 것으로 온다.
+    for (const u of data.users) if (u.email && u.email_confirmed_at) out.set(u.id, u.email);
     if (data.users.length < 1000) break;
   }
   return out;
@@ -175,6 +178,9 @@ async function main() {
     if (now - lastSent < MIN_GAP_DAYS * DAY) continue;
     const done = new Set(mine.map((s) => s.kind));
     const due = (isOrg ? ORG_STEPS : ARTIST_STEPS).filter((s) => s.day <= days && !done.has(s.kind)).reverse(); // 최근 단계부터
+    // 단, 기관 인증 안내는 밀려 있어도 가장 먼저(인증이 안 된 기관에는 이게 제일 중요하다)
+    const vi = due.findIndex((s) => s.kind === "o1_verify");
+    if (vi > 0) due.unshift(...due.splice(vi, 1));
     if (!due.length) continue;
 
     const a = artist.get(u.id);
