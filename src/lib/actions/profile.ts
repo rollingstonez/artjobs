@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { contactError } from "@/lib/validation/contact";
 import { REGION_CENTERS } from "@/lib/location";
-import { ORG_TYPES, PORTFOLIO_KINDS, artistCompleteness, orgCompleteness, type ArtistProfile, type OrgProfile } from "@/types/account";
+import { ORG_DOC_TYPES, ORG_TYPES, PORTFOLIO_KINDS, artistCompleteness, orgCompleteness, type ArtistProfile, type OrgProfile } from "@/types/account";
 import { EMPLOYMENT_TYPES, FIELDS, GENRES, REGIONS, ROLES } from "@/types/job";
 import type { ActionResult } from "./auth";
 
@@ -130,5 +130,34 @@ export async function saveSettings(_p: ActionResult | null, fd: FormData): Promi
   });
   if (error) return { ok: false, error: error.message };
   revalidatePath("/me/settings");
+  return { ok: true };
+}
+
+/** 기관 인증 서류 제출. 파일은 브라우저가 org-docs/{내 id}/ 에 먼저 올리고, 여기서는 기록만 남긴다.
+ *  상태·심사 칸은 DB 트리거가 submitted 로 되돌리므로 여기서 보내지 않는다. */
+export async function submitOrgVerification(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const me = await requireUser("/me/profile", "organization");
+  const supabase = (await createClient())!;
+
+  const docType = inSet(str(fd, "doc_type"), ORG_DOC_TYPES.map((t) => t.code));
+  if (!docType) return { ok: false, error: "서류 종류를 골라 주세요." };
+  const regNumber = str(fd, "reg_number").replace(/\D/g, "");
+  if (docType !== "other" && regNumber.length !== 10) return { ok: false, error: "등록번호 10자리를 적어 주세요. (예: 123-45-67890)" };
+  const docPath = str(fd, "doc_path");
+  if (!docPath.startsWith(`${me.id}/`) || docPath.includes("..")) return { ok: false, error: "서류 파일을 올려 주세요." };
+
+  const { data: prev } = await supabase.from("org_verifications").select("doc_path").eq("user_id", me.id).maybeSingle();
+  const { error } = await supabase.from("org_verifications").upsert({
+    user_id: me.id,
+    doc_type: docType,
+    reg_number: regNumber || null,
+    doc_path: docPath,
+    doc_name: strOrNull(fd, "doc_name")?.slice(0, 200) ?? null,
+  });
+  if (error) return { ok: false, error: error.message };
+  // 예전 파일은 지운다(실패해도 제출은 된 것).
+  if (prev?.doc_path && prev.doc_path !== docPath) await supabase.storage.from("org-docs").remove([prev.doc_path]);
+  revalidatePath("/me");
+  revalidatePath("/me/profile");
   return { ok: true };
 }

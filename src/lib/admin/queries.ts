@@ -38,7 +38,8 @@ export interface AdminBadges {
 
 export async function getAdminBadges(supabase: Supa): Promise<AdminBadges> {
   const [pendingOrgs, openReports, newContacts, newFeedback, suspended] = await Promise.all([
-    safeCount(supabase.from("org_profiles").select("user_id", { count: "exact", head: true }).eq("is_verified", false)),
+    // 서류를 내고 확인을 기다리는 기관만 "처리할 일"로 센다.
+    safeCount(supabase.from("org_verifications").select("user_id", { count: "exact", head: true }).eq("status", "submitted")),
     safeCount(supabase.from("user_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount(supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new")),
     safeCount(supabase.from("feedback").select("id", { count: "exact", head: true }).eq("status", "new")),
