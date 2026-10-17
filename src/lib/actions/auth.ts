@@ -206,6 +206,12 @@ export async function deleteMyAccount(_p: ActionResult | null, formData: FormDat
     return { ok: false, error: "운영자 계정은 여기서 탈퇴할 수 없습니다. 다른 운영자에게 권한 해제를 먼저 요청하세요." };
   }
   const supabase = (await createClient())!;
+  if (me.profile.role === "organization") {
+    // 기관 인증 서류(사업자등록증 등)는 탈퇴하면 바로 지운다. 실패해도 탈퇴는 진행한다.
+    const { data: files } = await supabase.storage.from("org-docs").list(me.id);
+    if (files?.length) await supabase.storage.from("org-docs").remove(files.map((f) => `${me.id}/${f.name}`));
+    await supabase.from("org_verifications").delete().eq("user_id", me.id);
+  }
   const { data, error } = await supabase.rpc("delete_my_account");
   if (error) return { ok: false, error: `탈퇴 처리에 실패했습니다: ${error.message}` };
   if (data !== true) return { ok: false, error: "탈퇴 처리에 실패했습니다. 잠시 뒤 다시 시도해 주세요." };

@@ -4,6 +4,7 @@
 export const ADMIN_ACTION_LABEL: Record<string, string> = {
   org_verify: "기관 인증",
   org_unverify: "기관 인증 취소",
+  org_request_docs: "기관 서류 보완 요청",
   user_suspend: "계정 정지",
   user_restore: "정지 해제",
   admin_grant: "운영자 지정",

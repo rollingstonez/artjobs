@@ -63,12 +63,14 @@ export default async function MeHome() {
   }
 
   const { percent, missing } = orgCompleteness(me.org);
-  const [postings, apps, convs, members] = await Promise.all([
+  const [postings, apps, convs, members, verif] = await Promise.all([
     supabase.from("org_postings").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "open").is("deleted_at", null),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "submitted"),
     supabase.from("conversations").select("id", { count: "exact", head: true }).eq("org_user_id", me.id),
     supabase.from("org_members").select("id", { count: "exact", head: true }).eq("org_user_id", me.id).eq("status", "active"),
+    supabase.from("org_verifications").select("status").eq("user_id", me.id).maybeSingle(),
   ]);
+  const verifStatus = (verif.data?.status as string | undefined) ?? null;
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-stone-200 bg-white p-5">
@@ -90,6 +92,19 @@ export default async function MeHome() {
           <p className="mt-2 text-sm text-emerald-700">완성! 공고를 올리고 인재를 찾아보세요.</p>
         )}
       </section>
+      {me.org && !me.org.is_verified && (
+        <Link
+          href="/me/profile#verify"
+          className={`block rounded-xl border p-4 text-sm hover:border-stone-500 ${verifStatus === "needs_more" ? "border-red-200 bg-red-50 text-red-800" : "border-stone-200 bg-white text-stone-700"}`}
+        >
+          <span className="font-bold">기관 인증 · </span>
+          {verifStatus === "submitted"
+            ? "서류를 확인하고 있습니다. 인증되면 알림으로 알려 드립니다."
+            : verifStatus === "needs_more"
+              ? "운영팀이 서류 보완을 요청했습니다. 눌러서 확인해 주세요."
+              : "사업자등록증·고유번호증을 올리면 공고에 ✓ 인증 기관 표시가 붙습니다. →"}
+        </Link>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="모집중 공고" value={postings.count ?? 0} href="/me/postings" />
         <Card title="확인 안 한 지원" value={apps.count ?? 0} href="/me/postings" note="심사 작업대에서 보고 점수를 주세요" />

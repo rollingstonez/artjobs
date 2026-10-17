@@ -28,10 +28,32 @@ export async function setOrgVerified(userId: string, verified: boolean): Promise
   const me = await requireAdmin("/admin/orgs");
   const supabase = (await createClient())!;
   await supabase.from("org_profiles").update({ is_verified: verified }).eq("user_id", userId);
+  // 제출된 서류가 있으면 심사 상태도 맞춘다(없으면 아무 행도 안 바뀐다).
+  await supabase
+    .from("org_verifications")
+    .update(verified ? { status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: me.id } : { status: "submitted" })
+    .eq("user_id", userId);
   await log(supabase, me.id, verified ? "org_verify" : "org_unverify", "org", userId);
   revalidatePath("/admin/orgs");
   revalidatePath(`/admin/users/${userId}`);
   revalidatePath("/admin");
+}
+
+/** 기관에 서류 보완 요청. 사유는 기관 화면과 알림에 그대로 보인다(알림은 DB 트리거가 보낸다).
+ *  서류를 아직 안 낸 기관에도 보낼 수 있다(그때는 행을 새로 만든다). */
+export async function requestOrgDocs(userId: string, fd: FormData): Promise<void> {
+  const me = await requireAdmin("/admin/orgs");
+  const note = str(fd, "note").slice(0, 1000);
+  if (!note) back("/admin/orgs", { err: "보완 요청 사유를 적어 주세요." });
+  const supabase = (await createClient())!;
+  const { error } = await supabase.from("org_verifications").upsert({
+    user_id: userId, status: "needs_more", admin_note: note, reviewed_at: new Date().toISOString(), reviewed_by: me.id,
+  });
+  if (error) back("/admin/orgs", { err: error.message });
+  await log(supabase, me.id, "org_request_docs", "org", userId, { note });
+  revalidatePath("/admin/orgs");
+  revalidatePath("/admin");
+  back("/admin/orgs", { ok: "보완 요청을 보냈습니다. 기관에 알림이 갔습니다." });
 }
 
 // ───────────────────────── 회원 ─────────────────────────

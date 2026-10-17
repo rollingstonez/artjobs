@@ -84,6 +84,37 @@ export interface OrgProfile {
   updated_at: string;
 }
 
+/** 기관 인증 서류(org_verifications). 본인과 운영자만 읽는다. */
+export const ORG_DOC_TYPES = [
+  { code: "business", label: "사업자등록증" },
+  { code: "unique_no", label: "고유번호증" },
+  { code: "nonprofit", label: "비영리법인 설립허가증" },
+  { code: "other", label: "기타 증빙" },
+] as const;
+export type OrgDocTypeCode = (typeof ORG_DOC_TYPES)[number]["code"];
+
+export function orgDocTypeLabel(code: string | null): string | null {
+  return ORG_DOC_TYPES.find((t) => t.code === code)?.label ?? null;
+}
+
+/** 등록번호 10자리를 000-00-00000 으로 */
+export function fmtRegNumber(v: string | null): string | null {
+  if (!v) return null;
+  return /^\d{10}$/.test(v) ? `${v.slice(0, 3)}-${v.slice(3, 5)}-${v.slice(5)}` : v;
+}
+
+export interface OrgVerification {
+  user_id: string;
+  doc_type: OrgDocTypeCode | null;
+  reg_number: string | null;
+  doc_path: string | null;
+  doc_name: string | null;
+  status: "submitted" | "needs_more" | "approved";
+  admin_note: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+}
+
 /** 인재정보 공개 뷰(talents_public). 좌표 없음. */
 export type TalentPublic = Omit<ArtistProfile, "lat" | "lng" | "is_public" | "profile_completed" | "max_distance_km"> & {
   display_name: string;

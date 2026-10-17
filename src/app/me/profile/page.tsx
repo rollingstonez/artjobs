@@ -1,9 +1,10 @@
 import ArtistProfileForm from "@/components/forms/ArtistProfileForm";
 import OrgProfileForm from "@/components/forms/OrgProfileForm";
+import OrgVerificationForm from "@/components/forms/OrgVerificationForm";
 import { Notice } from "@/components/forms/ui";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { PortfolioItem } from "@/types/account";
+import type { OrgVerification, PortfolioItem } from "@/types/account";
 
 export default async function MyProfilePage({ searchParams }: PageProps<"/me/profile">) {
   const me = await requireUser("/me/profile");
@@ -13,6 +14,12 @@ export default async function MyProfilePage({ searchParams }: PageProps<"/me/pro
     const supabase = (await createClient())!;
     const { data } = await supabase.from("artist_portfolio_items").select("*").eq("user_id", me.id).order("sort_order").order("created_at");
     portfolio = (data ?? []) as PortfolioItem[];
+  }
+  let verification: OrgVerification | null = null;
+  if (me.profile.role === "organization") {
+    const supabase = (await createClient())!;
+    const { data } = await supabase.from("org_verifications").select("*").eq("user_id", me.id).maybeSingle();
+    verification = (data as OrgVerification | null) ?? null;
   }
   return (
     <div className="space-y-4">
@@ -25,7 +32,12 @@ export default async function MyProfilePage({ searchParams }: PageProps<"/me/pro
       {me.profile.role === "artist" && me.artist && (
         <ArtistProfileForm profile={me.artist} displayName={me.profile.display_name} portfolio={portfolio} />
       )}
-      {me.profile.role === "organization" && me.org && <OrgProfileForm profile={me.org} />}
+      {me.profile.role === "organization" && me.org && (
+        <>
+          <OrgProfileForm profile={me.org} />
+          <OrgVerificationForm userId={me.id} isVerified={me.org.is_verified} verification={verification} />
+        </>
+      )}
     </div>
   );
 }
