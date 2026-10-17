@@ -41,6 +41,7 @@ export interface Profile {
   display_name: string;
   status: "active" | "suspended" | "deleted";
   is_admin: boolean;
+  created_at: string;
 }
 
 export interface ArtistProfile {

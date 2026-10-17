@@ -3,12 +3,14 @@ import OrgProfileForm from "@/components/forms/OrgProfileForm";
 import OrgVerificationForm from "@/components/forms/OrgVerificationForm";
 import { Notice } from "@/components/forms/ui";
 import { requireUser } from "@/lib/auth";
+import { sendWelcomeOnce } from "@/lib/email/welcome";
 import { createClient } from "@/lib/supabase/server";
 import type { OrgVerification, PortfolioItem } from "@/types/account";
 
 export default async function MyProfilePage({ searchParams }: PageProps<"/me/profile">) {
   const me = await requireUser("/me/profile");
   const sp = await searchParams;
+  if (sp.welcome) await sendWelcomeOnce(me);
   let portfolio: PortfolioItem[] = [];
   if (me.profile.role === "artist") {
     const supabase = (await createClient())!;
