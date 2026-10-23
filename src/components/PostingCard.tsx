@@ -57,6 +57,7 @@ export default function PostingCard({
   return (
     <Link
       href={href}
+      prefetch={false}
       className={`block w-full min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition hover:border-stone-400 ${
         isExpired ? "opacity-60" : ""
       }`}
